@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Token Storage</title>
+</head>
+<body>
+    <h1>Test Token Storage</h1>
+    <button onclick="testLogin()">Test Login</button>
+    <button onclick="testToken()">Test Token</button>
+    <div id="output"></div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000/api/v1';
+        
+        async function testLogin() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'teste@email.com',
+                        password: 'Teste123456!'
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Login response:', data);
+                
+                if (data.access_token) {
+                    // Store token as string (not JSON)
+                    localStorage.setItem('meufuturo_token', data.access_token);
+                    console.log('Token stored:', data.access_token);
+                    document.getElementById('output').innerHTML = 'Login successful! Token stored.';
+                } else {
+                    document.getElementById('output').innerHTML = 'Login failed: ' + JSON.stringify(data);
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                document.getElementById('output').innerHTML = 'Login error: ' + error.message;
+            }
+        }
+        
+        async function testToken() {
+            try {
+                const token = localStorage.getItem('meufuturo_token');
+                console.log('Token from localStorage:', token);
+                
+                if (!token) {
+                    document.getElementById('output').innerHTML = 'No token found';
+                    return;
+                }
+                
+                const response = await fetch(`${API_BASE_URL}/financial/transactions`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                console.log('API response:', data);
+                document.getElementById('output').innerHTML = 'API Response: ' + JSON.stringify(data);
+            } catch (error) {
+                console.error('API error:', error);
+                document.getElementById('output').innerHTML = 'API error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

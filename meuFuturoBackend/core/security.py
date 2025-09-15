@@ -1,0 +1,330 @@
+"""
+Authentication and security utilities.
+
+Handles JWT tokens, password hashing, and user authentication.
+"""
+
+from datetime import datetime, timedelta
+from typing import Optional, Any
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+from fastapi import HTTPException, status, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+import structlog
+
+from core.config import settings
+from core.constants import SecurityConstants, ErrorMessages
+from core.exceptions import AuthenticationError, InvalidCredentialsError
+from core.validators import EmailValidator, PasswordValidator
+
+logger = structlog.get_logger()
+
+# Password hashing with improved security
+pwd_context = CryptContext(
+    schemes=["bcrypt"], 
+    deprecated="auto",
+    bcrypt__rounds=SecurityConstants.PASSWORD_HASH_ROUNDS,
+    bcrypt__min_rounds=10,
+    bcrypt__max_rounds=15
+)
+
+# JWT token security
+security = HTTPBearer()
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """
+    Verify a plain password against its hash.
+    
+    Args:
+        plain_password: The plain text password
+        hashed_password: The hashed password from database
+        
+    Returns:
+        bool: True if password matches, False otherwise
+    """
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except Exception as e:
+        logger.error("Password verification error", error=str(e))
+        return False
+
+
+def get_password_hash(password: str) -> str:
+    """
+    Hash a password for storing in database.
+    
+    Args:
+        password: Plain text password
+        
+    Returns:
+        str: Hashed password
+    """
+    try:
+        return pwd_context.hash(password)
+    except Exception as e:
+        logger.error("Password hashing error", error=str(e))
+        raise AuthenticationError("Erro ao processar senha")
+
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    """
+    Create a JWT access token.
+    
+    Args:
+        data: Data to encode in token
+        expires_delta: Optional custom expiration time
+        
+    Returns:
+        str: Encoded JWT token
+    """
+    to_encode = data.copy()
+    
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    
+    to_encode.update({"exp": expire})
+    
+    encoded_jwt = jwt.encode(
+        to_encode, 
+        settings.SECRET_KEY, 
+        algorithm=settings.ALGORITHM
+    )
+    
+    logger.info("Access token created", subject=data.get("sub"), expires_at=expire.isoformat())
+    
+    return encoded_jwt
+
+
+def verify_token(token: str) -> dict:
+    """
+    Verify and decode a JWT token.
+    
+    Args:
+        token: JWT token string
+        
+    Returns:
+        dict: Decoded token payload
+        
+    Raises:
+        HTTPException: If token is invalid or expired
+    """
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Token inválido ou expirado",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    try:
+        payload = jwt.decode(
+            token, 
+            settings.SECRET_KEY, 
+            algorithms=[settings.ALGORITHM]
+        )
+        
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            logger.warning("Token missing subject")
+            raise credentials_exception
+            
+        logger.debug("Token verified successfully", user_id=user_id)
+        return payload
+        
+    except JWTError as e:
+        logger.warning("JWT verification failed", error=str(e))
+        raise credentials_exception
+
+
+async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
+    """
+    FastAPI dependency to get current user ID from JWT token.
+    
+    Args:
+        credentials: HTTP Authorization credentials
+        
+    Returns:
+        str: Current user ID
+        
+    Raises:
+        HTTPException: If token is invalid
+    """
+    payload = verify_token(credentials.credentials)
+    user_id = payload.get("sub")
+    
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token inválido",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    return user_id
+
+
+def generate_totp_secret() -> str:
+    """
+    Generate a random TOTP secret for 2FA.
+    
+    Returns:
+        str: Base32 encoded secret
+    """
+    import secrets
+    import base64
+    
+    # Generate 20 random bytes and encode as base32
+    secret_bytes = secrets.token_bytes(20)
+    secret = base64.b32encode(secret_bytes).decode('utf-8')
+    
+    return secret
+
+
+def verify_totp_token(secret: str, token: str, window: int = 1) -> bool:
+    """
+    Verify a TOTP token.
+    
+    Args:
+        secret: Base32 encoded TOTP secret
+        token: 6-digit TOTP token
+        window: Time window for token validation (±30 seconds * window)
+        
+    Returns:
+        bool: True if token is valid, False otherwise
+    """
+    import hmac
+    import hashlib
+    import struct
+    import time
+    import base64
+    
+    try:
+        # Decode the secret
+        secret_bytes = base64.b32decode(secret)
+        
+        # Get current time step (30 seconds)
+        current_time_step = int(time.time()) // 30
+        
+        # Check token within the time window
+        for time_step in range(current_time_step - window, current_time_step + window + 1):
+            # Convert time step to bytes
+            time_bytes = struct.pack(">Q", time_step)
+            
+            # Generate HMAC-SHA1
+            hmac_digest = hmac.new(secret_bytes, time_bytes, hashlib.sha1).digest()
+            
+            # Dynamic truncation
+            offset = hmac_digest[-1] & 0x0f
+            truncated = struct.unpack(">I", hmac_digest[offset:offset + 4])[0]
+            truncated &= 0x7fffffff
+            
+            # Generate 6-digit code
+            code = truncated % 1000000
+            
+            # Compare with provided token
+            if f"{code:06d}" == token:
+                return True
+                
+        return False
+        
+    except Exception as e:
+        logger.error("TOTP verification error", error=str(e))
+        return False
+
+
+class SecurityService:
+    """Service class for security-related operations."""
+    
+    @staticmethod
+    def create_password_reset_token(user_id: str) -> str:
+        """
+        Create a password reset token.
+        
+        Args:
+            user_id: User ID
+            
+        Returns:
+            str: Password reset token
+        """
+        data = {
+            "sub": user_id,
+            "purpose": "password_reset",
+        }
+        
+        # Password reset tokens expire in 1 hour
+        expires_delta = timedelta(hours=1)
+        
+        return create_access_token(data, expires_delta)
+    
+    @staticmethod
+    def verify_password_reset_token(token: str) -> Optional[str]:
+        """
+        Verify a password reset token.
+        
+        Args:
+            token: Password reset token
+            
+        Returns:
+            Optional[str]: User ID if token is valid, None otherwise
+        """
+        try:
+            payload = verify_token(token)
+            
+            if payload.get("purpose") != "password_reset":
+                return None
+                
+            return payload.get("sub")
+            
+        except HTTPException:
+            return None
+    
+    @staticmethod
+    def create_email_verification_token(user_id: str, email: str) -> str:
+        """
+        Create an email verification token.
+        
+        Args:
+            user_id: User ID
+            email: Email address to verify
+            
+        Returns:
+            str: Email verification token
+        """
+        data = {
+            "sub": user_id,
+            "email": email,
+            "purpose": "email_verification",
+        }
+        
+        # Email verification tokens expire in 24 hours
+        expires_delta = timedelta(hours=24)
+        
+        return create_access_token(data, expires_delta)
+    
+    @staticmethod
+    def verify_email_verification_token(token: str) -> Optional[tuple[str, str]]:
+        """
+        Verify an email verification token.
+        
+        Args:
+            token: Email verification token
+            
+        Returns:
+            Optional[tuple[str, str]]: (user_id, email) if token is valid, None otherwise
+        """
+        try:
+            payload = verify_token(token)
+            
+            if payload.get("purpose") != "email_verification":
+                return None
+                
+            user_id = payload.get("sub")
+            email = payload.get("email")
+            
+            if not user_id or not email:
+                return None
+                
+            return user_id, email
+            
+        except HTTPException:
+            return None

@@ -1,0 +1,75 @@
+/* Estilos específicos para garantir visibilidade do VLibras */
+
+/* Força visibilidade de todos os elementos VLibras */
+[id*="vlibras"], 
+[class*="vlibras"],
+#vlibras,
+.vlibras-widget,
+.vlibras-container {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 9999 !important;
+  position: fixed !important;
+}
+
+/* Estilos específicos para o widget principal */
+#vlibras-widget {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 9999 !important;
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 20px !important;
+}
+
+/* Estilos para o avatar */
+#vlibras-widget .vlibras-avatar {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 60px !important;
+  height: 60px !important;
+  cursor: pointer !important;
+}
+
+/* Estilos para o container do avatar */
+#vlibras-widget .vlibras-avatar-container {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  z-index: 9999 !important;
+}
+
+/* Estilos para o iframe do VLibras */
+#vlibras-widget iframe {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 9999 !important;
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  width: 60px !important;
+  height: 60px !important;
+}
+
+/* Garantir que elementos não sejam ocultados por outros estilos */
+* {
+  --vlibras-z-index: 9999;
+}
+
+/* Override para qualquer elemento que possa estar ocultando o VLibras */
+body {
+  overflow-x: visible !important;
+}
+
+/* Estilos de debug - remover em produção */
+.vlibras-debug {
+  border: 2px solid red !important;
+  background: yellow !important;
+}
