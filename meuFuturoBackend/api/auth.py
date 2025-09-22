@@ -124,6 +124,8 @@ async def verify_2fa(
     )
 
 
+
+
 @router.get(
     "/profile",
     response_model=UserProfile,
@@ -224,6 +226,72 @@ async def setup_2fa(
         secret=setup_data["secret"],
         qr_code_url=setup_data["qr_code_url"],
         backup_codes=backup_codes,
+    )
+
+
+@router.post(
+    "/enable-2fa",
+    response_model=TwoFactorSetupResponse,
+    summary="Habilitar 2FA",
+    description="Inicia a configuração da autenticação de dois fatores",
+)
+async def enable_2fa(
+    current_user: User = Depends(get_current_user),
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    """
+    Habilitar autenticação de dois fatores (2FA).
+    
+    Retorna o segredo TOTP e URL do QR code para configurar no app autenticador.
+    """
+    if current_user.two_factor_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="2FA já está habilitado"
+        )
+    
+    setup_data = await auth_service.setup_2fa(current_user.id)
+    
+    # Generate some backup codes (simplified implementation)
+    backup_codes = ["123456789", "987654321", "456123789", "789456123", "321654987"]
+    
+    return TwoFactorSetupResponse(
+        secret=setup_data["secret"],
+        qr_code_url=setup_data["qr_code_url"],
+        backup_codes=backup_codes,
+    )
+
+
+@router.post(
+    "/confirm-2fa",
+    response_model=SuccessResponse,
+    summary="Confirmar 2FA",
+    description="Confirma e habilita a autenticação de dois fatores",
+)
+async def confirm_2fa(
+    enable_data: TwoFactorEnable,
+    secret: str,
+    current_user: User = Depends(get_current_user),
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    """
+    Confirmar e habilitar autenticação de dois fatores.
+    
+    - **totp_code**: Código de verificação do app autenticador
+    - **secret**: Segredo TOTP obtido no setup
+    """
+    if current_user.two_factor_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="2FA já está habilitado"
+        )
+    
+    await auth_service.enable_2fa(
+        current_user.id, secret, enable_data.totp_code
+    )
+    
+    return SuccessResponse(
+        message="2FA habilitado com sucesso"
     )
 
 
@@ -361,3 +429,25 @@ async def get_current_user_info(
     Endpoint simplificado para obter dados básicos do usuário.
     """
     return current_user
+
+
+@router.post(
+    "/logout",
+    response_model=SuccessResponse,
+    summary="Fazer logout",
+    description="Encerra a sessão do usuário",
+)
+async def logout(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Fazer logout do sistema.
+    
+    Encerra a sessão do usuário atual. Em um sistema JWT stateless,
+    o logout é feito no lado do cliente removendo o token.
+    """
+    logger.info("User logged out via API", user_id=current_user.id)
+    
+    return SuccessResponse(
+        message="Logout realizado com sucesso"
+    )

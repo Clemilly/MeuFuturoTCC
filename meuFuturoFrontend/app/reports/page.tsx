@@ -1,5 +1,4 @@
-import { FinancialReports } from "@/components/financial-reports"
-import { AccessibilityMenu } from "@/components/accessibility-menu"
+import { FinancialReportsEnhanced } from "@/components/financial-reports-enhanced"
 import { MainNavigation } from "@/components/main-navigation"
 import { RouteGuard } from "@/components/route-guard"
 
@@ -7,7 +6,6 @@ export default function ReportsPage() {
   return (
     <RouteGuard requireAuth={true}>
       <div className="min-h-screen bg-background">
-        <AccessibilityMenu />
         <MainNavigation />
 
         <main id="main-content" className="container mx-auto px-4 py-8">
@@ -19,7 +17,7 @@ export default function ReportsPage() {
               </p>
             </header>
 
-            <FinancialReports />
+            <FinancialReportsEnhanced />
           </div>
         </main>
       </div>

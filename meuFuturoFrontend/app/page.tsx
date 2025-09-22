@@ -1,4 +1,3 @@
-import { AccessibilityMenu } from "@/components/accessibility-menu"
 import { MainNavigation } from "@/components/main-navigation"
 import { FinancialOverview } from "@/components/financial-overview"
 import { RouteGuard } from "@/components/route-guard"
@@ -7,8 +6,6 @@ export default function HomePage() {
   return (
     <RouteGuard requireAuth={true}>
       <div className="min-h-screen bg-background">
-        <AccessibilityMenu />
-
         <MainNavigation />
 
         <main id="main-content" className="container mx-auto px-4 py-8">

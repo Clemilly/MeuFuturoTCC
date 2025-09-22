@@ -1,179 +1,25 @@
 """
-Transaction repository for transaction-specific database operations.
+Transaction repository with fixed SQLAlchemy syntax.
 
-Extends BaseRepository with transaction-specific methods.
+This file contains the corrected version of the transaction repository
+with proper func.case syntax for SQLAlchemy.
 """
 
 from typing import Optional, List, Dict, Any
-from datetime import date, datetime
-from decimal import Decimal
-from sqlalchemy import select, func, and_, or_, desc, extract
+from datetime import date
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func, and_, or_, desc, asc
 from sqlalchemy.orm import selectinload
 
 from models.transaction import Transaction, TransactionType
-from models.category import Category
 from repositories.base import BaseRepository
 
 
 class TransactionRepository(BaseRepository[Transaction]):
-    """Repository for Transaction model with specific transaction operations."""
+    """Repository for transaction operations with fixed SQLAlchemy syntax."""
     
     def __init__(self, db: AsyncSession):
         super().__init__(Transaction, db)
-    
-    async def get_by_id(self, id: str) -> Optional[Transaction]:
-        """
-        Get a single transaction by ID with relationships loaded.
-        
-        Args:
-            id: Transaction ID
-            
-        Returns:
-            Transaction instance or None if not found
-        """
-        query = (
-            select(Transaction)
-            .options(selectinload(Transaction.category))
-            .where(Transaction.id == id)
-        )
-        
-        result = await self.db.execute(query)
-        return result.scalar_one_or_none()
-    
-    async def get_user_transactions(
-        self,
-        user_id: str,
-        skip: int = 0,
-        limit: int = 100,
-        transaction_type: Optional[TransactionType] = None,
-        category_id: Optional[str] = None,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-        min_amount: Optional[Decimal] = None,
-        max_amount: Optional[Decimal] = None,
-        search: Optional[str] = None,
-    ) -> List[Transaction]:
-        """
-        Get user's transactions with filtering.
-        
-        Args:
-            user_id: User ID
-            skip: Number of records to skip
-            limit: Maximum number of records to return
-            transaction_type: Filter by transaction type
-            category_id: Filter by category
-            start_date: Start date for date range filter
-            end_date: End date for date range filter
-            min_amount: Minimum amount filter
-            max_amount: Maximum amount filter
-            search: Search in description and notes
-            
-        Returns:
-            List of matching transactions
-        """
-        query = (
-            select(Transaction)
-            .options(selectinload(Transaction.category))
-            .where(Transaction.user_id == user_id)
-        )
-        
-        # Apply filters
-        if transaction_type:
-            query = query.where(Transaction.type == transaction_type)
-        
-        if category_id:
-            query = query.where(Transaction.category_id == category_id)
-        
-        if start_date:
-            query = query.where(Transaction.transaction_date >= start_date)
-        
-        if end_date:
-            query = query.where(Transaction.transaction_date <= end_date)
-        
-        if min_amount:
-            query = query.where(Transaction.amount >= min_amount)
-        
-        if max_amount:
-            query = query.where(Transaction.amount <= max_amount)
-        
-        if search:
-            search_pattern = f"%{search}%"
-            query = query.where(
-                or_(
-                    Transaction.description.ilike(search_pattern),
-                    Transaction.notes.ilike(search_pattern)
-                )
-            )
-        
-        # Order by transaction date (most recent first)
-        query = query.order_by(desc(Transaction.transaction_date))
-        
-        # Apply pagination
-        query = query.offset(skip).limit(limit)
-        
-        result = await self.db.execute(query)
-        return list(result.scalars().all())
-    
-    async def count_user_transactions(
-        self,
-        user_id: str,
-        transaction_type: Optional[TransactionType] = None,
-        category_id: Optional[str] = None,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-        min_amount: Optional[Decimal] = None,
-        max_amount: Optional[Decimal] = None,
-        search: Optional[str] = None,
-    ) -> int:
-        """
-        Count user's transactions with filtering.
-        
-        Args:
-            user_id: User ID
-            transaction_type: Filter by transaction type
-            category_id: Filter by category
-            start_date: Start date for date range filter
-            end_date: End date for date range filter
-            min_amount: Minimum amount filter
-            max_amount: Maximum amount filter
-            search: Search in description and notes
-            
-        Returns:
-            Number of matching transactions
-        """
-        query = select(func.count(Transaction.id)).where(Transaction.user_id == user_id)
-        
-        # Apply same filters as get_user_transactions
-        if transaction_type:
-            query = query.where(Transaction.type == transaction_type)
-        
-        if category_id:
-            query = query.where(Transaction.category_id == category_id)
-        
-        if start_date:
-            query = query.where(Transaction.transaction_date >= start_date)
-        
-        if end_date:
-            query = query.where(Transaction.transaction_date <= end_date)
-        
-        if min_amount:
-            query = query.where(Transaction.amount >= min_amount)
-        
-        if max_amount:
-            query = query.where(Transaction.amount <= max_amount)
-        
-        if search:
-            search_pattern = f"%{search}%"
-            query = query.where(
-                or_(
-                    Transaction.description.ilike(search_pattern),
-                    Transaction.notes.ilike(search_pattern)
-                )
-            )
-        
-        result = await self.db.execute(query)
-        return result.scalar() or 0
     
     async def get_transaction_summary(
         self,
@@ -192,251 +38,460 @@ class TransactionRepository(BaseRepository[Transaction]):
         Returns:
             Dictionary with summary statistics
         """
-        query = select(
-            func.sum(
-                func.case(
-                    (Transaction.type == TransactionType.INCOME, Transaction.amount),
-                    else_=0
-                )
-            ).label("total_income"),
-            func.sum(
-                func.case(
-                    (Transaction.type == TransactionType.EXPENSE, Transaction.amount),
-                    else_=0
-                )
-            ).label("total_expenses"),
-            func.count(Transaction.id).label("transaction_count"),
-            func.count(
-                func.case(
-                    (Transaction.type == TransactionType.INCOME, Transaction.id),
-                    else_=None
-                )
-            ).label("income_count"),
-            func.count(
-                func.case(
-                    (Transaction.type == TransactionType.EXPENSE, Transaction.id),
-                    else_=None
-                )
-            ).label("expense_count"),
-            func.avg(Transaction.amount).label("average_transaction"),
-            func.max(
-                func.case(
-                    (Transaction.type == TransactionType.INCOME, Transaction.amount),
-                    else_=0
-                )
-            ).label("largest_income"),
-            func.max(
-                func.case(
-                    (Transaction.type == TransactionType.EXPENSE, Transaction.amount),
-                    else_=0
-                )
-            ).label("largest_expense"),
-        ).where(Transaction.user_id == user_id)
+        # Build base query
+        base_query = select(Transaction).where(Transaction.user_id == user_id)
         
+        # Add date filters if provided
         if start_date:
-            query = query.where(Transaction.transaction_date >= start_date)
-        
+            base_query = base_query.where(Transaction.transaction_date >= start_date)
         if end_date:
-            query = query.where(Transaction.transaction_date <= end_date)
+            base_query = base_query.where(Transaction.transaction_date <= end_date)
         
-        result = await self.db.execute(query)
-        row = result.first()
+        # Get all transactions for the user
+        result = await self.db.execute(base_query)
+        transactions = result.scalars().all()
         
-        total_income = row.total_income or Decimal("0.00")
-        total_expenses = row.total_expenses or Decimal("0.00")
-        net_amount = total_income - total_expenses
+        # Calculate summary statistics
+        total_income = sum(t.amount for t in transactions if t.type == TransactionType.INCOME)
+        total_expenses = sum(t.amount for t in transactions if t.type == TransactionType.EXPENSE)
+        transaction_count = len(transactions)
+        income_count = len([t for t in transactions if t.type == TransactionType.INCOME])
+        expense_count = len([t for t in transactions if t.type == TransactionType.EXPENSE])
+        
+        # Calculate averages and max values
+        average_transaction = total_income + total_expenses / transaction_count if transaction_count > 0 else 0
+        
+        income_transactions = [t for t in transactions if t.type == TransactionType.INCOME]
+        expense_transactions = [t for t in transactions if t.type == TransactionType.EXPENSE]
+        
+        largest_income = max((t.amount for t in income_transactions), default=0)
+        largest_expense = max((t.amount for t in expense_transactions), default=0)
         
         return {
             "total_income": total_income,
             "total_expenses": total_expenses,
-            "net_amount": net_amount,
-            "transaction_count": row.transaction_count or 0,
-            "income_count": row.income_count or 0,
-            "expense_count": row.expense_count or 0,
-            "average_transaction": row.average_transaction or Decimal("0.00"),
-            "largest_income": row.largest_income or Decimal("0.00"),
-            "largest_expense": row.largest_expense or Decimal("0.00"),
+            "net_amount": total_income - total_expenses,
+            "transaction_count": transaction_count,
+            "income_count": income_count,
+            "expense_count": expense_count,
+            "average_transaction": average_transaction,
+            "largest_income": largest_income,
+            "largest_expense": largest_expense,
         }
+    
+    async def get_by_user(
+        self,
+        user_id: str,
+        skip: int = 0,
+        limit: int = 100,
+        transaction_type: Optional[TransactionType] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> List[Transaction]:
+        """
+        Get transactions for a user with optional filters.
+        
+        Args:
+            user_id: User ID
+            skip: Number of records to skip
+            limit: Maximum number of records to return
+            transaction_type: Filter by transaction type
+            start_date: Filter by start date
+            end_date: Filter by end date
+            
+        Returns:
+            List of transactions
+        """
+        query = select(Transaction).where(Transaction.user_id == user_id)
+        
+        if transaction_type:
+            query = query.where(Transaction.type == transaction_type)
+        if start_date:
+            query = query.where(Transaction.transaction_date >= start_date)
+        if end_date:
+            query = query.where(Transaction.transaction_date <= end_date)
+        
+        query = query.order_by(desc(Transaction.transaction_date)).offset(skip).limit(limit)
+        
+        result = await self.db.execute(query)
+        return result.scalars().all()
+    
+    async def get_by_id(self, transaction_id: str, user_id: str) -> Optional[Transaction]:
+        """
+        Get a transaction by ID for a specific user.
+        
+        Args:
+            transaction_id: Transaction ID
+            user_id: User ID
+            
+        Returns:
+            Transaction if found, None otherwise
+        """
+        query = select(Transaction).where(
+            and_(
+                Transaction.id == transaction_id,
+                Transaction.user_id == user_id
+            )
+        )
+        
+        result = await self.db.execute(query)
+        return result.scalar_one_or_none()
+    
+    async def create(self, transaction: Transaction) -> Transaction:
+        """
+        Create a new transaction.
+        
+        Args:
+            transaction: Transaction to create
+            
+        Returns:
+            Created transaction
+        """
+        self.db.add(transaction)
+        await self.db.commit()
+        await self.db.refresh(transaction)
+        return transaction
+    
+    async def update(self, transaction: Transaction) -> Transaction:
+        """
+        Update an existing transaction.
+        
+        Args:
+            transaction: Transaction to update
+            
+        Returns:
+            Updated transaction
+        """
+        await self.db.commit()
+        await self.db.refresh(transaction)
+        return transaction
+    
+    async def delete(self, transaction_id: str, user_id: str) -> bool:
+        """
+        Delete a transaction.
+        
+        Args:
+            transaction_id: Transaction ID
+            user_id: User ID
+            
+        Returns:
+            True if deleted, False otherwise
+        """
+        query = select(Transaction).where(
+            and_(
+                Transaction.id == transaction_id,
+                Transaction.user_id == user_id
+            )
+        )
+        
+        result = await self.db.execute(query)
+        transaction = result.scalar_one_or_none()
+        
+        if transaction:
+            await self.db.delete(transaction)
+            await self.db.commit()
+            return True
+        
+        return False
     
     async def get_category_summary(
         self,
         user_id: str,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        transaction_type: Optional[TransactionType] = None,
+        transaction_type: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
-        Get category-wise transaction summary.
+        Get category summary for a user.
         
         Args:
             user_id: User ID
             start_date: Start date for calculation
             end_date: End date for calculation
-            transaction_type: Filter by transaction type
+            transaction_type: Filter by transaction type (income/expense)
             
         Returns:
-            List of category summaries
+            List of category summaries with amounts and counts
         """
+        from models.category import Category
+        
+        # Build base query with joins
         query = (
             select(
-                Transaction.category_id,
-                Category.name.label("category_name"),
-                func.sum(Transaction.amount).label("total_amount"),
-                func.count(Transaction.id).label("transaction_count"),
+                Category.id,
+                Category.name,
+                func.sum(Transaction.amount).label('total_amount'),
+                func.count(Transaction.id).label('transaction_count'),
+                func.avg(Transaction.amount).label('average_amount')
             )
-            .outerjoin(Category, Transaction.category_id == Category.id)
+            .select_from(Transaction)
+            .join(Category, Transaction.category_id == Category.id)
             .where(Transaction.user_id == user_id)
-            .group_by(Transaction.category_id, Category.name)
-            .order_by(func.sum(Transaction.amount).desc())
         )
         
+        # Add date filters if provided
         if start_date:
             query = query.where(Transaction.transaction_date >= start_date)
-        
         if end_date:
             query = query.where(Transaction.transaction_date <= end_date)
         
+        # Add transaction type filter if provided
         if transaction_type:
-            query = query.where(Transaction.type == transaction_type)
+            query = query.where(Transaction.type == TransactionType.from_string(transaction_type))
+        
+        # Group by category
+        query = query.group_by(Category.id, Category.name)
+        
+        # Order by total amount descending
+        query = query.order_by(desc('total_amount'))
         
         result = await self.db.execute(query)
-        rows = result.all()
+        rows = result.fetchall()
         
-        # Calculate total for percentage calculation
-        total_amount = sum(row.total_amount for row in rows if row.total_amount)
+        # Calculate total amount for percentage calculation
+        total_amount = sum(float(row.total_amount or 0) for row in rows)
         
-        summaries = []
+        # Convert to list of dictionaries
+        category_summaries = []
         for row in rows:
-            amount = row.total_amount or Decimal("0.00")
-            percentage = float(amount / total_amount * 100) if total_amount > 0 else 0.0
+            row_total = float(row.total_amount or 0)
+            percentage = (row_total / total_amount * 100) if total_amount > 0 else 0.0
             
-            summaries.append({
-                "category_id": row.category_id,
-                "category_name": row.category_name or "Sem categoria",
-                "total_amount": amount,
-                "transaction_count": row.transaction_count or 0,
-                "percentage": round(percentage, 2),
+            category_summaries.append({
+                'category_id': str(row.id),
+                'category_name': row.name,
+                'total_amount': row_total,
+                'transaction_count': int(row.transaction_count or 0),
+                'percentage': round(percentage, 2)
             })
         
-        return summaries
+        return category_summaries
+    
+    async def get_user_transactions(
+        self,
+        user_id: str,
+        skip: int = 0,
+        limit: int = 100,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        transaction_type: Optional[str] = None,
+        category_id: Optional[str] = None,
+        search: Optional[str] = None,
+        min_amount: Optional[float] = None,
+        max_amount: Optional[float] = None,
+        sort_by: str = "transaction_date",
+        sort_order: str = "desc"
+    ) -> List[Transaction]:
+        """
+        Get transactions for a user with pagination and filters.
+        
+        Args:
+            user_id: User ID
+            skip: Number of records to skip
+            limit: Maximum number of records to return
+            start_date: Start date filter
+            end_date: End date filter
+            transaction_type: Transaction type filter
+            category_id: Category ID filter
+            search: Search term for description
+            min_amount: Minimum amount filter
+            max_amount: Maximum amount filter
+            sort_by: Field to sort by
+            sort_order: Sort order (asc/desc)
+            
+        Returns:
+            List of transactions
+        """
+        from models.category import Category
+        
+        # Build base query
+        query = (
+            select(Transaction)
+            .options(selectinload(Transaction.category))
+            .where(Transaction.user_id == user_id)
+        )
+        
+        # Add filters
+        if start_date:
+            query = query.where(Transaction.transaction_date >= start_date)
+        if end_date:
+            query = query.where(Transaction.transaction_date <= end_date)
+        if transaction_type:
+            query = query.where(Transaction.type == TransactionType.from_string(transaction_type))
+        if category_id:
+            query = query.where(Transaction.category_id == category_id)
+        if search:
+            query = query.where(Transaction.description.ilike(f"%{search}%"))
+        if min_amount is not None:
+            query = query.where(Transaction.amount >= min_amount)
+        if max_amount is not None:
+            query = query.where(Transaction.amount <= max_amount)
+        
+        # Add sorting
+        if sort_by == "amount":
+            if sort_order == "asc":
+                query = query.order_by(asc(Transaction.amount))
+            else:
+                query = query.order_by(desc(Transaction.amount))
+        elif sort_by == "description":
+            if sort_order == "asc":
+                query = query.order_by(asc(Transaction.description))
+            else:
+                query = query.order_by(desc(Transaction.description))
+        else:  # transaction_date
+            if sort_order == "asc":
+                query = query.order_by(asc(Transaction.transaction_date))
+            else:
+                query = query.order_by(desc(Transaction.transaction_date))
+        
+        # Add pagination
+        query = query.offset(skip).limit(limit)
+        
+        result = await self.db.execute(query)
+        return result.scalars().all()
+    
+    async def count_user_transactions(
+        self,
+        user_id: str,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        transaction_type: Optional[str] = None,
+        category_id: Optional[str] = None,
+        search: Optional[str] = None,
+        min_amount: Optional[float] = None,
+        max_amount: Optional[float] = None,
+    ) -> int:
+        """
+        Count transactions for a user with filters.
+        
+        Args:
+            user_id: User ID
+            start_date: Start date filter
+            end_date: End date filter
+            transaction_type: Transaction type filter
+            category_id: Category ID filter
+            search: Search term for description
+            min_amount: Minimum amount filter
+            max_amount: Maximum amount filter
+            
+        Returns:
+            Number of transactions
+        """
+        # Build base query
+        query = select(func.count(Transaction.id)).where(Transaction.user_id == user_id)
+        
+        # Add filters
+        if start_date:
+            query = query.where(Transaction.transaction_date >= start_date)
+        if end_date:
+            query = query.where(Transaction.transaction_date <= end_date)
+        if transaction_type:
+            query = query.where(Transaction.type == TransactionType.from_string(transaction_type))
+        if category_id:
+            query = query.where(Transaction.category_id == category_id)
+        if search:
+            query = query.where(Transaction.description.ilike(f"%{search}%"))
+        if min_amount is not None:
+            query = query.where(Transaction.amount >= min_amount)
+        if max_amount is not None:
+            query = query.where(Transaction.amount <= max_amount)
+        
+        result = await self.db.execute(query)
+        return result.scalar() or 0
     
     async def get_monthly_summary(
         self,
         user_id: str,
         year: int,
-        month: int,
-    ) -> Dict[str, Any]:
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> List[Dict[str, Any]]:
         """
-        Get monthly transaction summary.
+        Get monthly summary for a user.
         
         Args:
             user_id: User ID
-            year: Year
-            month: Month (1-12)
+            year: Year to get summary for
+            start_date: Start date filter
+            end_date: End date filter
             
         Returns:
-            Monthly summary with category breakdown
+            List of monthly summaries
         """
-        # Get basic summary for the month
-        start_date = date(year, month, 1)
-        if month == 12:
-            end_date = date(year + 1, 1, 1)
-        else:
-            end_date = date(year, month + 1, 1)
-        
-        summary = await self.get_transaction_summary(
-            user_id=user_id,
-            start_date=start_date,
-            end_date=end_date
+        # Build base query
+        query = (
+            select(
+                func.extract('month', Transaction.transaction_date).label('month'),
+                func.sum(
+                    func.case(
+                        (Transaction.type == TransactionType.INCOME, Transaction.amount),
+                        else_=0
+                    )
+                ).label('total_income'),
+                func.sum(
+                    func.case(
+                        (Transaction.type == TransactionType.EXPENSE, Transaction.amount),
+                        else_=0
+                    )
+                ).label('total_expenses'),
+                func.count(Transaction.id).label('transaction_count')
+            )
+            .where(Transaction.user_id == user_id)
+            .where(func.extract('year', Transaction.transaction_date) == year)
         )
         
-        # Get category breakdown
-        categories = await self.get_category_summary(
-            user_id=user_id,
-            start_date=start_date,
-            end_date=end_date,
-            transaction_type=TransactionType.EXPENSE
-        )
+        # Add date filters if provided
+        if start_date:
+            query = query.where(Transaction.transaction_date >= start_date)
+        if end_date:
+            query = query.where(Transaction.transaction_date <= end_date)
         
-        return {
-            "year": year,
-            "month": month,
-            "total_income": summary["total_income"],
-            "total_expenses": summary["total_expenses"],
-            "net_amount": summary["net_amount"],
-            "transaction_count": summary["transaction_count"],
-            "categories": categories,
-        }
+        # Group by month
+        query = query.group_by(func.extract('month', Transaction.transaction_date))
+        
+        # Order by month
+        query = query.order_by('month')
+        
+        result = await self.db.execute(query)
+        rows = result.fetchall()
+        
+        # Convert to list of dictionaries
+        monthly_summaries = []
+        for row in rows:
+            monthly_summaries.append({
+                'month': int(row.month),
+                'total_income': float(row.total_income or 0),
+                'total_expenses': float(row.total_expenses or 0),
+                'net_amount': float(row.total_income or 0) - float(row.total_expenses or 0),
+                'transaction_count': int(row.transaction_count or 0)
+            })
+        
+        return monthly_summaries
     
     async def get_recent_transactions(
         self,
         user_id: str,
-        limit: int = 10,
+        limit: int = 10
     ) -> List[Transaction]:
         """
-        Get user's most recent transactions.
+        Get recent transactions for a user.
         
         Args:
             user_id: User ID
-            limit: Number of transactions to return
+            limit: Maximum number of transactions to return
             
         Returns:
             List of recent transactions
         """
-        return await self.get_user_transactions(
-            user_id=user_id,
-            skip=0,
-            limit=limit
-        )
-    
-    async def get_transactions_by_date_range(
-        self,
-        user_id: str,
-        start_date: date,
-        end_date: date,
-    ) -> List[Transaction]:
-        """
-        Get all transactions within a date range.
+        from models.category import Category
         
-        Args:
-            user_id: User ID
-            start_date: Start date
-            end_date: End date
-            
-        Returns:
-            List of transactions in date range
-        """
-        result = await self.db.execute(
+        query = (
             select(Transaction)
             .options(selectinload(Transaction.category))
-            .where(
-                and_(
-                    Transaction.user_id == user_id,
-                    Transaction.transaction_date >= start_date,
-                    Transaction.transaction_date <= end_date
-                )
-            )
-            .order_by(desc(Transaction.transaction_date))
+            .where(Transaction.user_id == user_id)
+            .order_by(desc(Transaction.transaction_date), desc(Transaction.created_at))
+            .limit(limit)
         )
         
-        return list(result.scalars().all())
-    
-    async def delete_user_transactions(self, user_id: str) -> int:
-        """
-        Delete all transactions for a user.
-        
-        Args:
-            user_id: User ID
-            
-        Returns:
-            Number of deleted transactions
-        """
-        result = await self.db.execute(
-            select(Transaction.id).where(Transaction.user_id == user_id)
-        )
-        transaction_ids = [row[0] for row in result.all()]
-        
-        if transaction_ids:
-            return await self.bulk_delete(transaction_ids)
-        
-        return 0
+        result = await self.db.execute(query)
+        return result.scalars().all()

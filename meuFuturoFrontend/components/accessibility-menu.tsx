@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
-import { Settings, Type, Contrast, Eye, Keyboard, Zap, RotateCcw, Info } from "lucide-react"
+import { Settings, Type, Contrast, Eye, Keyboard, Zap, RotateCcw, Info, X } from "lucide-react"
 
 interface AccessibilitySettings {
   fontSize: number
@@ -17,8 +17,12 @@ interface AccessibilitySettings {
   soundFeedback: boolean
 }
 
-export function AccessibilityMenu() {
-  const [isOpen, setIsOpen] = useState(false)
+interface AccessibilityMenuProps {
+  isOpen?: boolean
+  onClose?: () => void
+}
+
+export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuProps) {
   const [settings, setSettings] = useState<AccessibilitySettings>({
     fontSize: 16,
     contrast: "normal",
@@ -151,47 +155,38 @@ export function AccessibilityMenu() {
     setTimeout(() => document.body.removeChild(announcement), 1000)
   }
 
+  if (!isOpen) return null
+
   return (
-    <div className="bg-primary text-primary-foreground">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between py-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setIsOpen(!isOpen)
-              announceToScreenReader(isOpen ? "Menu de acessibilidade fechado" : "Menu de acessibilidade aberto")
-            }}
-            className="text-primary-foreground hover:bg-primary-foreground/10"
-            aria-expanded={isOpen}
-            aria-controls="accessibility-panel"
-            aria-label="Abrir menu de configurações de acessibilidade"
-          >
-            <Settings className="w-4 h-4 mr-2" />
-            Menu de Acessibilidade
-          </Button>
-
-          <div className="flex items-center space-x-2">
-          </div>
-        </div>
-
-        {isOpen && (
+    <div className="p-4">
           <Card id="accessibility-panel" className="mb-4">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>Configurações de Acessibilidade</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    resetSettings()
-                    announceToScreenReader("Configurações de acessibilidade restauradas para o padrão")
-                  }}
-                  aria-label="Restaurar configurações padrão"
-                >
-                  <RotateCcw className="w-4 h-4 mr-2" />
-                  Restaurar Padrão
-                </Button>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      resetSettings()
+                      announceToScreenReader("Configurações de acessibilidade restauradas para o padrão")
+                    }}
+                    aria-label="Restaurar configurações padrão"
+                  >
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Restaurar Padrão
+                  </Button>
+                  {onClose && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onClose}
+                      aria-label="Fechar menu de acessibilidade"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -390,8 +385,6 @@ export function AccessibilityMenu() {
               </div>
             </CardContent>
           </Card>
-        )}
-      </div>
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { GeistMono } from "geist/font/mono"
 import "./globals.css"
 import { AuthProvider } from "@/contexts/auth-context"
 import { GlobalDataProvider } from "@/contexts/transaction-context"
+import { AuthErrorInterceptor } from "@/components/auth-error-interceptor"
 
 export const metadata: Metadata = {
   title: "MeuFuturo - Gestão Financeira Acessível",
@@ -37,7 +38,9 @@ html {
         </a>
         <AuthProvider>
           <GlobalDataProvider>
-            {children}
+            <AuthErrorInterceptor>
+              {children}
+            </AuthErrorInterceptor>
           </GlobalDataProvider>
         </AuthProvider>
       </body>

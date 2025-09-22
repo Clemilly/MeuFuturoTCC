@@ -26,13 +26,20 @@ export function RouteGuard({ children, requireAuth = true }: RouteGuardProps) {
   useEffect(() => {
     if (!isMounted.current) return
 
-    if (requireAuth && !isAuthenticated) {
-      setIsRedirecting(true)
-      router.push("/login")
-    } else if (!requireAuth && isAuthenticated) {
-      setIsRedirecting(true)
-      router.push("/")
-    }
+    // Add a small delay to prevent race conditions
+    const timeoutId = setTimeout(() => {
+      if (!isMounted.current) return
+
+      if (requireAuth && !isAuthenticated) {
+        setIsRedirecting(true)
+        router.push("/login")
+      } else if (!requireAuth && isAuthenticated) {
+        setIsRedirecting(true)
+        router.push("/")
+      }
+    }, 100)
+
+    return () => clearTimeout(timeoutId)
   }, [isAuthenticated, requireAuth, router])
 
   if (requireAuth && !isAuthenticated) {

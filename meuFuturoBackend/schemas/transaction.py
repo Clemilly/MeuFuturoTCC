@@ -62,12 +62,24 @@ class TransactionUpdate(BaseModel):
     )
 
 
+class CategoryInfo(BaseModel):
+    """Schema for category information in transaction response."""
+    
+    id: str = Field(..., description="Category ID")
+    name: str = Field(..., description="Category name")
+    color: Optional[str] = Field(None, description="Category color")
+    type: Optional[str] = Field(None, description="Category type")
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
 class TransactionResponse(TransactionBase):
     """Schema for transaction response."""
     
     id: str = Field(..., description="Unique transaction identifier")
     user_id: str = Field(..., description="Owner of the transaction")
-    category_name: Optional[str] = Field(None, description="Category name")
+    category: Optional[CategoryInfo] = Field(None, description="Category information")
+    category_name: Optional[str] = Field(None, description="Category name (deprecated, use category.name)")
     signed_amount: Decimal = Field(..., description="Signed amount (negative for expenses)")
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
@@ -84,6 +96,12 @@ class TransactionResponse(TransactionBase):
                 "transaction_date": "2025-01-24",
                 "notes": "Compras da semana",
                 "category_id": "456e7890-e89b-12d3-a456-426614174000",
+                "category": {
+                    "id": "456e7890-e89b-12d3-a456-426614174000",
+                    "name": "Alimentação",
+                    "color": "#ef4444",
+                    "type": "expense"
+                },
                 "category_name": "Alimentação",
                 "user_id": "789e0123-e89b-12d3-a456-426614174000",
                 "created_at": "2025-01-24T10:00:00Z",
@@ -144,6 +162,82 @@ class TransactionSummary(BaseModel):
                 "average_transaction": 182.22,
                 "largest_income": 4000.00,
                 "largest_expense": 800.00
+            }
+        }
+    )
+
+
+class TransactionStats(BaseModel):
+    """Schema for transaction statistics (frontend format)."""
+    
+    total_income: float = Field(..., description="Total income amount")
+    total_expenses: float = Field(..., description="Total expenses amount")
+    net_amount: float = Field(..., description="Net amount (income - expenses)")
+    transaction_count: int = Field(..., ge=0, description="Total number of transactions")
+    average_transaction: float = Field(..., description="Average transaction amount")
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "total_income": 5000.00,
+                "total_expenses": 3200.00,
+                "net_amount": 1800.00,
+                "transaction_count": 45,
+                "average_transaction": 182.22
+            }
+        }
+    )
+
+
+class PaginationInfo(BaseModel):
+    """Schema for pagination information."""
+    
+    current_page: int = Field(..., ge=1, description="Current page number")
+    page_size: int = Field(..., ge=1, le=100, description="Number of items per page")
+    total_items: int = Field(..., ge=0, description="Total number of items")
+    total_pages: int = Field(..., ge=0, description="Total number of pages")
+    has_next: bool = Field(..., description="Whether there is a next page")
+    has_previous: bool = Field(..., description="Whether there is a previous page")
+    next_page: Optional[int] = Field(None, description="Next page number")
+    previous_page: Optional[int] = Field(None, description="Previous page number")
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "current_page": 1,
+                "page_size": 20,
+                "total_items": 100,
+                "total_pages": 5,
+                "has_next": True,
+                "has_previous": False,
+                "next_page": 2,
+                "previous_page": None
+            }
+        }
+    )
+
+
+class PaginatedTransactionResponse(BaseModel):
+    """Schema for paginated transaction response."""
+    
+    items: List[TransactionResponse] = Field(..., description="List of transactions")
+    total: int = Field(..., ge=0, description="Total number of transactions")
+    page: int = Field(..., ge=1, description="Current page number")
+    size: int = Field(..., ge=1, le=100, description="Number of items per page")
+    pages: int = Field(..., ge=0, description="Total number of pages")
+    has_next: bool = Field(..., description="Whether there is a next page")
+    has_previous: bool = Field(..., description="Whether there is a previous page")
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "items": [],
+                "total": 100,
+                "page": 1,
+                "size": 20,
+                "pages": 5,
+                "has_next": True,
+                "has_previous": False
             }
         }
     )

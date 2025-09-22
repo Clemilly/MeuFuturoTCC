@@ -3,13 +3,15 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Home, PlusCircle, BarChart3, Brain, Bell, Menu, X, Shield, LogOut, User, Info } from "lucide-react"
+import { Home, PlusCircle, BarChart3, Brain, Bell, Menu, X, Shield, LogOut, User, Info, Settings } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
+import { AccessibilityMenu } from "@/components/accessibility-menu"
 
 export function MainNavigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isAccessibilityMenuOpen, setIsAccessibilityMenuOpen] = useState(false)
   const pathname = usePathname()
   const { user, logout } = useAuth()
 
@@ -68,6 +70,21 @@ export function MainNavigation() {
             })}
 
             <div className="flex items-center space-x-2 ml-2 pl-2 border-l border-border flex-shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsAccessibilityMenuOpen(!isAccessibilityMenuOpen)}
+                className="group flex items-center space-x-1 whitespace-nowrap transition-all duration-300 ease-in-out hover:bg-accent/50 hover:scale-105 px-2"
+                aria-label="Menu de acessibilidade"
+                aria-expanded={isAccessibilityMenuOpen}
+                aria-controls="accessibility-menu"
+              >
+                <Settings className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />
+                <span className="text-xs sm:text-sm transition-all duration-300 group-hover:text-foreground hidden xl:inline">
+                  Acessibilidade
+                </span>
+              </Button>
+              
               <Button
                 variant="ghost"
                 size="sm"
@@ -138,7 +155,21 @@ export function MainNavigation() {
                 )
               })}
 
-              <div className="pt-2 border-t border-border">
+              <div className="pt-2 border-t border-border space-y-2">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start flex items-center space-x-2"
+                  onClick={() => {
+                    setIsAccessibilityMenuOpen(!isAccessibilityMenuOpen)
+                    setIsMobileMenuOpen(false)
+                  }}
+                  aria-expanded={isAccessibilityMenuOpen}
+                  aria-controls="accessibility-menu"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>Configurações de Acessibilidade</span>
+                </Button>
+                
                 <Button
                   variant="ghost"
                   className="w-full justify-start flex items-center space-x-2 text-destructive hover:text-destructive"
@@ -152,6 +183,16 @@ export function MainNavigation() {
           </div>
         )}
       </div>
+      
+      {/* Menu de Acessibilidade */}
+      {isAccessibilityMenuOpen && (
+        <div id="accessibility-menu" className="border-t border-border bg-card">
+          <AccessibilityMenu 
+            isOpen={isAccessibilityMenuOpen} 
+            onClose={() => setIsAccessibilityMenuOpen(false)} 
+          />
+        </div>
+      )}
     </nav>
   )
 }

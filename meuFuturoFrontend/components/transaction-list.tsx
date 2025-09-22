@@ -171,13 +171,31 @@ export function TransactionList() {
         
         if (data.items) {
           // Original endpoint format
-          const transactions = data.items || []
+          const rawTransactions = data.items || []
           const total = data.total || 0
           const page = data.page || 1
           const size = data.size || 10
           const pages = data.pages || 0
           const has_next = data.has_next || false
           const has_previous = data.has_previous || false
+          
+          // Convert string amounts to numbers and ensure proper data structure
+          const transactions: Transaction[] = rawTransactions.map((item: any) => ({
+            id: item.id,
+            type: item.type,
+            amount: typeof item.amount === 'string' ? parseFloat(item.amount) : (item.amount || 0),
+            description: item.description,
+            transaction_date: item.transaction_date,
+            notes: item.notes || undefined,
+            category: item.category ? {
+              id: item.category.id,
+              name: item.category.name,
+              color: item.category.color,
+              type: item.category.type || undefined
+            } : undefined,
+            created_at: item.created_at,
+            updated_at: item.updated_at
+          }))
           
           // Calculate totals from transactions
           const totalIncome = transactions
@@ -381,7 +399,7 @@ export function TransactionList() {
     return <TransactionListSkeleton />
   }
 
-  if (error) {
+  if (error && error.trim()) {
     return (
       <Card>
         <CardContent className="p-8 text-center">

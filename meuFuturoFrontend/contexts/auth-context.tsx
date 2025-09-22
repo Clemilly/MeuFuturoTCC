@@ -43,11 +43,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check for stored authentication only once
     if (!isInitialized) {
-      if (storedUser) {
+      // Only proceed if we have valid stored data
+      if (storedUser && storedUser !== null && storedUser.id) {
         setUser(storedUser)
         setIsAuthenticated(true)
+      } else {
+        // Clear any invalid stored data
+        setUser(null)
+        setIsAuthenticated(false)
       }
       setIsInitialized(true)
+    }
+  }, [storedUser, isInitialized])
+
+  // Add effect to sync state with localStorage changes
+  useEffect(() => {
+    if (isInitialized) {
+      if (storedUser && storedUser !== null && storedUser.id) {
+        setUser(storedUser)
+        setIsAuthenticated(true)
+      } else {
+        setUser(null)
+        setIsAuthenticated(false)
+      }
     }
   }, [storedUser, isInitialized])
 
@@ -134,13 +152,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await apiService.logout()
     } catch (error) {
       // Continue with logout even if API call fails
+      console.warn('Logout API call failed:', error)
     }
     
+    // Clear all state
     setUser(null)
     setIsAuthenticated(false)
     setPendingUser(null)
+    
+    // Clear localStorage
     removeStoredUser()
     removeStoredToken()
+    
+    // Clear any other auth-related data
+    if (typeof window !== 'undefined') {
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('meufuturo_')) {
+          localStorage.removeItem(key)
+        }
+      })
+    }
+    
+    // Reset initialization state to allow re-initialization
+    setIsInitialized(false)
   }
 
   const enableTwoFactor = async () => {

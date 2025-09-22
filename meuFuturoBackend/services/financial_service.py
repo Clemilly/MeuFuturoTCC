@@ -69,12 +69,28 @@ class FinancialService:
         
         # Validate category if provided
         if transaction_data.category_id:
+            logger.info(
+                "Validating category for transaction creation",
+                user_id=user_id,
+                category_id=transaction_data.category_id
+            )
             category = await self.category_repo.get_by_id(transaction_data.category_id)
             if not category:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Categoria não encontrada"
+                logger.warning(
+                    "Category not found for transaction creation",
+                    user_id=user_id,
+                    category_id=transaction_data.category_id
                 )
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Categoria não encontrada. Verifique se a categoria existe e está disponível."
+                )
+            logger.info(
+                "Category validation successful",
+                user_id=user_id,
+                category_id=transaction_data.category_id,
+                category_name=category.name
+            )
             
             # Check if user has access to this category
             if not category.is_system and category.user_id != user_id:
@@ -404,6 +420,138 @@ class FinancialService:
                 user_id, include_system
             )
     
+    async def get_category_by_id(
+        self,
+        user_id: str,
+        category_id: str,
+    ) -> Category:
+        """
+        Get a specific category by ID.
+        
+        Args:
+            user_id: User ID
+            category_id: Category ID
+            
+        Returns:
+            Category instance
+            
+        Raises:
+            HTTPException: If category not found or access denied
+        """
+        category = await self.category_repo.get_by_id(category_id)
+        
+        if not category:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Categoria não encontrada"
+            )
+        
+        # Check if user has access to this category
+        if not category.is_system and category.user_id != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Acesso negado à categoria"
+            )
+        
+        return category
+    
+    async def get_transaction_stats(
+        self,
+        user_id: str,
+        filters: Optional[TransactionFilter] = None,
+    ) -> Dict[str, Any]:
+        """
+        Get transaction statistics for a user.
+        
+        Args:
+            user_id: User ID
+            filters: Optional filters to apply
+            
+        Returns:
+            Dictionary with transaction statistics
+        """
+        # Prepare filter parameters
+        filter_params = {}
+        if filters:
+            if filters.type:
+                filter_params["transaction_type"] = filters.type
+            if filters.category_id:
+                filter_params["category_id"] = filters.category_id
+            if filters.start_date:
+                filter_params["start_date"] = filters.start_date
+            if filters.end_date:
+                filter_params["end_date"] = filters.end_date
+            if filters.min_amount:
+                filter_params["min_amount"] = filters.min_amount
+            if filters.max_amount:
+                filter_params["max_amount"] = filters.max_amount
+            if filters.search:
+                filter_params["search"] = filters.search
+        
+        # Get summary from repository
+        summary = await self.transaction_repo.get_transaction_summary(
+            user_id=user_id,
+            **filter_params
+        )
+        
+        # Convert to frontend format
+        return {
+            "total_income": float(summary["total_income"]),
+            "total_expenses": float(summary["total_expenses"]),
+            "net_amount": float(summary["net_amount"]),
+            "transaction_count": summary["transaction_count"],
+            "average_transaction": float(summary["average_transaction"]),
+        }
+    
+    async def get_paginated_transactions(
+        self,
+        user_id: str,
+        page: int = 1,
+        size: int = 20,
+        filters: Optional[TransactionFilter] = None,
+        sort_by: str = "transaction_date",
+        sort_order: str = "desc",
+    ) -> Dict[str, Any]:
+        """
+        Get paginated transactions for a user.
+        
+        Args:
+            user_id: User ID
+            page: Page number (1-based)
+            size: Number of items per page
+            filters: Optional filters to apply
+            sort_by: Field to sort by
+            sort_order: Sort order (asc/desc)
+            
+        Returns:
+            Dictionary with paginated transactions and metadata
+        """
+        # Calculate skip
+        skip = (page - 1) * size
+        
+        # Get transactions and count
+        transactions, total_count = await self.get_user_transactions(
+            user_id=user_id,
+            filters=filters,
+            skip=skip,
+            limit=size
+        )
+        
+        # Calculate pagination info
+        total_pages = (total_count + size - 1) // size
+        has_next = page < total_pages
+        has_previous = page > 1
+        
+        return {
+            "items": transactions,
+            "total": total_count,
+            "page": page,
+            "size": size,
+            "pages": total_pages,
+            "has_next": has_next,
+            "has_previous": has_previous,
+        }
+    
     async def update_category(
         self,
         user_id: str,
@@ -637,9 +785,224 @@ class FinancialService:
         # Get overall summary
         overall_summary = await self.get_transaction_summary(user_id=user_id)
         
+        # Get previous month for comparison
+        from datetime import timedelta
+        prev_month = today.replace(day=1) - timedelta(days=1)
+        previous_month = await self.get_monthly_summary(
+            user_id=user_id,
+            year=prev_month.year,
+            month=prev_month.month
+        )
+        
+        # Get financial goals
+        try:
+            from services.goal_service import GoalService
+            goal_service = GoalService(self.db)
+            goals = await goal_service.get_user_goals(user_id)
+        except Exception as e:
+            logger.warning(f"Error loading goals: {e}")
+            goals = []
+        
+        # Get financial alerts
+        try:
+            from services.alert_service import AlertService
+            alert_service = AlertService(self.db)
+            alerts = await alert_service.get_user_alerts(user_id)
+        except Exception as e:
+            logger.warning(f"Error loading alerts: {e}")
+            alerts = []
+        
+        # Get AI insights
+        try:
+            from services.ai_service import AIService
+            ai_service = AIService(self.db)
+            insights = await ai_service.get_financial_insights(user_id)
+        except Exception as e:
+            logger.warning(f"Error loading AI insights: {e}")
+            insights = {
+                "health_score": 0,
+                "health_label": "Indisponível",
+                "risk_level": "low",
+                "monthly_trend": "stable",
+                "recommendations": []
+            }
+        
+        # Calculate health score
+        health_score = self._calculate_health_score(
+            current_month, previous_month, goals, overall_summary
+        )
+        
+        # Calculate trends
+        trends = self._calculate_trends(current_month, previous_month)
+        
         return {
-            "current_month": current_month,
-            "recent_transactions": recent_transactions,
-            "overall_summary": overall_summary,
-            "current_balance": overall_summary.net_amount,
+            "current_balance": float(overall_summary.net_amount),
+            "monthly_income": float(current_month.total_income),
+            "monthly_expenses": float(current_month.total_expenses),
+            "savings": float(current_month.net_amount),
+            "health_score": health_score["score"],
+            "health_label": health_score["label"],
+            "recent_transactions": [
+                {
+                    "id": t.id,
+                    "description": t.description,
+                    "amount": float(t.amount),
+                    "type": t.type.value,
+                    "transaction_date": t.transaction_date.isoformat(),
+                    "category": {
+                        "name": t.category_name or "Sem categoria"
+                    }
+                }
+                for t in recent_transactions
+            ],
+            "financial_goals": [
+                {
+                    "id": g.id,
+                    "name": g.name,
+                    "description": g.description,
+                    "type": g.type.value,
+                    "target_amount": float(g.target_amount),
+                    "current_amount": float(g.current_amount),
+                    "progress_percentage": g.progress_percentage,
+                    "days_remaining": g.days_remaining,
+                    "is_completed": g.is_completed,
+                    "status": g.status.value
+                }
+                for g in goals
+            ],
+            "alerts": [
+                {
+                    "id": a.id,
+                    "type": a.type.value,
+                    "title": a.title,
+                    "description": a.description,
+                    "amount": float(a.amount) if a.amount else None,
+                    "due_date": a.due_date.isoformat() if a.due_date else None,
+                    "priority": a.priority.value,
+                    "status": a.status.value,
+                    "days_until_due": a.days_until_due,
+                    "is_overdue": a.is_overdue
+                }
+                for a in alerts
+            ],
+            "insights": {
+                "health_score": insights.health_score,
+                "health_label": insights.health_label,
+                "risk_level": insights.risk_level,
+                "monthly_trend": insights.monthly_trend,
+                "recommendations": insights.recommendations
+            },
+            "trends": trends
         }
+    
+    def _calculate_health_score(
+        self, 
+        current_month, 
+        previous_month, 
+        goals, 
+        overall_summary
+    ) -> Dict[str, Any]:
+        """Calculate financial health score."""
+        score = 0
+        factors = []
+        
+        # Income vs Expenses ratio (40 points)
+        if current_month.total_income > 0:
+            ratio = float(current_month.total_expenses) / float(current_month.total_income)
+            if ratio <= 0.5:
+                score += 40
+                factors.append("Excelente controle de gastos")
+            elif ratio <= 0.7:
+                score += 30
+                factors.append("Bom controle de gastos")
+            elif ratio <= 0.9:
+                score += 20
+                factors.append("Controle de gastos moderado")
+            else:
+                score += 10
+                factors.append("Atenção aos gastos")
+        
+        # Savings rate (30 points)
+        if current_month.total_income > 0:
+            savings_rate = float(current_month.net_amount) / float(current_month.total_income)
+            if savings_rate >= 0.2:
+                score += 30
+                factors.append("Excelente taxa de poupança")
+            elif savings_rate >= 0.1:
+                score += 20
+                factors.append("Boa taxa de poupança")
+            elif savings_rate > 0:
+                score += 10
+                factors.append("Taxa de poupança baixa")
+        
+        # Goals progress (20 points)
+        if goals:
+            completed_goals = sum(1 for g in goals if g.is_completed)
+            total_goals = len(goals)
+            goal_progress = completed_goals / total_goals
+            score += int(20 * goal_progress)
+            if goal_progress > 0.5:
+                factors.append("Metas sendo cumpridas")
+        
+        # Transaction consistency (10 points)
+        if current_month.transaction_count > 0:
+            score += 10
+            factors.append("Transações regulares")
+        
+        # Determine label
+        if score >= 80:
+            label = "Excelente"
+        elif score >= 60:
+            label = "Bom"
+        elif score >= 40:
+            label = "Regular"
+        else:
+            label = "Atenção"
+        
+        return {
+            "score": min(score, 100),
+            "label": label,
+            "factors": factors
+        }
+    
+    def _calculate_trends(self, current_month, previous_month) -> Dict[str, str]:
+        """Calculate financial trends."""
+        trends = {}
+        
+        # Income trend
+        if previous_month.total_income > 0:
+            income_change = (float(current_month.total_income) - float(previous_month.total_income)) / float(previous_month.total_income)
+            if income_change > 0.05:
+                trends["income_trend"] = "up"
+            elif income_change < -0.05:
+                trends["income_trend"] = "down"
+            else:
+                trends["income_trend"] = "stable"
+        else:
+            trends["income_trend"] = "stable"
+        
+        # Expense trend
+        if previous_month.total_expenses > 0:
+            expense_change = (float(current_month.total_expenses) - float(previous_month.total_expenses)) / float(previous_month.total_expenses)
+            if expense_change > 0.05:
+                trends["expense_trend"] = "up"
+            elif expense_change < -0.05:
+                trends["expense_trend"] = "down"
+            else:
+                trends["expense_trend"] = "stable"
+        else:
+            trends["expense_trend"] = "stable"
+        
+        # Savings trend
+        if previous_month.net_amount != 0:
+            savings_change = (float(current_month.net_amount) - float(previous_month.net_amount)) / abs(float(previous_month.net_amount))
+            if savings_change > 0.05:
+                trends["savings_trend"] = "up"
+            elif savings_change < -0.05:
+                trends["savings_trend"] = "down"
+            else:
+                trends["savings_trend"] = "stable"
+        else:
+            trends["savings_trend"] = "stable"
+        
+        return trends

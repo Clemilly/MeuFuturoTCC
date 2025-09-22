@@ -1,5 +1,4 @@
 import { RouteGuard } from "@/components/route-guard"
-import { AccessibilityMenu } from "@/components/accessibility-menu"
 import { MainNavigation } from "@/components/main-navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -97,7 +96,6 @@ export default function AboutPage() {
   return (
     <RouteGuard requireAuth={true}>
       <div className="min-h-screen bg-background">
-        <AccessibilityMenu />
         <MainNavigation />
 
         <main id="main-content" className="container mx-auto px-4 py-8 max-w-6xl">

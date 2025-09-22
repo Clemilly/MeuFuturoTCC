@@ -16,6 +16,7 @@ class CategoryBase(BaseModel):
     description: Optional[str] = Field(None, max_length=1000, description="Category description")
     color: Optional[str] = Field(None, pattern=r"^#[0-9A-Fa-f]{6}$", description="Hex color code")
     icon: Optional[str] = Field(None, max_length=50, description="Icon identifier")
+    type: Optional[str] = Field(None, description="Category type (income/expense)")
 
 
 class CategoryCreate(CategoryBase):

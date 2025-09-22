@@ -14,7 +14,6 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Shield, ShieldCheck, ShieldX, Smartphone, Key, Copy, CheckCircle } from "lucide-react"
 import { MainNavigation } from "@/components/main-navigation"
-import { AccessibilityMenu } from "@/components/accessibility-menu"
 
 export default function SecurityPage() {
   const { user, enableTwoFactor, confirmTwoFactor, disableTwoFactor } = useAuth()
@@ -116,7 +115,6 @@ export default function SecurityPage() {
   return (
     <RouteGuard requireAuth={true}>
       <div className="min-h-screen bg-background">
-        <AccessibilityMenu />
         <MainNavigation />
 
         <main id="main-content" className="container mx-auto px-4 py-8 max-w-4xl">

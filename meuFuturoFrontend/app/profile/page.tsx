@@ -16,7 +16,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { User, Lock, Bell, Shield, Activity, Eye, EyeOff } from "lucide-react"
 import { MainNavigation } from "@/components/main-navigation"
-import { AccessibilityMenu } from "@/components/accessibility-menu"
 
 export default function ProfilePage() {
   const { user } = useAuth()
@@ -113,7 +112,6 @@ export default function ProfilePage() {
   return (
     <RouteGuard requireAuth={true}>
       <div className="min-h-screen bg-background">
-        <AccessibilityMenu />
         <MainNavigation />
 
         <main id="main-content" className="container mx-auto px-4 py-8 max-w-4xl">
