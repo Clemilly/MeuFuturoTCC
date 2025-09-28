@@ -52,20 +52,20 @@ class TransactionRepository(BaseRepository[Transaction]):
         transactions = result.scalars().all()
         
         # Calculate summary statistics
-        total_income = sum(t.amount for t in transactions if t.type == TransactionType.INCOME)
-        total_expenses = sum(t.amount for t in transactions if t.type == TransactionType.EXPENSE)
+        total_income = float(sum(t.amount for t in transactions if t.type == TransactionType.INCOME))
+        total_expenses = float(sum(t.amount for t in transactions if t.type == TransactionType.EXPENSE))
         transaction_count = len(transactions)
         income_count = len([t for t in transactions if t.type == TransactionType.INCOME])
         expense_count = len([t for t in transactions if t.type == TransactionType.EXPENSE])
         
         # Calculate averages and max values
-        average_transaction = total_income + total_expenses / transaction_count if transaction_count > 0 else 0
+        average_transaction = (total_income + total_expenses) / transaction_count if transaction_count > 0 else 0.0
         
         income_transactions = [t for t in transactions if t.type == TransactionType.INCOME]
         expense_transactions = [t for t in transactions if t.type == TransactionType.EXPENSE]
         
-        largest_income = max((t.amount for t in income_transactions), default=0)
-        largest_expense = max((t.amount for t in expense_transactions), default=0)
+        largest_income = float(max((t.amount for t in income_transactions), default=0))
+        largest_expense = float(max((t.amount for t in expense_transactions), default=0))
         
         return {
             "total_income": total_income,
@@ -137,20 +137,7 @@ class TransactionRepository(BaseRepository[Transaction]):
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
     
-    async def create(self, transaction: Transaction) -> Transaction:
-        """
-        Create a new transaction.
-        
-        Args:
-            transaction: Transaction to create
-            
-        Returns:
-            Created transaction
-        """
-        self.db.add(transaction)
-        await self.db.commit()
-        await self.db.refresh(transaction)
-        return transaction
+    # Using the base repository create method which accepts **kwargs
     
     async def update(self, transaction: Transaction) -> Transaction:
         """
@@ -237,7 +224,7 @@ class TransactionRepository(BaseRepository[Transaction]):
         
         # Add transaction type filter if provided
         if transaction_type:
-            query = query.where(Transaction.type == TransactionType.from_string(transaction_type))
+            query = query.where(Transaction.type == TransactionType(transaction_type))
         
         # Group by category
         query = query.group_by(Category.id, Category.name)
@@ -317,7 +304,7 @@ class TransactionRepository(BaseRepository[Transaction]):
         if end_date:
             query = query.where(Transaction.transaction_date <= end_date)
         if transaction_type:
-            query = query.where(Transaction.type == TransactionType.from_string(transaction_type))
+            query = query.where(Transaction.type == TransactionType(transaction_type))
         if category_id:
             query = query.where(Transaction.category_id == category_id)
         if search:
@@ -386,7 +373,7 @@ class TransactionRepository(BaseRepository[Transaction]):
         if end_date:
             query = query.where(Transaction.transaction_date <= end_date)
         if transaction_type:
-            query = query.where(Transaction.type == TransactionType.from_string(transaction_type))
+            query = query.where(Transaction.type == TransactionType(transaction_type))
         if category_id:
             query = query.where(Transaction.category_id == category_id)
         if search:

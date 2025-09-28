@@ -39,6 +39,7 @@ security = HTTPBearer()
     status_code=status.HTTP_201_CREATED,
     summary="Registrar novo usuário",
     description="Cria uma nova conta de usuário no sistema",
+    dependencies=[],  # Explicitly no authentication required
 )
 async def register(
     user_data: UserCreate,
@@ -62,6 +63,7 @@ async def register(
     "/login",
     summary="Fazer login",
     description="Autentica o usuário e retorna token de acesso",
+    dependencies=[],  # Explicitly no authentication required
 )
 async def login(
     login_data: UserLogin,

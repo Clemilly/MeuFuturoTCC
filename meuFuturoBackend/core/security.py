@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Any
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from passlib.hash import bcrypt_sha256
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import structlog
@@ -20,12 +21,13 @@ from core.validators import EmailValidator, PasswordValidator
 logger = structlog.get_logger()
 
 # Password hashing with improved security
+# Using bcrypt_sha256 to avoid 72-byte limitation
 pwd_context = CryptContext(
-    schemes=["bcrypt"], 
+    schemes=["bcrypt_sha256"], 
     deprecated="auto",
-    bcrypt__rounds=SecurityConstants.PASSWORD_HASH_ROUNDS,
-    bcrypt__min_rounds=10,
-    bcrypt__max_rounds=15
+    bcrypt_sha256__rounds=SecurityConstants.PASSWORD_HASH_ROUNDS,
+    bcrypt_sha256__min_rounds=10,
+    bcrypt_sha256__max_rounds=15
 )
 
 # JWT token security
@@ -44,9 +46,19 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         bool: True if password matches, False otherwise
     """
     try:
-        return pwd_context.verify(plain_password, hashed_password)
+        # Validate inputs
+        if not plain_password or not hashed_password:
+            logger.warning("Empty password or hash provided")
+            return False
+        
+        # Verify password using bcrypt_sha256
+        is_valid = pwd_context.verify(plain_password, hashed_password)
+        
+        logger.debug("Password verification completed", valid=is_valid)
+        return is_valid
+        
     except Exception as e:
-        logger.error("Password verification error", error=str(e))
+        logger.error("Password verification error", error=str(e), error_type=type(e).__name__)
         return False
 
 
@@ -61,9 +73,25 @@ def get_password_hash(password: str) -> str:
         str: Hashed password
     """
     try:
-        return pwd_context.hash(password)
+        # Validate password is not empty
+        if not password or not password.strip():
+            raise AuthenticationError("Senha não pode estar vazia")
+        
+        # Check password length (bcrypt_sha256 can handle longer passwords)
+        if len(password) > 1000:  # Reasonable upper limit
+            raise AuthenticationError("Senha muito longa (máximo 1000 caracteres)")
+        
+        # Hash the password using bcrypt_sha256
+        hashed = pwd_context.hash(password)
+        
+        logger.debug("Password hashed successfully", password_length=len(password))
+        return hashed
+        
+    except AuthenticationError:
+        # Re-raise authentication errors
+        raise
     except Exception as e:
-        logger.error("Password hashing error", error=str(e))
+        logger.error("Password hashing error", error=str(e), error_type=type(e).__name__)
         raise AuthenticationError("Erro ao processar senha")
 
 

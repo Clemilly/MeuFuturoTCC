@@ -521,8 +521,8 @@ async def get_transactions_advanced(
         has_previous = page > 1
         
         # Calculate totals for filtered data
-        total_income = sum(t.amount for t in transactions if t.type == TransactionType.INCOME)
-        total_expenses = sum(t.amount for t in transactions if t.type == TransactionType.EXPENSE)
+        total_income = float(sum(t.amount for t in transactions if t.type == TransactionType.INCOME))
+        total_expenses = float(sum(t.amount for t in transactions if t.type == TransactionType.EXPENSE))
         net_amount = total_income - total_expenses
         
         # Get all categories for filter dropdown

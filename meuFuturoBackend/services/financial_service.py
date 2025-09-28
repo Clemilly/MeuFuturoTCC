@@ -124,7 +124,7 @@ class FinancialService:
         )
         
         # Reload the transaction with its relationships to avoid DetachedInstanceError
-        transaction = await self.transaction_repo.get_by_id(transaction.id)
+        transaction = await self.transaction_repo.get_by_id(transaction.id, user_id)
         
         logger.info(
             "Transaction created",
@@ -202,7 +202,7 @@ class FinancialService:
         Raises:
             HTTPException: If transaction not found or access denied
         """
-        transaction = await self.transaction_repo.get_by_id(transaction_id)
+        transaction = await self.transaction_repo.get_by_id(transaction_id, user_id)
         
         if not transaction:
             raise HTTPException(
