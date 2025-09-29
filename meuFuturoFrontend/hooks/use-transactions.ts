@@ -282,9 +282,8 @@ export function useTransactions(): UseTransactionsReturn {
       })
     } finally {
       console.log('🔍 DEBUG: loadCategories finally block, isMounted:', isMountedRef.current)
-      if (isMountedRef.current) {
-        setLoading(prev => ({ ...prev, categories: false }))
-      }
+      // Always clear loading state, regardless of mount status
+      setLoading(prev => ({ ...prev, categories: false }))
     }
   }, [handleAuthErrorRef])
   
@@ -767,6 +766,14 @@ export function useTransactions(): UseTransactionsReturn {
       loadTransactions(apiFilters)
     }
   }, [loadCategories, loadTransactions]) // Include dependencies
+
+  // Load categories when create modal opens (always refresh)
+  useEffect(() => {
+    if (modals.isCreateOpen && isMountedRef.current) {
+      console.log('🔍 DEBUG: Create modal opened, loading categories...')
+      loadCategories()
+    }
+  }, [modals.isCreateOpen, loadCategories])
   
   return {
     // Data

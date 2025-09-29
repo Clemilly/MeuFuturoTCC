@@ -22,12 +22,28 @@ export interface Transaction {
 export interface Category {
   id: string
   name: string
+  description?: string
   color: string
+  icon?: string
   type?: 'income' | 'expense'
   is_system?: boolean
   is_active?: boolean
+  user_id?: string
+  parent_id?: string
+  full_name?: string
+  is_subcategory?: boolean
+  transaction_count?: number
   created_at?: string
   updated_at?: string
+}
+
+export interface CategoryCreate {
+  name: string
+  description?: string
+  color: string
+  icon?: string
+  type?: 'income' | 'expense'
+  parent_id?: string
 }
 
 export interface TransactionCreate {
