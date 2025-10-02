@@ -123,6 +123,9 @@ class FinancialService:
             category_id=transaction_data.category_id,
         )
         
+        # Commit the transaction
+        await self.transaction_repo.db.commit()
+        
         # Reload the transaction with its relationships to avoid DetachedInstanceError
         transaction = await self.transaction_repo.get_by_id(transaction.id, user_id)
         
@@ -158,9 +161,11 @@ class FinancialService:
         # Prepare filter parameters
         filter_params = {}
         if filters:
+            print(f"🔍 DEBUG: Processing filters: {filters}")
             if filters.type:
                 filter_params["transaction_type"] = filters.type
             if filters.category_id:
+                print(f"🔍 DEBUG: Category filter found: {filters.category_id}")
                 filter_params["category_id"] = filters.category_id
             if filters.start_date:
                 filter_params["start_date"] = filters.start_date
@@ -172,6 +177,8 @@ class FinancialService:
                 filter_params["max_amount"] = filters.max_amount
             if filters.search:
                 filter_params["search"] = filters.search
+        
+        print(f"🔍 DEBUG: Final filter_params: {filter_params}")
         
         # Get transactions and count
         transactions = await self.transaction_repo.get_user_transactions(
@@ -681,14 +688,22 @@ class FinancialService:
         user_id: str,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
+        transaction_type: Optional[str] = None,
+        category_id: Optional[str] = None,
+        min_amount: Optional[float] = None,
+        max_amount: Optional[float] = None
     ) -> TransactionSummary:
         """
-        Get transaction summary for a user.
+        Get transaction summary for a user with filters.
         
         Args:
             user_id: User ID
             start_date: Start date for calculation
             end_date: End date for calculation
+            transaction_type: Filter by transaction type
+            category_id: Filter by category
+            min_amount: Minimum amount filter
+            max_amount: Maximum amount filter
             
         Returns:
             Transaction summary
@@ -696,7 +711,11 @@ class FinancialService:
         summary_data = await self.transaction_repo.get_transaction_summary(
             user_id=user_id,
             start_date=start_date,
-            end_date=end_date
+            end_date=end_date,
+            transaction_type=transaction_type,
+            category_id=category_id,
+            min_amount=min_amount,
+            max_amount=max_amount
         )
         
         return TransactionSummary(**summary_data)

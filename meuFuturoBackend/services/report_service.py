@@ -278,16 +278,24 @@ Maior Despesa: R$ {summary.largest_expense or 0:,.2f}
         user_id: str, 
         start_date: Optional[date] = None, 
         end_date: Optional[date] = None,
-        granularity: Granularity = Granularity.MONTHLY
+        granularity: Granularity = Granularity.MONTHLY,
+        transaction_type: Optional[str] = None,
+        category_id: Optional[str] = None,
+        min_amount: Optional[float] = None,
+        max_amount: Optional[float] = None
     ) -> List[AnalyticsData]:
         """
-        Get analytics data with specified granularity.
+        Get analytics data with specified granularity and filters.
         
         Args:
             user_id: User ID
             start_date: Start date
             end_date: End date
             granularity: Time granularity
+            transaction_type: Filter by transaction type
+            category_id: Filter by category
+            min_amount: Minimum amount filter
+            max_amount: Maximum amount filter
             
         Returns:
             List of analytics data points
@@ -306,7 +314,15 @@ Maior Despesa: R$ {summary.largest_expense or 0:,.2f}
                 if period_end > end_date:
                     period_end = end_date
                 
-                analytics_data = await self._get_period_analytics(user_id, current_date, period_end)
+                analytics_data = await self._get_period_analytics(
+                    user_id=user_id,
+                    start_date=current_date,
+                    end_date=period_end,
+                    transaction_type=transaction_type,
+                    category_id=category_id,
+                    min_amount=min_amount,
+                    max_amount=max_amount
+                )
                 analytics_data.period = self._format_period(current_date, granularity)
                 analytics_data.period_start = current_date
                 analytics_data.period_end = period_end
@@ -351,13 +367,21 @@ Maior Despesa: R$ {summary.largest_expense or 0:,.2f}
         self, 
         user_id: str, 
         start_date: date, 
-        end_date: date
+        end_date: date,
+        transaction_type: Optional[str] = None,
+        category_id: Optional[str] = None,
+        min_amount: Optional[float] = None,
+        max_amount: Optional[float] = None
     ) -> AnalyticsData:
-        """Get analytics data for a specific period."""
+        """Get analytics data for a specific period with filters."""
         summary = await self.financial_service.get_transaction_summary(
             user_id=user_id,
             start_date=start_date,
-            end_date=end_date
+            end_date=end_date,
+            transaction_type=transaction_type,
+            category_id=category_id,
+            min_amount=min_amount,
+            max_amount=max_amount
         )
         
         return AnalyticsData(

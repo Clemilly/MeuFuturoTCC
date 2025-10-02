@@ -834,6 +834,10 @@ async def get_financial_analytics(
     start_date: Optional[date] = Query(None, description="Data de início"),
     end_date: Optional[date] = Query(None, description="Data de fim"),
     granularity: str = Query("monthly", regex="^(daily|weekly|monthly|yearly)$", description="Granularidade temporal"),
+    transaction_type: Optional[TransactionType] = Query(None, description="Tipo de transação"),
+    category_id: Optional[str] = Query(None, description="ID da categoria"),
+    min_amount: Optional[float] = Query(None, description="Valor mínimo"),
+    max_amount: Optional[float] = Query(None, description="Valor máximo"),
     current_user: User = Depends(get_current_user),
     financial_service: FinancialService = Depends(get_financial_service),
 ):
@@ -841,6 +845,7 @@ async def get_financial_analytics(
     Obter dados analíticos para gráficos avançados.
     
     Retorna dados agregados por período com granularidade configurável.
+    Suporta filtros por tipo de transação, categoria e valores.
     """
     from services.report_service import ReportService
     from schemas.report import Granularity
@@ -851,10 +856,14 @@ async def get_financial_analytics(
         user_id=current_user.id,
         start_date=start_date,
         end_date=end_date,
-        granularity=Granularity(granularity)
+        granularity=Granularity(granularity),
+        transaction_type=transaction_type,
+        category_id=category_id,
+        min_amount=min_amount,
+        max_amount=max_amount
     )
     
-    logger.info(f"Analytics data retrieved for user {current_user.id}, granularity: {granularity}")
+    logger.info(f"Analytics data retrieved for user {current_user.id}, granularity: {granularity}, filters: type={transaction_type}, category={category_id}")
     return analytics_data
 
 

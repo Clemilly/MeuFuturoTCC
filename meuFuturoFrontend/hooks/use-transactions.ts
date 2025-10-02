@@ -474,11 +474,15 @@ export function useTransactions(): UseTransactionsReturn {
   
   // Debounced filter update
   const updateFiltersWithDebounce = useCallback((newFilters: FilterState) => {
+    console.log('🔍 DEBUG: updateFiltersWithDebounce called with:', newFilters)
+    
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current)
     }
     
     debounceTimeoutRef.current = setTimeout(() => {
+      console.log('🔍 DEBUG: Debounce timeout triggered, creating API filters...')
+      
       // Create API filters using the new filters
       const apiFilters: TransactionFilters = {
         page: 1,
@@ -494,12 +498,13 @@ export function useTransactions(): UseTransactionsReturn {
       if (newFilters.type !== 'all') {
         apiFilters.transaction_type = newFilters.type
         console.log('🔍 DEBUG: Setting transaction_type filter to:', newFilters.type)
-      console.log('🔍 DEBUG: newFilters.type value:', newFilters.type, 'type:', typeof newFilters.type)
-      console.log('🔍 DEBUG: newFilters.type !== "all":', newFilters.type !== 'all')
+        console.log('🔍 DEBUG: newFilters.type value:', newFilters.type, 'type:', typeof newFilters.type)
+        console.log('🔍 DEBUG: newFilters.type !== "all":', newFilters.type !== 'all')
       }
       
       if (newFilters.category !== 'all') {
         apiFilters.category_id = newFilters.category
+        console.log('🔍 DEBUG: Setting category_id filter to:', newFilters.category)
       }
       
       if (newFilters.dateRange.start && newFilters.dateRange.end) {
@@ -518,19 +523,79 @@ export function useTransactions(): UseTransactionsReturn {
       console.log('🔍 DEBUG: Final API filters being sent:', apiFilters)
       console.log('🔍 DEBUG: About to call loadTransactions with transaction_type:', apiFilters.transaction_type)
       console.log('🔍 DEBUG: API filters object keys:', Object.keys(apiFilters))
+      
+      // Reset pagination to page 1 when filters change
+      setPagination(prev => ({
+        ...prev,
+        current_page: 1
+      }))
+      
       loadTransactions(apiFilters)
     }, 300)
   }, [pagination.page_size, loadTransactions])
   
-  // Update filters
+  // Update filters (without triggering API call)
   const updateFilters = useCallback((newFilters: Partial<FilterState>) => {
     console.log('🔍 DEBUG: updateFilters called with:', newFilters)
     console.log('🔍 DEBUG: current filters:', filters)
     const updatedFilters = { ...filters, ...newFilters }
     console.log('🔍 DEBUG: updatedFilters:', updatedFilters)
     setFilters(updatedFilters)
-    updateFiltersWithDebounce(updatedFilters)
-  }, [filters, updateFiltersWithDebounce])
+    // Remove automatic API call - now user will click "Filtrar" button
+  }, [filters])
+  
+  // Apply filters manually (triggered by "Filtrar" button)
+  const applyFilters = useCallback(() => {
+    console.log('🔍 DEBUG: applyFilters called with current filters:', filters)
+    
+    // Create API filters directly from current filters
+    const apiFilters: TransactionFilters = {
+      page: 1,
+      size: pagination.page_size,
+      sort_by: filters.sortBy,
+      sort_order: filters.sortOrder
+    }
+    
+    if (filters.search.trim()) {
+      apiFilters.search = filters.search.trim()
+    }
+    
+    if (filters.type !== 'all') {
+      apiFilters.transaction_type = filters.type
+      console.log('🔍 DEBUG: Applying type filter:', filters.type)
+    }
+    
+    if (filters.category !== 'all') {
+      apiFilters.category_id = filters.category
+      console.log('🔍 DEBUG: Applying category filter:', filters.category)
+    }
+    
+    if (filters.dateRange.start && filters.dateRange.end) {
+      apiFilters.start_date = filters.dateRange.start.toISOString().split('T')[0]
+      apiFilters.end_date = filters.dateRange.end.toISOString().split('T')[0]
+      console.log('🔍 DEBUG: Applying date range filter:', apiFilters.start_date, '-', apiFilters.end_date)
+    }
+    
+    if (filters.amountRange.min !== null) {
+      apiFilters.min_amount = filters.amountRange.min
+    }
+    
+    if (filters.amountRange.max !== null) {
+      apiFilters.max_amount = filters.amountRange.max
+    }
+    
+    console.log('🔍 DEBUG: Final API filters to be sent:', apiFilters)
+    console.log('🔍 DEBUG: Calling loadTransactions directly...')
+    
+    // Reset pagination to page 1 when filters change
+    setPagination(prev => ({
+      ...prev,
+      current_page: 1
+    }))
+    
+    // Call loadTransactions directly without debounce
+    loadTransactions(apiFilters)
+  }, [filters, pagination.page_size, loadTransactions])
   
   // Clear filters
   const clearFilters = useCallback(() => {
@@ -790,6 +855,7 @@ export function useTransactions(): UseTransactionsReturn {
     
     // Filter actions
     updateFilters,
+    applyFilters,
     clearFilters,
     resetFilters,
     

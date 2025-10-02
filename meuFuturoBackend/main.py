@@ -88,7 +88,7 @@ async def log_requests(request: Request, call_next):
             "Request failed",
             method=request.method,
             url=str(request.url),
-            error=str(e),
+            error=repr(e),  # Use repr instead of str to avoid DetachedInstanceError
             response_time=round(process_time, 4),
             client_ip=client_ip
         )

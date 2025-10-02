@@ -26,14 +26,22 @@ class TransactionRepository(BaseRepository[Transaction]):
         user_id: str,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
+        transaction_type: Optional[str] = None,
+        category_id: Optional[str] = None,
+        min_amount: Optional[float] = None,
+        max_amount: Optional[float] = None
     ) -> Dict[str, Any]:
         """
-        Get transaction summary for a user.
+        Get transaction summary for a user with filters.
         
         Args:
             user_id: User ID
             start_date: Start date for calculation
             end_date: End date for calculation
+            transaction_type: Filter by transaction type
+            category_id: Filter by category
+            min_amount: Minimum amount filter
+            max_amount: Maximum amount filter
             
         Returns:
             Dictionary with summary statistics
@@ -46,6 +54,16 @@ class TransactionRepository(BaseRepository[Transaction]):
             base_query = base_query.where(Transaction.transaction_date >= start_date)
         if end_date:
             base_query = base_query.where(Transaction.transaction_date <= end_date)
+        
+        # Add additional filters
+        if transaction_type:
+            base_query = base_query.where(Transaction.type == transaction_type)
+        if category_id:
+            base_query = base_query.where(Transaction.category_id == category_id)
+        if min_amount is not None:
+            base_query = base_query.where(Transaction.amount >= min_amount)
+        if max_amount is not None:
+            base_query = base_query.where(Transaction.amount <= max_amount)
         
         # Get all transactions for the user
         result = await self.db.execute(base_query)
@@ -118,7 +136,7 @@ class TransactionRepository(BaseRepository[Transaction]):
     
     async def get_by_id(self, transaction_id: str, user_id: str) -> Optional[Transaction]:
         """
-        Get a transaction by ID for a specific user.
+        Get a transaction by ID for a specific user with relationships loaded.
         
         Args:
             transaction_id: Transaction ID
@@ -127,7 +145,9 @@ class TransactionRepository(BaseRepository[Transaction]):
         Returns:
             Transaction if found, None otherwise
         """
-        query = select(Transaction).where(
+        query = select(Transaction).options(
+            selectinload(Transaction.category)
+        ).where(
             and_(
                 Transaction.id == transaction_id,
                 Transaction.user_id == user_id
@@ -306,6 +326,7 @@ class TransactionRepository(BaseRepository[Transaction]):
         if transaction_type:
             query = query.where(Transaction.type == TransactionType(transaction_type))
         if category_id:
+            print(f"🔍 DEBUG: Applying category filter: {category_id}")
             query = query.where(Transaction.category_id == category_id)
         if search:
             query = query.where(Transaction.description.ilike(f"%{search}%"))

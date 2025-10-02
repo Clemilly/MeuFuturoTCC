@@ -142,6 +142,7 @@ export function TransactionsPage() {
     hasActiveFilters,
     activeFiltersCount,
     updateFilters,
+    applyFilters,
     clearFilters,
     refresh,
     openCreateModal,
@@ -205,8 +206,9 @@ export function TransactionsPage() {
         <TransactionsFilters
           filters={filters}
           onFiltersChange={updateFilters}
+          onApplyFilters={applyFilters}
           onClearFilters={clearFilters}
-          loading={false}
+          loading={loading.transactions}
           categories={categories}
         />
 

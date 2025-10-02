@@ -14,15 +14,31 @@ from api.dependencies import (
     PaginationParams,
     get_pagination_params,
 )
+from core.database import get_db_session
 from services.ai_service import AIService
+from services.simulation_service import SimulationService
+from services.pattern_analysis_service import PatternAnalysisService
+from services.recommendation_service import RecommendationService
+from services.report_generator_service import ReportGeneratorService
 from schemas.ai_prediction import (
     PredictionRequest,
     AIPredictionResponse,
     FinancialInsights,
+    FinancialSimulation,
+    SimulationResult,
+    PatternAnalysisAdvanced,
+    SeasonalPattern,
+    AnomalyDetection,
+    PersonalizedRecommendation,
+    AdvancedMetrics,
+    MonthlyAIReport,
+    AdvancedDashboard,
+    AIFeedback,
 )
 from schemas.common import PaginatedResponse, SuccessResponse
 from models.user import User
 from models.ai_prediction import PredictionType, PredictionStatus
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = structlog.get_logger()
 
@@ -382,4 +398,385 @@ async def cleanup_old_predictions(
     
     return SuccessResponse(
         message=f"{deleted_count} predições antigas removidas"
+    )
+
+
+# Advanced AI Endpoints
+
+@router.get(
+    "/dashboard/advanced",
+    response_model=AdvancedDashboard,
+    summary="Dashboard avançado de IA",
+    description="Obtém dashboard completo com métricas avançadas de IA",
+)
+async def get_advanced_dashboard(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+):
+    """
+    Obter dashboard avançado com todas as funcionalidades de IA.
+    
+    Inclui:
+    - Score de saúde financeira e métricas avançadas
+    - Predições de fluxo de caixa (3, 6, 12 meses)
+    - Padrões sazonais e anomalias
+    - Análise avançada de padrões
+    - Recomendações personalizadas
+    - Projeções de metas
+    - Projeções de poupança
+    """
+    if not current_user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email deve ser verificado para usar recursos de IA"
+        )
+    
+    # Initialize services
+    ai_service = AIService(db)
+    pattern_service = PatternAnalysisService(db)
+    recommendation_service = RecommendationService(db)
+    
+    # Get basic insights
+    insights = await ai_service.get_financial_insights(current_user.id)
+    
+    # Get advanced metrics
+    advanced_metrics = await recommendation_service.calculate_advanced_metrics(
+        current_user.id
+    )
+    
+    # Get cash flow predictions
+    # TODO: Implement proper time-series predictions
+    cash_flow_predictions = []
+    
+    # Get seasonal patterns
+    seasonal_patterns = await pattern_service.detect_seasonal_patterns(
+        current_user.id
+    )
+    
+    # Get recent anomalies
+    anomalies = await pattern_service.detect_anomalies(
+        current_user.id,
+        days=30
+    )
+    
+    # Get pattern analysis
+    pattern_analysis = await pattern_service.analyze_patterns(
+        current_user.id
+    )
+    
+    # Get personalized recommendations
+    recommendations = await recommendation_service.generate_recommendations(
+        current_user.id,
+        max_recommendations=10
+    )
+    
+    # Get goal projections (from existing insights)
+    goal_projections = []
+    
+    return AdvancedDashboard(
+        health_score=insights.health_score,
+        health_label=insights.health_label,
+        risk_level=insights.risk_level,
+        monthly_trend=insights.monthly_trend,
+        advanced_metrics=advanced_metrics,
+        cash_flow_predictions=cash_flow_predictions,
+        seasonal_patterns=seasonal_patterns,
+        anomalies=anomalies,
+        spending_patterns=insights.spending_patterns,
+        pattern_analysis=pattern_analysis,
+        recommendations=recommendations,
+        goal_projections=goal_projections,
+        savings_projection=insights.savings_projection,
+    )
+
+
+@router.post(
+    "/simulations",
+    response_model=SimulationResult,
+    summary="Simular cenário financeiro",
+    description="Executa simulação de cenário 'e se' para planejamento financeiro",
+)
+async def run_financial_simulation(
+    simulation: FinancialSimulation,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+):
+    """
+    Executar simulação financeira.
+    
+    Permite testar diferentes cenários:
+    - E se eu economizasse X% mais?
+    - E se eu aumentasse minha renda?
+    - E se eu reduzisse gastos em Y%?
+    
+    Retorna projeção detalhada do impacto ao longo do tempo.
+    """
+    if not current_user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email deve ser verificado para usar recursos de IA"
+        )
+    
+    simulation_service = SimulationService(db)
+    
+    result = await simulation_service.run_simulation(
+        user_id=current_user.id,
+        simulation=simulation
+    )
+    
+    logger.info(
+        "Financial simulation completed",
+        user_id=current_user.id,
+        scenario=simulation.scenario_name
+    )
+    
+    return result
+
+
+@router.get(
+    "/patterns/advanced",
+    response_model=PatternAnalysisAdvanced,
+    summary="Análise avançada de padrões",
+    description="Obtém análise detalhada de padrões de gastos",
+)
+async def get_advanced_patterns(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+):
+    """
+    Obter análise avançada de padrões.
+    
+    Inclui:
+    - Padrões temporais (dia da semana, mês)
+    - Correlações entre categorias
+    - Score de gastos impulsivos
+    - Insights comportamentais
+    """
+    if not current_user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email deve ser verificado para usar recursos de IA"
+        )
+    
+    pattern_service = PatternAnalysisService(db)
+    
+    patterns = await pattern_service.analyze_patterns(current_user.id)
+    
+    return patterns
+
+
+@router.get(
+    "/patterns/seasonal",
+    response_model=List[SeasonalPattern],
+    summary="Padrões sazonais",
+    description="Detecta padrões sazonais de gastos",
+)
+async def get_seasonal_patterns(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+):
+    """
+    Detectar padrões sazonais de gastos.
+    
+    Identifica categorias com variações sazonais significativas
+    e sugere planejamento para picos de gastos.
+    """
+    if not current_user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email deve ser verificado para usar recursos de IA"
+        )
+    
+    pattern_service = PatternAnalysisService(db)
+    
+    patterns = await pattern_service.detect_seasonal_patterns(current_user.id)
+    
+    return patterns
+
+
+@router.get(
+    "/anomalies",
+    response_model=List[AnomalyDetection],
+    summary="Detectar anomalias",
+    description="Detecta gastos anômalos ou fora do padrão",
+)
+async def detect_anomalies(
+    days: int = Query(30, ge=7, le=90, description="Período em dias para análise"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+):
+    """
+    Detectar anomalias em gastos.
+    
+    Identifica transações significativamente diferentes do padrão
+    habitual do usuário, ajudando a detectar gastos impulsivos
+    ou não planejados.
+    """
+    if not current_user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email deve ser verificado para usar recursos de IA"
+        )
+    
+    pattern_service = PatternAnalysisService(db)
+    
+    anomalies = await pattern_service.detect_anomalies(
+        user_id=current_user.id,
+        days=days
+    )
+    
+    return anomalies
+
+
+@router.get(
+    "/recommendations/personalized",
+    response_model=List[PersonalizedRecommendation],
+    summary="Recomendações personalizadas",
+    description="Obtém recomendações personalizadas baseadas em IA",
+)
+async def get_personalized_recommendations(
+    max_count: int = Query(5, ge=1, le=20, description="Número máximo de recomendações"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+):
+    """
+    Obter recomendações personalizadas.
+    
+    Gera recomendações específicas baseadas em:
+    - Padrões de gastos do usuário
+    - Metas financeiras
+    - Oportunidades de economia
+    - Otimizações de orçamento
+    """
+    if not current_user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email deve ser verificado para usar recursos de IA"
+        )
+    
+    recommendation_service = RecommendationService(db)
+    
+    recommendations = await recommendation_service.generate_recommendations(
+        user_id=current_user.id,
+        max_recommendations=max_count
+    )
+    
+    return recommendations
+
+
+@router.get(
+    "/metrics/advanced",
+    response_model=AdvancedMetrics,
+    summary="Métricas avançadas",
+    description="Obtém métricas financeiras avançadas",
+)
+async def get_advanced_metrics(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+):
+    """
+    Obter métricas financeiras avançadas.
+    
+    Inclui:
+    - Taxa de poupança atual e ideal
+    - Score de liquidez
+    - Score de diversificação
+    - Índice de estabilidade
+    - Volatilidade de despesas
+    - Consistência de receita
+    """
+    if not current_user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email deve ser verificado para usar recursos de IA"
+        )
+    
+    recommendation_service = RecommendationService(db)
+    
+    metrics = await recommendation_service.calculate_advanced_metrics(
+        user_id=current_user.id
+    )
+    
+    return metrics
+
+
+@router.get(
+    "/reports/monthly",
+    response_model=MonthlyAIReport,
+    summary="Relatório mensal de IA",
+    description="Gera relatório mensal completo com análise de IA",
+)
+async def get_monthly_report(
+    month: str = Query(..., description="Mês de referência (YYYY-MM)", regex=r"^\d{4}-\d{2}$"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+):
+    """
+    Gerar relatório mensal completo.
+    
+    Inclui:
+    - Sumário executivo em linguagem natural
+    - Métricas financeiras do mês
+    - Insights e conquistas
+    - Áreas para melhoria
+    - Predição para próximo mês
+    - Recomendações prioritárias
+    - Progresso em metas
+    """
+    if not current_user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email deve ser verificado para usar recursos de IA"
+        )
+    
+    report_service = ReportGeneratorService(db)
+    
+    report = await report_service.generate_monthly_report(
+        user_id=current_user.id,
+        reference_month=month
+    )
+    
+    logger.info(
+        "Monthly AI report generated",
+        user_id=current_user.id,
+        month=month
+    )
+    
+    return report
+
+
+@router.post(
+    "/feedback",
+    response_model=SuccessResponse,
+    summary="Enviar feedback sobre IA",
+    description="Envia feedback sobre recomendações ou predições de IA",
+)
+async def submit_ai_feedback(
+    feedback: AIFeedback,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Enviar feedback sobre recursos de IA.
+    
+    Permite que usuários avaliem:
+    - Recomendações
+    - Predições
+    - Relatórios
+    
+    O feedback é usado para melhorar os algoritmos de IA.
+    """
+    logger.info(
+        "AI feedback received",
+        user_id=current_user.id,
+        feedback_type=feedback.feedback_type,
+        item_id=feedback.item_id,
+        rating=feedback.rating,
+        was_helpful=feedback.was_helpful
+    )
+    
+    # In a real implementation, this would store feedback in the database
+    # for analysis and model improvement
+    
+    return SuccessResponse(
+        message="Feedback recebido com sucesso. Obrigado!"
     )

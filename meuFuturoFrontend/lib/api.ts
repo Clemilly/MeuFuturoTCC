@@ -570,12 +570,20 @@ class ApiService {
     start_date?: string
     end_date?: string
     granularity?: 'daily' | 'weekly' | 'monthly' | 'yearly'
+    transaction_type?: 'income' | 'expense'
+    category_id?: string
+    min_amount?: number
+    max_amount?: number
   }) {
     const searchParams = new URLSearchParams()
     
     if (params.start_date) searchParams.append('start_date', params.start_date)
     if (params.end_date) searchParams.append('end_date', params.end_date)
     if (params.granularity) searchParams.append('granularity', params.granularity)
+    if (params.transaction_type) searchParams.append('transaction_type', params.transaction_type)
+    if (params.category_id) searchParams.append('category_id', params.category_id)
+    if (params.min_amount !== undefined) searchParams.append('min_amount', params.min_amount.toString())
+    if (params.max_amount !== undefined) searchParams.append('max_amount', params.max_amount.toString())
     
     const url = `/financial/reports/analytics?${searchParams.toString()}`
     

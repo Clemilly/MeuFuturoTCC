@@ -146,7 +146,7 @@ function TransactionDetailsModal({
                 getAmountBorderColor()
               )}
             >
-              {getTransactionIcon}
+              {getTransactionIcon()}
             </div>
 
             <div className="flex-1">
@@ -159,7 +159,7 @@ function TransactionDetailsModal({
             </div>
 
             <div className="text-right">
-              <p className={cn("text-2xl font-bold", getAmountColor)}>
+              <p className={cn("text-2xl font-bold", getAmountColor())}>
                 {transaction.type === "income" ? "+" : "-"}
                 {formatCurrency(transaction.amount)}
               </p>
@@ -192,11 +192,11 @@ function TransactionDetailsModal({
                 </div>
               </div>
 
-              {transaction.category && (
-                <div className="flex items-center gap-3">
-                  <Tag className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Categoria</p>
+              <div className="flex items-center gap-3">
+                <Tag className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Categoria</p>
+                  {transaction.category ? (
                     <Badge
                       variant="secondary"
                       className="mt-1"
@@ -208,9 +208,13 @@ function TransactionDetailsModal({
                     >
                       {transaction.category.name}
                     </Badge>
-                  </div>
+                  ) : (
+                    <Badge variant="outline" className="mt-1">
+                      Sem categoria
+                    </Badge>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
 
             <div className="space-y-4">
@@ -218,7 +222,7 @@ function TransactionDetailsModal({
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <p className="text-sm font-medium">Valor</p>
-                  <p className={cn("text-lg font-semibold", getAmountColor)}>
+                  <p className={cn("text-lg font-semibold", getAmountColor())}>
                     {formatCurrency(transaction.amount)}
                   </p>
                 </div>

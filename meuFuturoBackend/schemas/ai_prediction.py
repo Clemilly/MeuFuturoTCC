@@ -248,3 +248,390 @@ class GoalProjection(BaseModel):
             }
         }
     )
+
+
+# Advanced AI Schemas for Enhanced Features
+
+class AdvancedMetrics(BaseModel):
+    """Schema for advanced financial metrics."""
+    
+    savings_rate: float = Field(..., description="Current savings rate percentage")
+    ideal_savings_rate: float = Field(..., description="Ideal savings rate for user profile")
+    liquidity_score: int = Field(..., ge=0, le=100, description="Financial liquidity score")
+    diversification_score: int = Field(..., ge=0, le=100, description="Spending diversification score")
+    stability_index: float = Field(..., description="Financial stability index")
+    expense_volatility: float = Field(..., description="Expense volatility percentage")
+    income_consistency: float = Field(..., description="Income consistency score")
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "savings_rate": 22.5,
+                "ideal_savings_rate": 20.0,
+                "liquidity_score": 78,
+                "diversification_score": 65,
+                "stability_index": 0.82,
+                "expense_volatility": 12.3,
+                "income_consistency": 0.95
+            }
+        }
+    )
+
+
+class CashFlowPrediction(BaseModel):
+    """Schema for cash flow predictions."""
+    
+    month: str = Field(..., description="Month reference (YYYY-MM)")
+    predicted_income: Decimal = Field(..., description="Predicted income")
+    predicted_expenses: Decimal = Field(..., description="Predicted expenses")
+    predicted_balance: Decimal = Field(..., description="Predicted balance")
+    confidence: float = Field(..., ge=0, le=1, description="Prediction confidence")
+    risk_factors: List[str] = Field(default_factory=list, description="Identified risk factors")
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "month": "2025-04",
+                "predicted_income": 5000.00,
+                "predicted_expenses": 3800.00,
+                "predicted_balance": 1200.00,
+                "confidence": 0.87,
+                "risk_factors": ["Gasto sazonal esperado com educação"]
+            }
+        }
+    )
+
+
+class SeasonalPattern(BaseModel):
+    """Schema for seasonal spending patterns."""
+    
+    category: str = Field(..., description="Category name")
+    pattern_type: str = Field(..., description="Pattern type (monthly, quarterly, yearly)")
+    peak_months: List[str] = Field(..., description="Months with peak spending")
+    average_variation: float = Field(..., description="Average variation percentage")
+    next_peak_date: Optional[date] = Field(None, description="Next expected peak date")
+    recommendation: str = Field(..., description="Recommendation based on pattern")
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "category": "Educação",
+                "pattern_type": "yearly",
+                "peak_months": ["January", "July"],
+                "average_variation": 45.2,
+                "next_peak_date": "2025-07-01",
+                "recommendation": "Reserve R$ 800 adicionais para julho (material escolar)"
+            }
+        }
+    )
+
+
+class AnomalyDetection(BaseModel):
+    """Schema for spending anomaly detection."""
+    
+    transaction_id: Optional[str] = Field(None, description="Transaction ID if specific")
+    category: str = Field(..., description="Category name")
+    amount: Decimal = Field(..., description="Anomalous amount")
+    expected_range: Dict[str, Decimal] = Field(..., description="Expected amount range")
+    anomaly_score: float = Field(..., ge=0, le=1, description="Anomaly score")
+    detected_at: date = Field(..., description="Detection date")
+    is_recurring: bool = Field(..., description="Whether this is a recurring anomaly")
+    suggestion: str = Field(..., description="Suggestion for user")
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "transaction_id": "abc123",
+                "category": "Lazer",
+                "amount": 850.00,
+                "expected_range": {"min": 200.00, "max": 450.00},
+                "anomaly_score": 0.92,
+                "detected_at": "2025-01-15",
+                "is_recurring": False,
+                "suggestion": "Este gasto está 89% acima do seu padrão habitual. Foi planejado?"
+            }
+        }
+    )
+
+
+class FinancialSimulation(BaseModel):
+    """Schema for financial scenario simulations."""
+    
+    scenario_name: str = Field(..., description="Scenario name")
+    income_adjustment: float = Field(0, description="Income adjustment percentage")
+    expense_adjustment: float = Field(0, description="Expense adjustment percentage")
+    savings_increase: float = Field(0, description="Savings increase percentage")
+    time_horizon_months: int = Field(..., ge=1, le=120, description="Simulation time horizon")
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "scenario_name": "E se eu economizasse 10% mais?",
+                "income_adjustment": 0,
+                "expense_adjustment": -10,
+                "savings_increase": 10,
+                "time_horizon_months": 12
+            }
+        }
+    )
+
+
+class SimulationResult(BaseModel):
+    """Schema for simulation results."""
+    
+    scenario_name: str = Field(..., description="Scenario name")
+    final_balance: Decimal = Field(..., description="Final projected balance")
+    total_savings: Decimal = Field(..., description="Total savings accumulated")
+    monthly_average_balance: Decimal = Field(..., description="Average monthly balance")
+    goals_achievable: List[str] = Field(..., description="Goals achievable with this scenario")
+    timeline_data: List[Dict[str, Any]] = Field(..., description="Month-by-month projection")
+    comparison_to_current: Dict[str, Any] = Field(..., description="Comparison to current trajectory")
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "scenario_name": "E se eu economizasse 10% mais?",
+                "final_balance": 18500.00,
+                "total_savings": 16200.00,
+                "monthly_average_balance": 1350.00,
+                "goals_achievable": ["Reserva de Emergência", "Viagem"],
+                "timeline_data": [
+                    {"month": "2025-02", "balance": 1200.00, "savings": 1200.00}
+                ],
+                "comparison_to_current": {
+                    "balance_difference": 4500.00,
+                    "percentage_improvement": 32.1
+                }
+            }
+        }
+    )
+
+
+class PatternAnalysisAdvanced(BaseModel):
+    """Schema for advanced pattern analysis."""
+    
+    temporal_patterns: Dict[str, Any] = Field(..., description="Time-based spending patterns")
+    category_correlations: List[Dict[str, Any]] = Field(..., description="Category spending correlations")
+    impulse_spending_score: float = Field(..., ge=0, le=100, description="Impulse spending tendency score")
+    spending_by_weekday: Dict[str, Decimal] = Field(..., description="Average spending by day of week")
+    spending_by_time: Dict[str, Decimal] = Field(..., description="Spending patterns by time of day")
+    behavioral_insights: List[str] = Field(..., description="Behavioral insights identified")
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "temporal_patterns": {
+                    "peak_spending_day": "Friday",
+                    "lowest_spending_day": "Tuesday",
+                    "month_pattern": "decreasing_trend"
+                },
+                "category_correlations": [
+                    {
+                        "categories": ["Lazer", "Alimentação"],
+                        "correlation": 0.78,
+                        "insight": "Gastos com lazer geralmente acompanham aumento em alimentação"
+                    }
+                ],
+                "impulse_spending_score": 35.2,
+                "spending_by_weekday": {
+                    "Monday": 120.00,
+                    "Friday": 280.00
+                },
+                "spending_by_time": {
+                    "morning": 450.00,
+                    "afternoon": 680.00,
+                    "evening": 920.00
+                },
+                "behavioral_insights": [
+                    "Você tende a gastar mais nas sextas-feiras à noite",
+                    "Compras matinais são geralmente mais planejadas"
+                ]
+            }
+        }
+    )
+
+
+class PersonalizedRecommendation(BaseModel):
+    """Schema for personalized AI recommendations."""
+    
+    id: str = Field(..., description="Recommendation ID")
+    title: str = Field(..., description="Recommendation title")
+    description: str = Field(..., description="Detailed description")
+    category: str = Field(..., description="Recommendation category")
+    priority: str = Field(..., description="Priority (low, medium, high, urgent)")
+    potential_impact: Decimal = Field(..., description="Potential monthly impact")
+    implementation_steps: List[str] = Field(..., description="Step-by-step implementation")
+    difficulty: str = Field(..., description="Implementation difficulty")
+    estimated_time: str = Field(..., description="Time to implement")
+    success_probability: float = Field(..., ge=0, le=100, description="Success probability")
+    related_goals: List[str] = Field(default_factory=list, description="Related goal IDs")
+    ai_confidence: float = Field(..., ge=0, le=1, description="AI confidence in recommendation")
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "id": "rec_001",
+                "title": "Otimize Gastos com Streaming",
+                "description": "Você tem 4 assinaturas de streaming. Consolidar para 2 pode economizar R$ 60/mês",
+                "category": "Entretenimento",
+                "priority": "medium",
+                "potential_impact": 60.00,
+                "implementation_steps": [
+                    "Revise quais serviços você realmente usa",
+                    "Cancele assinaturas menos utilizadas",
+                    "Considere planos família para economia"
+                ],
+                "difficulty": "easy",
+                "estimated_time": "30 minutos",
+                "success_probability": 92.0,
+                "related_goals": ["goal_001"],
+                "ai_confidence": 0.89
+            }
+        }
+    )
+
+
+class MonthlyAIReport(BaseModel):
+    """Schema for monthly AI-generated report."""
+    
+    report_id: str = Field(..., description="Report ID")
+    reference_month: str = Field(..., description="Month reference (YYYY-MM)")
+    generated_at: datetime = Field(..., description="Report generation timestamp")
+    
+    # Summary
+    executive_summary: str = Field(..., description="Executive summary in natural language")
+    health_score: int = Field(..., ge=0, le=100, description="Monthly health score")
+    health_score_change: int = Field(..., description="Change from previous month")
+    
+    # Financial metrics
+    income_total: Decimal = Field(..., description="Total income")
+    expense_total: Decimal = Field(..., description="Total expenses")
+    savings_total: Decimal = Field(..., description="Total savings")
+    savings_rate: float = Field(..., description="Savings rate percentage")
+    
+    # Insights
+    key_insights: List[str] = Field(..., description="Key insights from AI analysis")
+    achievements: List[str] = Field(..., description="Financial achievements this month")
+    areas_for_improvement: List[str] = Field(..., description="Areas needing attention")
+    
+    # Predictions
+    next_month_prediction: CashFlowPrediction = Field(..., description="Next month prediction")
+    
+    # Recommendations
+    top_recommendations: List[PersonalizedRecommendation] = Field(..., description="Top recommendations")
+    
+    # Goals progress
+    goals_progress: List[Dict[str, Any]] = Field(..., description="Progress on financial goals")
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "report_id": "report_202501",
+                "reference_month": "2025-01",
+                "generated_at": "2025-02-01T00:00:00Z",
+                "executive_summary": "Excelente mês! Você economizou 25% da sua renda e reduziu gastos com alimentação em 12%.",
+                "health_score": 82,
+                "health_score_change": 7,
+                "income_total": 5000.00,
+                "expense_total": 3750.00,
+                "savings_total": 1250.00,
+                "savings_rate": 25.0,
+                "key_insights": [
+                    "Gastos com transporte diminuíram 15% após uso de transporte público",
+                    "Receitas extras aumentaram seu saldo em R$ 500"
+                ],
+                "achievements": [
+                    "Meta de poupança mensal atingida",
+                    "Orçamento de alimentação respeitado"
+                ],
+                "areas_for_improvement": [
+                    "Gastos com lazer aumentaram 20%",
+                    "Compras impulsivas detectadas"
+                ],
+                "next_month_prediction": {},
+                "top_recommendations": [],
+                "goals_progress": [
+                    {
+                        "goal_name": "Reserva de Emergência",
+                        "progress": 45.0,
+                        "on_track": True
+                    }
+                ]
+            }
+        }
+    )
+
+
+class AIFeedback(BaseModel):
+    """Schema for user feedback on AI recommendations."""
+    
+    feedback_type: str = Field(..., description="Type: recommendation, prediction, report")
+    item_id: str = Field(..., description="ID of the item being rated")
+    rating: int = Field(..., ge=1, le=5, description="Rating 1-5")
+    was_helpful: bool = Field(..., description="Whether it was helpful")
+    was_implemented: Optional[bool] = Field(None, description="Whether user implemented suggestion")
+    comments: Optional[str] = Field(None, description="User comments")
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "feedback_type": "recommendation",
+                "item_id": "rec_001",
+                "rating": 5,
+                "was_helpful": True,
+                "was_implemented": True,
+                "comments": "Ótima sugestão! Já cancelei 2 assinaturas."
+            }
+        }
+    )
+
+
+class AdvancedDashboard(BaseModel):
+    """Schema for advanced AI dashboard data."""
+    
+    # Core metrics
+    health_score: int = Field(..., ge=0, le=100, description="Financial health score")
+    health_label: str = Field(..., description="Health label")
+    risk_level: str = Field(..., description="Risk level")
+    monthly_trend: str = Field(..., description="Trend direction")
+    
+    # Advanced metrics
+    advanced_metrics: AdvancedMetrics = Field(..., description="Advanced financial metrics")
+    
+    # Predictions
+    cash_flow_predictions: List[CashFlowPrediction] = Field(..., description="3, 6, 12 month predictions")
+    seasonal_patterns: List[SeasonalPattern] = Field(default_factory=list, description="Seasonal patterns")
+    anomalies: List[AnomalyDetection] = Field(default_factory=list, description="Recent anomalies")
+    
+    # Patterns
+    spending_patterns: List[SpendingPattern] = Field(..., description="Spending patterns")
+    pattern_analysis: PatternAnalysisAdvanced = Field(..., description="Advanced pattern analysis")
+    
+    # Recommendations
+    recommendations: List[PersonalizedRecommendation] = Field(..., description="Top recommendations")
+    
+    # Goals
+    goal_projections: List[GoalProjection] = Field(default_factory=list, description="Goal projections")
+    
+    # Savings
+    savings_projection: Dict[str, Dict[str, Decimal]] = Field(..., description="Savings projections")
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "health_score": 78,
+                "health_label": "Boa",
+                "risk_level": "Baixo",
+                "monthly_trend": "Positiva",
+                "advanced_metrics": {},
+                "cash_flow_predictions": [],
+                "seasonal_patterns": [],
+                "anomalies": [],
+                "spending_patterns": [],
+                "pattern_analysis": {},
+                "recommendations": [],
+                "goal_projections": [],
+                "savings_projection": {}
+            }
+        }
+    )

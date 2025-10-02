@@ -1,6 +1,6 @@
-import { FinancialReportsEnhanced } from "@/components/financial-reports-enhanced"
-import { MainNavigation } from "@/components/main-navigation"
-import { RouteGuard } from "@/components/route-guard"
+import { ReportsPageModular } from "@/components/reports/reports-page-modular";
+import { MainNavigation } from "@/components/main-navigation";
+import { RouteGuard } from "@/components/route-guard";
 
 export default function ReportsPage() {
   return (
@@ -8,19 +8,10 @@ export default function ReportsPage() {
       <div className="min-h-screen bg-background">
         <MainNavigation />
 
-        <main id="main-content" className="container mx-auto px-4 py-8">
-          <div className="space-y-8">
-            <header className="space-y-4">
-              <h1 className="text-3xl font-bold text-foreground">Relatórios Financeiros</h1>
-              <p className="text-lg text-muted-foreground">
-                Visualize e analise suas finanças através de gráficos e tabelas detalhadas
-              </p>
-            </header>
-
-            <FinancialReportsEnhanced />
-          </div>
+        <main id="main-content">
+          <ReportsPageModular />
         </main>
       </div>
     </RouteGuard>
-  )
+  );
 }

@@ -182,12 +182,8 @@ class BaseRepository(Generic[ModelType]):
         
         instance = self.model(**kwargs)
         self.db.add(instance)
-        await self.db.flush()
-        await self.db.refresh(instance)
-        await self.db.commit()  # Commit the transaction
-        
-        # Refresh the instance after commit to ensure it's still attached
-        await self.db.refresh(instance)
+        await self.db.flush()  # Flush to get the ID
+        await self.db.refresh(instance)  # Refresh to load any default values
         
         logger.info(
             "Record created",

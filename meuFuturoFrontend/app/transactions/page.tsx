@@ -1,6 +1,6 @@
-import { TransactionsPage } from "@/components/transactions/transactions-page"
-import { MainNavigation } from "@/components/main-navigation"
-import { RouteGuard } from "@/components/route-guard"
+import { TransactionsPageModular } from "@/components/transactions/transactions-page-modular";
+import { MainNavigation } from "@/components/main-navigation";
+import { RouteGuard } from "@/components/route-guard";
 
 export default function Transactions() {
   return (
@@ -9,9 +9,9 @@ export default function Transactions() {
         <MainNavigation />
 
         <main id="main-content" className="container mx-auto px-4 py-8">
-          <TransactionsPage />
+          <TransactionsPageModular />
         </main>
       </div>
     </RouteGuard>
-  )
+  );
 }
