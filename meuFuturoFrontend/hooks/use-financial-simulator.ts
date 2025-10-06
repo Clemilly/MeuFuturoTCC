@@ -52,10 +52,7 @@ export const useFinancialSimulator = (): UseFinancialSimulatorReturn => {
       setLoading(true)
       setError(null)
 
-      const response = await apiService.post<SimulationResult>(
-        '/ai-predictions/simulations',
-        simulation
-      )
+      const response = await apiService.runFinancialSimulation(simulation)
 
       if (response.error) {
         setError(response.error)
@@ -84,4 +81,5 @@ export const useFinancialSimulator = (): UseFinancialSimulatorReturn => {
     clearResult,
   }
 }
+
 

@@ -138,8 +138,8 @@ class AIService:
             monthly_trend=health_score["trend"],
             predictions=predictions,
             savings_projection=savings_projection,
-            spending_patterns=spending_patterns,
-            recommendations=recommendations,
+            spending_patterns=[pattern.dict() for pattern in spending_patterns],
+            recommendations=[rec.dict() for rec in recommendations],
         )
     
     async def _generate_savings_projection(
@@ -337,6 +337,9 @@ class AIService:
                 score += 10
             elif expense_ratio > 1.2:
                 score -= 20
+        else:
+            # No income - penalize heavily
+            score -= 30
         
         # Savings rate (0-25 points)
         if summary["total_income"] > 0:
@@ -349,6 +352,9 @@ class AIService:
                 score += 5
             else:
                 score -= 15
+        else:
+            # No income - penalize
+            score -= 15
         
         # Transaction consistency (0-15 points)
         expected_transactions = 30  # Rough estimate for 6 months
@@ -504,16 +510,16 @@ class AIService:
         
         return {
             "conservative": {
-                "six_months": monthly_net * 6 * Decimal("0.8"),
-                "one_year": monthly_net * 12 * Decimal("0.8"),
+                "six_months": float(Decimal(str(monthly_net)) * 6 * Decimal("0.8")),
+                "one_year": float(Decimal(str(monthly_net)) * 12 * Decimal("0.8")),
             },
             "moderate": {
-                "six_months": monthly_net * 6,
-                "one_year": monthly_net * 12,
+                "six_months": float(Decimal(str(monthly_net)) * 6),
+                "one_year": float(Decimal(str(monthly_net)) * 12),
             },
             "optimistic": {
-                "six_months": monthly_net * 6 * Decimal("1.2"),
-                "one_year": monthly_net * 12 * Decimal("1.2"),
+                "six_months": float(Decimal(str(monthly_net)) * 6 * Decimal("1.2")),
+                "one_year": float(Decimal(str(monthly_net)) * 12 * Decimal("1.2")),
             },
         }
     

@@ -425,3 +425,6 @@ Ajude a melhorar a IA:
 5. Tome decisões financeiras mais inteligentes!
 
 **Dúvidas?** Consulte `IMPLEMENTACAO_IA_FINANCEIRA_COMPLETA.md` para detalhes técnicos.
+
+
+

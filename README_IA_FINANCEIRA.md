@@ -563,3 +563,6 @@ Depois (3 meses):
 Desenvolvido com ❤️ usando FastAPI, Next.js e Scikit-learn
 
 </div>
+
+
+

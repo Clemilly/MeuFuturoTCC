@@ -667,3 +667,6 @@ Uma tela de IA financeira completa, moderna e funcional que:
 **Data de Criação**: 02/10/2025
 **Versão**: 1.0.0
 **Status**: Backend Completo | Frontend Hooks Completos | Componentes Pendentes
+
+
+

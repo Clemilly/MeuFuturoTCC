@@ -26,9 +26,7 @@ export const usePatternAnalysis = (): UsePatternAnalysisReturn => {
 
   const fetchPatterns = useCallback(async () => {
     try {
-      const response = await apiService.get<PatternAnalysisAdvanced>(
-        '/ai-predictions/patterns/advanced'
-      )
+      const response = await apiService.getAdvancedPatterns()
 
       if (response.error) {
         throw new Error(response.error)
@@ -43,9 +41,7 @@ export const usePatternAnalysis = (): UsePatternAnalysisReturn => {
 
   const fetchSeasonal = useCallback(async () => {
     try {
-      const response = await apiService.get<SeasonalPattern[]>(
-        '/ai-predictions/patterns/seasonal'
-      )
+      const response = await apiService.getSeasonalPatterns()
 
       if (response.error) {
         throw new Error(response.error)
@@ -60,9 +56,7 @@ export const usePatternAnalysis = (): UsePatternAnalysisReturn => {
 
   const fetchAnomalies = useCallback(async (days: number = 30) => {
     try {
-      const response = await apiService.get<AnomalyDetection[]>(
-        `/ai-predictions/anomalies?days=${days}`
-      )
+      const response = await apiService.detectAnomalies()
 
       if (response.error) {
         throw new Error(response.error)
@@ -106,4 +100,5 @@ export const usePatternAnalysis = (): UsePatternAnalysisReturn => {
     fetchAnomalies,
   }
 }
+
 

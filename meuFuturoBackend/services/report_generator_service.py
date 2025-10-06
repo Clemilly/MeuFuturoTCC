@@ -64,8 +64,10 @@ class ReportGeneratorService:
             end_date = date(year, month + 1, 1) - timedelta(days=1)
         
         # Get transactions for the month
-        transactions = await self.transaction_repo.get_by_date_range(
+        transactions = await self.transaction_repo.get_user_transactions(
             user_id=user_id,
+            skip=0,
+            limit=1000,
             start_date=start_date,
             end_date=end_date
         )
@@ -513,4 +515,7 @@ class ReportGeneratorService:
             self.logger.warning("error_getting_goals_progress", error=str(e))
         
         return progress_list
+
+
+
 

@@ -190,3 +190,6 @@ O componente `<Cell>` era usado para aplicar cores individualmente, mas:
 ---
 
 **FIM DA DOCUMENTAÇÃO DE CORREÇÃO**
+
+
+

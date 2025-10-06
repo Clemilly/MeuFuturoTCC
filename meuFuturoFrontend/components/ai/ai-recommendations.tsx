@@ -134,20 +134,32 @@ export function AIRecommendations() {
                     Impacto Potencial
                   </p>
                   <p className="text-xl font-bold text-green-600">
-                    +R$ {rec.potential_impact.toFixed(2)}/mês
+                    +R${" "}
+                    {typeof rec.potential_impact === "number"
+                      ? rec.potential_impact.toFixed(2)
+                      : "0.00"}
+                    /mês
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-muted-foreground">Confiança IA</p>
                   <p className="text-xl font-bold">
-                    {(rec.ai_confidence * 100).toFixed(0)}%
+                    {typeof rec.ai_confidence === "number"
+                      ? (rec.ai_confidence * 100).toFixed(0)
+                      : "0"}
+                    %
                   </p>
                 </div>
               </div>
               <div>
                 <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                   <span>Confiança da IA</span>
-                  <span>{(rec.ai_confidence * 100).toFixed(0)}%</span>
+                  <span>
+                    {typeof rec.ai_confidence === "number"
+                      ? (rec.ai_confidence * 100).toFixed(0)
+                      : "0"}
+                    %
+                  </span>
                 </div>
                 <Progress value={rec.ai_confidence * 100} />
               </div>
@@ -180,7 +192,10 @@ export function AIRecommendations() {
                       <div>
                         <p className="text-sm font-medium">Impacto Mensal</p>
                         <p className="text-2xl font-bold text-green-600">
-                          +R$ {rec.potential_impact.toFixed(2)}
+                          +R${" "}
+                          {typeof rec.potential_impact === "number"
+                            ? rec.potential_impact.toFixed(2)
+                            : "0.00"}
                         </p>
                       </div>
                       <div>
@@ -188,7 +203,10 @@ export function AIRecommendations() {
                           Probabilidade de Sucesso
                         </p>
                         <p className="text-2xl font-bold">
-                          {rec.success_probability.toFixed(0)}%
+                          {typeof rec.success_probability === "number"
+                            ? rec.success_probability.toFixed(0)
+                            : "0"}
+                          %
                         </p>
                       </div>
                     </div>

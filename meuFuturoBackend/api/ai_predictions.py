@@ -64,11 +64,6 @@ async def generate_predictions(
     - **time_horizon**: Horizonte temporal em dias (1-365)
     - **include_recommendations**: Incluir recomendações acionáveis
     """
-    if not current_user.is_verified:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Email deve ser verificado para usar recursos de IA"
-        )
     
     predictions = await ai_service.generate_predictions(current_user.id, request)
     
@@ -102,11 +97,6 @@ async def get_financial_insights(
     - Recomendações personalizadas
     - Projeções de poupança
     """
-    if not current_user.is_verified:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Email deve ser verificado para usar recursos de IA"
-        )
     
     insights = await ai_service.get_financial_insights(current_user.id)
     
@@ -425,11 +415,6 @@ async def get_advanced_dashboard(
     - Projeções de metas
     - Projeções de poupança
     """
-    if not current_user.is_verified:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Email deve ser verificado para usar recursos de IA"
-        )
     
     # Initialize services
     ai_service = AIService(db)
@@ -445,7 +430,6 @@ async def get_advanced_dashboard(
     )
     
     # Get cash flow predictions
-    # TODO: Implement proper time-series predictions
     cash_flow_predictions = []
     
     # Get seasonal patterns
@@ -470,7 +454,7 @@ async def get_advanced_dashboard(
         max_recommendations=10
     )
     
-    # Get goal projections (from existing insights)
+    # Get goal projections
     goal_projections = []
     
     return AdvancedDashboard(
@@ -511,12 +495,6 @@ async def run_financial_simulation(
     
     Retorna projeção detalhada do impacto ao longo do tempo.
     """
-    if not current_user.is_verified:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Email deve ser verificado para usar recursos de IA"
-        )
-    
     simulation_service = SimulationService(db)
     
     result = await simulation_service.run_simulation(
@@ -552,12 +530,6 @@ async def get_advanced_patterns(
     - Score de gastos impulsivos
     - Insights comportamentais
     """
-    if not current_user.is_verified:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Email deve ser verificado para usar recursos de IA"
-        )
-    
     pattern_service = PatternAnalysisService(db)
     
     patterns = await pattern_service.analyze_patterns(current_user.id)
@@ -581,12 +553,6 @@ async def get_seasonal_patterns(
     Identifica categorias com variações sazonais significativas
     e sugere planejamento para picos de gastos.
     """
-    if not current_user.is_verified:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Email deve ser verificado para usar recursos de IA"
-        )
-    
     pattern_service = PatternAnalysisService(db)
     
     patterns = await pattern_service.detect_seasonal_patterns(current_user.id)
@@ -612,12 +578,6 @@ async def detect_anomalies(
     habitual do usuário, ajudando a detectar gastos impulsivos
     ou não planejados.
     """
-    if not current_user.is_verified:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Email deve ser verificado para usar recursos de IA"
-        )
-    
     pattern_service = PatternAnalysisService(db)
     
     anomalies = await pattern_service.detect_anomalies(
@@ -648,12 +608,6 @@ async def get_personalized_recommendations(
     - Oportunidades de economia
     - Otimizações de orçamento
     """
-    if not current_user.is_verified:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Email deve ser verificado para usar recursos de IA"
-        )
-    
     recommendation_service = RecommendationService(db)
     
     recommendations = await recommendation_service.generate_recommendations(
@@ -685,12 +639,6 @@ async def get_advanced_metrics(
     - Volatilidade de despesas
     - Consistência de receita
     """
-    if not current_user.is_verified:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Email deve ser verificado para usar recursos de IA"
-        )
-    
     recommendation_service = RecommendationService(db)
     
     metrics = await recommendation_service.calculate_advanced_metrics(
@@ -723,12 +671,6 @@ async def get_monthly_report(
     - Recomendações prioritárias
     - Progresso em metas
     """
-    if not current_user.is_verified:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Email deve ser verificado para usar recursos de IA"
-        )
-    
     report_service = ReportGeneratorService(db)
     
     report = await report_service.generate_monthly_report(

@@ -697,6 +697,58 @@ class ApiService {
   async getEnhancedFinancialOverview(): Promise<ApiResponse<FinancialOverview>> {
     return this.request('/financial/overview')
   }
+
+  // Generic GET method for AI endpoints
+  async get<T = any>(endpoint: string): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint)
+  }
+
+  // AI Predictions endpoints
+  async getAdvancedDashboard(): Promise<ApiResponse<any>> {
+    return this.request('/ai-predictions/dashboard/advanced')
+  }
+
+  async getFinancialInsights(): Promise<ApiResponse<any>> {
+    return this.request('/ai-predictions/insights')
+  }
+
+  async runFinancialSimulation(simulation: any): Promise<ApiResponse<any>> {
+    return this.request('/ai-predictions/simulations', {
+      method: 'POST',
+      body: JSON.stringify(simulation),
+    })
+  }
+
+  async getAdvancedPatterns(): Promise<ApiResponse<any>> {
+    return this.request('/ai-predictions/patterns/advanced')
+  }
+
+  async getSeasonalPatterns(): Promise<ApiResponse<any>> {
+    return this.request('/ai-predictions/patterns/seasonal')
+  }
+
+  async detectAnomalies(): Promise<ApiResponse<any>> {
+    return this.request('/ai-predictions/anomalies')
+  }
+
+  async getPersonalizedRecommendations(): Promise<ApiResponse<any>> {
+    return this.request('/ai-predictions/recommendations/personalized')
+  }
+
+  async getAdvancedMetrics(): Promise<ApiResponse<any>> {
+    return this.request('/ai-predictions/metrics/advanced')
+  }
+
+  async getMonthlyAIReport(): Promise<ApiResponse<any>> {
+    return this.request('/ai-predictions/reports/monthly')
+  }
+
+  async submitAIFeedback(feedback: any): Promise<ApiResponse<any>> {
+    return this.request('/ai-predictions/feedback', {
+      method: 'POST',
+      body: JSON.stringify(feedback),
+    })
+  }
 }
 
 export const apiService = new ApiService()

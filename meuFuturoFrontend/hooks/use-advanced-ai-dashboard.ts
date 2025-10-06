@@ -109,9 +109,7 @@ export const useAdvancedAIDashboard = (): UseAdvancedAIDashboardReturn => {
       setLoading(true)
       setError(null)
 
-      const response = await apiService.get<AdvancedDashboard>(
-        '/ai-predictions/dashboard/advanced'
-      )
+      const response = await apiService.getAdvancedDashboard()
 
       if (response.error) {
         setError(response.error)
@@ -138,4 +136,5 @@ export const useAdvancedAIDashboard = (): UseAdvancedAIDashboardReturn => {
     refresh: fetchDashboard,
   }
 }
+
 

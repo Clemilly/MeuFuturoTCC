@@ -231,7 +231,10 @@ export function AdvancedAIDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {dashboard.advanced_metrics.savings_rate.toFixed(1)}%
+              {typeof dashboard.advanced_metrics.savings_rate === "number"
+                ? dashboard.advanced_metrics.savings_rate.toFixed(1)
+                : "0.0"}
+              %
             </div>
             <div className="flex items-center justify-between mt-2">
               <p className="text-xs text-muted-foreground">
@@ -301,9 +304,12 @@ export function AdvancedAIDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {(dashboard.advanced_metrics.stability_index * 100).toFixed(
-                    0
-                  )}
+                  {typeof dashboard.advanced_metrics.stability_index ===
+                  "number"
+                    ? (
+                        dashboard.advanced_metrics.stability_index * 100
+                      ).toFixed(0)
+                    : "0"}
                   %
                 </div>
                 <Progress
@@ -372,7 +378,11 @@ export function AdvancedAIDashboard() {
                         <span>Picos: {pattern.peak_months.join(", ")}</span>
                         <span>•</span>
                         <span>
-                          Variação: {pattern.average_variation.toFixed(1)}%
+                          Variação:{" "}
+                          {typeof pattern.average_variation === "number"
+                            ? pattern.average_variation.toFixed(1)
+                            : "0.0"}
+                          %
                         </span>
                       </div>
                     </div>
@@ -410,11 +420,20 @@ export function AdvancedAIDashboard() {
                               : "secondary"
                           }
                         >
-                          Score: {(anomaly.anomaly_score * 100).toFixed(0)}%
+                          Score:{" "}
+                          {typeof anomaly.anomaly_score === "number"
+                            ? (anomaly.anomaly_score * 100).toFixed(0)
+                            : "0"}
+                          %
                         </Badge>
                       </AlertTitle>
                       <AlertDescription>
-                        <p className="mb-2">R$ {anomaly.amount.toFixed(2)}</p>
+                        <p className="mb-2">
+                          R${" "}
+                          {typeof anomaly.amount === "number"
+                            ? anomaly.amount.toFixed(2)
+                            : "0.00"}
+                        </p>
                         <p className="text-xs">{anomaly.suggestion}</p>
                       </AlertDescription>
                     </Alert>
@@ -472,10 +491,19 @@ export function AdvancedAIDashboard() {
                     </p>
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-semibold text-green-600">
-                        +R$ {rec.potential_impact.toFixed(2)}/mês
+                        +R${" "}
+                        {(typeof rec.potential_impact === "number"
+                          ? rec.potential_impact
+                          : 0
+                        ).toFixed(2)}
+                        /mês
                       </span>
                       <span className="text-muted-foreground">
-                        Confiança: {(rec.ai_confidence * 100).toFixed(0)}%
+                        Confiança:{" "}
+                        {typeof rec.ai_confidence === "number"
+                          ? (rec.ai_confidence * 100).toFixed(0)
+                          : "0"}
+                        %
                       </span>
                     </div>
                     <Progress
@@ -520,13 +548,19 @@ export function AdvancedAIDashboard() {
                             6 meses:
                           </span>
                           <span className="font-medium">
-                            R$ {values.six_months?.toFixed(2) || "0.00"}
+                            R${" "}
+                            {typeof values.six_months === "number"
+                              ? values.six_months.toFixed(2)
+                              : "0.00"}
                           </span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">1 ano:</span>
                           <span className="font-medium">
-                            R$ {values.one_year?.toFixed(2) || "0.00"}
+                            R${" "}
+                            {typeof values.one_year === "number"
+                              ? values.one_year.toFixed(2)
+                              : "0.00"}
                           </span>
                         </div>
                       </div>

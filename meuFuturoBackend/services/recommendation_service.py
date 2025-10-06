@@ -56,13 +56,15 @@ class RecommendationService:
         end_date = date.today()
         start_date = end_date - timedelta(days=90)
         
-        transactions = await self.transaction_repo.get_by_date_range(
+        transactions = await self.transaction_repo.get_user_transactions(
             user_id=user_id,
+            skip=0,
+            limit=1000,  # Get all transactions for the period
             start_date=start_date,
             end_date=end_date
         )
         
-        goals = await self.goal_repo.get_all(user_id=user_id)
+        goals = await self.goal_repo.get_user_goals(user_id)
         
         # Generate different types of recommendations
         
@@ -123,8 +125,10 @@ class RecommendationService:
         end_date = date.today()
         start_date = end_date - timedelta(days=180)
         
-        transactions = await self.transaction_repo.get_by_date_range(
+        transactions = await self.transaction_repo.get_user_transactions(
             user_id=user_id,
+            skip=0,
+            limit=1000,  # Get all transactions for the period
             start_date=start_date,
             end_date=end_date
         )

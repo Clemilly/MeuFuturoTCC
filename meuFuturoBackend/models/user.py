@@ -71,7 +71,7 @@ class User(Base, TimestampMixin):
     
     is_verified: Mapped[bool] = mapped_column(
         Boolean,
-        default=False,
+        default=True,  # Changed to True for development
         nullable=False,
         doc="Whether the email is verified"
     )

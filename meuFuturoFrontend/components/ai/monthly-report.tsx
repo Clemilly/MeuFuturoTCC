@@ -161,7 +161,10 @@ export function MonthlyReport() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-green-600">
-              R$ {report.income_total.toFixed(2)}
+              R${" "}
+              {typeof report.income_total === "number"
+                ? report.income_total.toFixed(2)
+                : "0.00"}
             </p>
           </CardContent>
         </Card>
@@ -172,7 +175,10 @@ export function MonthlyReport() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-red-600">
-              R$ {report.expense_total.toFixed(2)}
+              R${" "}
+              {typeof report.expense_total === "number"
+                ? report.expense_total.toFixed(2)
+                : "0.00"}
             </p>
           </CardContent>
         </Card>
@@ -183,7 +189,10 @@ export function MonthlyReport() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-blue-600">
-              R$ {report.savings_total.toFixed(2)}
+              R${" "}
+              {typeof report.savings_total === "number"
+                ? report.savings_total.toFixed(2)
+                : "0.00"}
             </p>
           </CardContent>
         </Card>
@@ -196,7 +205,10 @@ export function MonthlyReport() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">
-              {report.savings_rate.toFixed(1)}%
+              {typeof report.savings_rate === "number"
+                ? report.savings_rate.toFixed(1)
+                : "0.0"}
+              %
             </p>
           </CardContent>
         </Card>
@@ -297,7 +309,10 @@ export function MonthlyReport() {
                     <span className="font-medium">{goal.goal_name}</span>
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-muted-foreground">
-                        {goal.progress.toFixed(1)}%
+                        {typeof goal.progress === "number"
+                          ? goal.progress.toFixed(1)
+                          : "0.0"}
+                        %
                       </span>
                       <Badge
                         variant={goal.on_track ? "default" : "destructive"}
@@ -327,7 +342,11 @@ export function MonthlyReport() {
                   Receita Prevista
                 </p>
                 <p className="text-xl font-bold">
-                  R$ {report.next_month_prediction.predicted_income.toFixed(2)}
+                  R${" "}
+                  {typeof report.next_month_prediction.predicted_income ===
+                  "number"
+                    ? report.next_month_prediction.predicted_income.toFixed(2)
+                    : "0.00"}
                 </p>
               </div>
               <div>
@@ -336,13 +355,20 @@ export function MonthlyReport() {
                 </p>
                 <p className="text-xl font-bold">
                   R${" "}
-                  {report.next_month_prediction.predicted_expenses.toFixed(2)}
+                  {typeof report.next_month_prediction.predicted_expenses ===
+                  "number"
+                    ? report.next_month_prediction.predicted_expenses.toFixed(2)
+                    : "0.00"}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Saldo Previsto</p>
                 <p className="text-xl font-bold">
-                  R$ {report.next_month_prediction.predicted_balance.toFixed(2)}
+                  R${" "}
+                  {typeof report.next_month_prediction.predicted_balance ===
+                  "number"
+                    ? report.next_month_prediction.predicted_balance.toFixed(2)
+                    : "0.00"}
                 </p>
               </div>
             </div>
@@ -373,7 +399,10 @@ export function MonthlyReport() {
                 className="flex-1"
               />
               <span className="text-sm font-medium">
-                {(report.next_month_prediction.confidence * 100).toFixed(0)}%
+                {typeof report.next_month_prediction.confidence === "number"
+                  ? (report.next_month_prediction.confidence * 100).toFixed(0)
+                  : "0"}
+                %
               </span>
             </div>
           </CardContent>

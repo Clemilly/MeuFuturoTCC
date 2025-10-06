@@ -56,9 +56,7 @@ export const useMonthlyAIReport = (): UseMonthlyAIReportReturn => {
         return
       }
 
-      const response = await apiService.get<MonthlyAIReport>(
-        `/ai-predictions/reports/monthly?month=${month}`
-      )
+      const response = await apiService.getMonthlyAIReport()
 
       if (response.error) {
         setError(response.error)
@@ -81,4 +79,5 @@ export const useMonthlyAIReport = (): UseMonthlyAIReportReturn => {
     fetchReport,
   }
 }
+
 

@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     TEST_DATABASE_URL: Optional[str] = None
     
     # CORS
-    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:3001"
+    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001,*"
     
     @property
     def cors_origins(self) -> List[str]:

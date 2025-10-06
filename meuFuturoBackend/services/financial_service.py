@@ -161,11 +161,11 @@ class FinancialService:
         # Prepare filter parameters
         filter_params = {}
         if filters:
-            print(f"🔍 DEBUG: Processing filters: {filters}")
+            print(f"DEBUG: Processing filters: {filters}")
             if filters.type:
                 filter_params["transaction_type"] = filters.type
             if filters.category_id:
-                print(f"🔍 DEBUG: Category filter found: {filters.category_id}")
+                print(f"DEBUG: Category filter found: {filters.category_id}")
                 filter_params["category_id"] = filters.category_id
             if filters.start_date:
                 filter_params["start_date"] = filters.start_date
@@ -178,7 +178,7 @@ class FinancialService:
             if filters.search:
                 filter_params["search"] = filters.search
         
-        print(f"🔍 DEBUG: Final filter_params: {filter_params}")
+        print(f"DEBUG: Final filter_params: {filter_params}")
         
         # Get transactions and count
         transactions = await self.transaction_repo.get_user_transactions(

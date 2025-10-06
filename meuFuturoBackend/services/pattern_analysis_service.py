@@ -46,8 +46,10 @@ class PatternAnalysisService:
         end_date = date.today()
         start_date = end_date - timedelta(days=365)
         
-        transactions = await self.transaction_repo.get_by_date_range(
+        transactions = await self.transaction_repo.get_user_transactions(
             user_id=user_id,
+            skip=0,
+            limit=1000,
             start_date=start_date,
             end_date=end_date
         )
@@ -102,8 +104,10 @@ class PatternAnalysisService:
         end_date = date.today()
         start_date = end_date - timedelta(days=730)
         
-        transactions = await self.transaction_repo.get_by_date_range(
+        transactions = await self.transaction_repo.get_user_transactions(
             user_id=user_id,
+            skip=0,
+            limit=1000,
             start_date=start_date,
             end_date=end_date
         )
@@ -177,16 +181,20 @@ class PatternAnalysisService:
         end_date = date.today()
         start_date = end_date - timedelta(days=days)
         
-        recent_transactions = await self.transaction_repo.get_by_date_range(
+        recent_transactions = await self.transaction_repo.get_user_transactions(
             user_id=user_id,
+            skip=0,
+            limit=1000,
             start_date=start_date,
             end_date=end_date
         )
         
         # Get historical data for baseline
         historical_start = start_date - timedelta(days=180)
-        historical_transactions = await self.transaction_repo.get_by_date_range(
+        historical_transactions = await self.transaction_repo.get_user_transactions(
             user_id=user_id,
+            skip=0,
+            limit=1000,
             start_date=historical_start,
             end_date=start_date
         )
@@ -474,4 +482,7 @@ class PatternAnalysisService:
             f"Este gasto está {percentage:.0f}% acima do seu padrão habitual "
             f"em {category}. Foi planejado?"
         )
+
+
+
 

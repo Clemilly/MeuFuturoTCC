@@ -16,6 +16,7 @@ from core.config import settings
 from core.logging import configure_logging, get_logger
 from core.exceptions import MeuFuturoException
 from core.rate_limiting import check_rate_limit, get_rate_limit_headers
+from core.constants import Environment
 from api.auth import router as auth_router
 from api.financial import router as financial_router
 from api.ai_predictions import router as ai_router
@@ -43,9 +44,9 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -209,7 +210,7 @@ app.include_router(
 
 app.include_router(
     ai_router,
-    prefix=f"{settings.API_V1_PREFIX}/ai",
+    prefix=f"{settings.API_V1_PREFIX}/ai-predictions",
     tags=["AI Insights"],
 )
 

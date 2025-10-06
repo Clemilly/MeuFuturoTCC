@@ -25,9 +25,7 @@ export const useAIRecommendations = (maxCount: number = 5): UseAIRecommendations
       setLoading(true)
       setError(null)
 
-      const response = await apiService.get<PersonalizedRecommendation[]>(
-        `/ai-predictions/recommendations/personalized?max_count=${maxCount}`
-      )
+      const response = await apiService.getPersonalizedRecommendations()
 
       if (response.error) {
         setError(response.error)
@@ -60,7 +58,7 @@ export const useAIRecommendations = (maxCount: number = 5): UseAIRecommendations
         comments,
       }
 
-      const response = await apiService.post('/ai-predictions/feedback', feedback)
+      const response = await apiService.submitAIFeedback(feedback)
 
       if (response.error) {
         console.error('Error submitting feedback:', response.error)
@@ -82,4 +80,5 @@ export const useAIRecommendations = (maxCount: number = 5): UseAIRecommendations
     submitFeedback,
   }
 }
+
 

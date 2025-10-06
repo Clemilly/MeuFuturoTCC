@@ -93,8 +93,10 @@ class SimulationService:
         end_date = date.today()
         start_date = end_date - timedelta(days=180)
         
-        transactions = await self.transaction_repo.get_by_date_range(
+        transactions = await self.transaction_repo.get_user_transactions(
             user_id=user_id,
+            skip=0,
+            limit=1000,
             start_date=start_date,
             end_date=end_date
         )
@@ -223,4 +225,7 @@ class SimulationService:
             "percentage_improvement": round(percentage_improvement, 2),
             "better_outcome": balance_diff > 0,
         }
+
+
+
 
