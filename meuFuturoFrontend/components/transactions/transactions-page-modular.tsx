@@ -15,8 +15,9 @@ import { TransactionModals } from "./transaction-modals";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { RefreshCw, Plus, AlertCircle } from "lucide-react";
+import { MaterialIcon } from "@/lib/material-icons";
 import type { ModalState, Transaction } from "@/lib/types";
+import { CreateCategoryModal } from "@/components/categories/CreateCategoryModal";
 
 const initialModalState: ModalState = {
   isCreateOpen: false,
@@ -50,6 +51,7 @@ export function TransactionsPageModular() {
 
   // Estado local apenas para modals (UI state)
   const [modals, setModals] = useState<ModalState>(initialModalState);
+  const [isCreateCategoryOpen, setIsCreateCategoryOpen] = useState(false);
 
   // Modal handlers
   const openCreateModal = () => {
@@ -101,6 +103,13 @@ export function TransactionsPageModular() {
     });
   };
 
+  const handleCategoryCreated = () => {
+    console.log("✅ Category created successfully");
+    setIsCreateCategoryOpen(false);
+    // Refresh categories list
+    window.location.reload(); // Simple refresh for now
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <div className="container mx-auto px-4 py-6 space-y-6">
@@ -121,13 +130,24 @@ export function TransactionsPageModular() {
                   onClick={refresh}
                   disabled={loading}
                 >
-                  <RefreshCw
-                    className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+                  <MaterialIcon 
+                    name="refresh" 
+                    size={16} 
+                    className={`mr-2 ${loading ? "animate-spin" : ""}`}
+                    aria-label="Atualizar"
                   />
                   Atualizar
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsCreateCategoryOpen(true)}
+                >
+                  <MaterialIcon name="folder-plus" size={16} className="mr-2" aria-label="Nova categoria" />
+                  Nova Categoria
+                </Button>
                 <Button size="sm" onClick={openCreateModal}>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <MaterialIcon name="plus" size={16} className="mr-2" aria-label="Nova transação" />
                   Nova Transação
                 </Button>
               </div>
@@ -138,7 +158,7 @@ export function TransactionsPageModular() {
         {/* Error alert */}
         {error && (
           <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
+            <MaterialIcon name="alert-circle" size={16} aria-label="Erro" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -181,6 +201,13 @@ export function TransactionsPageModular() {
           categories={categories}
           loading={loading}
           categoriesLoading={categoriesLoading}
+        />
+
+        {/* Create Category Modal */}
+        <CreateCategoryModal
+          isOpen={isCreateCategoryOpen}
+          onClose={() => setIsCreateCategoryOpen(false)}
+          onSuccess={handleCategoryCreated}
         />
       </div>
     </div>

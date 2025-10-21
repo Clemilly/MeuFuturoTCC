@@ -10,19 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  Bell,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  DollarSign,
-  Calendar,
-  Settings,
-  Plus,
-  Trash2,
-  BellRing,
-  Edit,
-} from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useToast } from "@/hooks/use-toast"
+import { useAlerts, type Alert, type AlertCreate, type NotificationSettings } from "@/hooks/use-alerts"
+import { MaterialIcon, IconAccessibility } from "@/lib/material-icons"
 
 interface Alert {
   id: number
@@ -46,62 +37,18 @@ interface NotificationSettings {
 }
 
 export function AlertsAndNotifications() {
-  const [alerts, setAlerts] = useState<Alert[]>([
-    {
-      id: 1,
-      type: "bill",
-      title: "Conta de Internet",
-      description: "Vencimento em 3 dias",
-      amount: 89.9,
-      dueDate: "2025-01-27",
-      priority: "high",
-      status: "active",
-      recurring: true,
-      createdAt: "2025-01-20",
-    },
-    {
-      id: 2,
-      type: "goal",
-      title: "Meta de Poupança",
-      description: "Você está 85% próximo da sua meta mensal!",
-      priority: "medium",
-      status: "active",
-      recurring: false,
-      createdAt: "2025-01-22",
-    },
-    {
-      id: 3,
-      type: "budget",
-      title: "Orçamento de Alimentação",
-      description: "Você já gastou 90% do orçamento mensal com alimentação",
-      priority: "medium",
-      status: "active",
-      recurring: false,
-      createdAt: "2025-01-23",
-    },
-    {
-      id: 4,
-      type: "bill",
-      title: "Cartão de Crédito",
-      description: "Fatura vence em 7 dias",
-      amount: 1250.0,
-      dueDate: "2025-01-31",
-      priority: "high",
-      status: "active",
-      recurring: true,
-      createdAt: "2025-01-18",
-    },
-    {
-      id: 5,
-      type: "custom",
-      title: "Revisão Financeira Mensal",
-      description: "Hora de revisar seus gastos e metas do mês",
-      priority: "low",
-      status: "active",
-      recurring: true,
-      createdAt: "2025-01-15",
-    },
-  ])
+  const { toast } = useToast()
+  const {
+    alerts,
+    loading,
+    error,
+    createAlert,
+    updateAlert,
+    deleteAlert,
+    dismissAlert,
+    completeAlert,
+    generateSmartAlerts,
+  } = useAlerts()
 
   const [settings, setSettings] = useState<NotificationSettings>({
     billReminders: true,
@@ -111,18 +58,19 @@ export function AlertsAndNotifications() {
     reminderDays: 3,
   })
 
-  const [newAlert, setNewAlert] = useState({
-    type: "custom" as Alert["type"],
+  const [newAlert, setNewAlert] = useState<AlertCreate>({
+    type: "custom",
     title: "",
     description: "",
-    amount: "",
-    dueDate: "",
-    priority: "medium" as Alert["priority"],
-    recurring: false,
+    amount: undefined,
+    due_date: undefined,
+    priority: "medium",
+    is_recurring: false,
   })
 
   const [showNewAlertForm, setShowNewAlertForm] = useState(false)
   const [editingAlert, setEditingAlert] = useState<Alert | null>(null)
+  const [errors, setErrors] = useState<Partial<AlertCreate>>({})
 
   // Load settings from localStorage
   useEffect(() => {
@@ -148,7 +96,8 @@ export function AlertsAndNotifications() {
     return new Date(dateString).toLocaleDateString("pt-BR")
   }
 
-  const getDaysUntilDue = (dueDate: string) => {
+  const getDaysUntilDue = (dueDate?: string) => {
+    if (!dueDate) return 0
     const today = new Date()
     const due = new Date(dueDate)
     const diffTime = due.getTime() - today.getTime()
@@ -172,46 +121,64 @@ export function AlertsAndNotifications() {
   const getPriorityIcon = (priority: Alert["priority"]) => {
     switch (priority) {
       case "high":
-        return <AlertTriangle className="h-4 w-4 text-red-600" />
+        return <MaterialIcon name="alert-triangle" size={16} className="text-red-600" aria-label="Alta prioridade" />
       case "medium":
-        return <Clock className="h-4 w-4 text-yellow-600" />
+        return <MaterialIcon name="clock" size={16} className="text-yellow-600" aria-label="Média prioridade" />
       case "low":
-        return <Bell className="h-4 w-4 text-blue-600" />
+        return <MaterialIcon name="bell" size={16} className="text-blue-600" aria-label="Baixa prioridade" />
       default:
-        return <Bell className="h-4 w-4" />
+        return <MaterialIcon name="bell" size={16} aria-label="Prioridade padrão" />
     }
   }
 
   const getTypeIcon = (type: Alert["type"]) => {
     switch (type) {
       case "bill":
-        return <DollarSign className="h-4 w-4" />
+        return <MaterialIcon name="dollar-sign" size={16} aria-label="Conta a pagar" />
       case "goal":
-        return <CheckCircle className="h-4 w-4" />
+        return <MaterialIcon name="check-circle" size={16} aria-label="Meta financeira" />
       case "budget":
-        return <AlertTriangle className="h-4 w-4" />
+        return <MaterialIcon name="chart" size={16} aria-label="Orçamento" />
       case "income":
-        return <DollarSign className="h-4 w-4" />
+        return <MaterialIcon name="trending-up" size={16} aria-label="Receita" />
       case "custom":
-        return <Bell className="h-4 w-4" />
+        return <MaterialIcon name="bell" size={16} aria-label="Alerta personalizado" />
       default:
-        return <Bell className="h-4 w-4" />
+        return <MaterialIcon name="bell" size={16} aria-label="Alerta" />
     }
   }
 
-  const dismissAlert = (id: number) => {
-    setAlerts((prev) => prev.map((alert) => (alert.id === id ? { ...alert, status: "dismissed" } : alert)))
-    announceToScreenReader("Alerta dispensado")
+  const handleDismissAlert = async (id: string) => {
+    const success = await dismissAlert(id)
+    if (success) {
+      toast({
+        title: "Sucesso",
+        description: "Alerta dispensado com sucesso",
+      })
+      announceToScreenReader("Alerta dispensado")
+    }
   }
 
-  const completeAlert = (id: number) => {
-    setAlerts((prev) => prev.map((alert) => (alert.id === id ? { ...alert, status: "completed" } : alert)))
-    announceToScreenReader("Alerta marcado como concluído")
+  const handleCompleteAlert = async (id: string) => {
+    const success = await completeAlert(id)
+    if (success) {
+      toast({
+        title: "Sucesso",
+        description: "Alerta marcado como concluído",
+      })
+      announceToScreenReader("Alerta marcado como concluído")
+    }
   }
 
-  const deleteAlert = (id: number) => {
-    setAlerts((prev) => prev.filter((alert) => alert.id !== id))
-    announceToScreenReader("Alerta excluído")
+  const handleDeleteAlert = async (id: string) => {
+    const success = await deleteAlert(id)
+    if (success) {
+      toast({
+        title: "Sucesso",
+        description: "Alerta excluído com sucesso",
+      })
+      announceToScreenReader("Alerta excluído")
+    }
   }
 
   const editAlert = (alert: Alert) => {
@@ -220,49 +187,66 @@ export function AlertsAndNotifications() {
       type: alert.type,
       title: alert.title,
       description: alert.description,
-      amount: alert.amount?.toString() || "",
-      dueDate: alert.dueDate || "",
+      amount: alert.amount,
+      due_date: alert.due_date,
       priority: alert.priority,
-      recurring: alert.recurring,
+      is_recurring: alert.is_recurring,
     })
     setShowNewAlertForm(true)
   }
 
-  const addNewAlert = () => {
-    if (!newAlert.title.trim()) return
+  const validateForm = (): boolean => {
+    const newErrors: Partial<AlertCreate> = {}
+
+    if (!newAlert.title.trim()) {
+      newErrors.title = "Título é obrigatório"
+    }
+
+    if (newAlert.amount !== undefined && newAlert.amount <= 0) {
+      newErrors.amount = "Valor deve ser maior que zero"
+    }
+
+    if (newAlert.due_date && new Date(newAlert.due_date) < new Date()) {
+      newErrors.due_date = "Data não pode ser no passado"
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const addNewAlert = async () => {
+    if (!validateForm()) return
+
+    const alertData: AlertCreate = {
+      type: newAlert.type,
+      title: newAlert.title.trim(),
+      description: newAlert.description.trim(),
+      amount: newAlert.amount,
+      due_date: newAlert.due_date,
+      priority: newAlert.priority,
+      is_recurring: newAlert.is_recurring,
+    }
 
     if (editingAlert) {
       // Update existing alert
-      const updatedAlert: Alert = {
-        ...editingAlert,
-        type: newAlert.type,
-        title: newAlert.title,
-        description: newAlert.description,
-        amount: newAlert.amount ? Number.parseFloat(newAlert.amount) : undefined,
-        dueDate: newAlert.dueDate || undefined,
-        priority: newAlert.priority,
-        recurring: newAlert.recurring,
+      const success = await updateAlert(editingAlert.id, alertData)
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: "Alerta atualizado com sucesso",
+        })
+        announceToScreenReader("Alerta atualizado com sucesso")
       }
-
-      setAlerts((prev) => prev.map((alert) => (alert.id === editingAlert.id ? updatedAlert : alert)))
-      announceToScreenReader("Alerta atualizado com sucesso")
     } else {
       // Create new alert
-      const alert: Alert = {
-        id: Date.now(),
-        type: newAlert.type,
-        title: newAlert.title,
-        description: newAlert.description,
-        amount: newAlert.amount ? Number.parseFloat(newAlert.amount) : undefined,
-        dueDate: newAlert.dueDate || undefined,
-        priority: newAlert.priority,
-        status: "active",
-        recurring: newAlert.recurring,
-        createdAt: new Date().toISOString(),
+      const success = await createAlert(alertData)
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: "Novo alerta criado com sucesso",
+        })
+        announceToScreenReader("Novo alerta criado com sucesso")
       }
-
-      setAlerts((prev) => [alert, ...prev])
-      announceToScreenReader("Novo alerta criado com sucesso")
     }
 
     // Reset form
@@ -270,13 +254,14 @@ export function AlertsAndNotifications() {
       type: "custom",
       title: "",
       description: "",
-      amount: "",
-      dueDate: "",
+      amount: undefined,
+      due_date: undefined,
       priority: "medium",
-      recurring: false,
+      is_recurring: false,
     })
     setEditingAlert(null)
     setShowNewAlertForm(false)
+    setErrors({})
   }
 
   const announceToScreenReader = (message: string) => {
@@ -292,20 +277,28 @@ export function AlertsAndNotifications() {
   const activeAlerts = alerts.filter((alert) => alert.status === "active")
   const urgentAlerts = activeAlerts.filter((alert) => alert.priority === "high")
   const upcomingBills = activeAlerts.filter(
-    (alert) => alert.type === "bill" && alert.dueDate && getDaysUntilDue(alert.dueDate) <= 7,
+    (alert) => alert.type === "bill" && alert.due_date && getDaysUntilDue(alert.due_date) <= 7,
   )
 
   return (
     <div className="space-y-8">
-      {/* Resumo de Alertas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Error Alert */}
+        {error && (
+          <Alert variant="destructive">
+            <MaterialIcon name="alert-circle" size={16} aria-label="Erro" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Resumo de Alertas */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Alertas Ativos</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-2">
-              <BellRing className="h-5 w-5 text-primary" />
+              <MaterialIcon name="bell-ring" size={20} className="text-primary" aria-label="Notificações" />
               <span className="text-2xl font-bold">{activeAlerts.length}</span>
             </div>
           </CardContent>
@@ -317,7 +310,7 @@ export function AlertsAndNotifications() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-2">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
+              <MaterialIcon name="alert-triangle" size={20} className="text-red-600" aria-label="Alertas urgentes" />
               <span className="text-2xl font-bold text-red-600">{urgentAlerts.length}</span>
             </div>
           </CardContent>
@@ -329,7 +322,7 @@ export function AlertsAndNotifications() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-2">
-              <Calendar className="h-5 w-5 text-yellow-600" />
+              <MaterialIcon name="calendar" size={20} className="text-yellow-600" aria-label="Contas próximas" />
               <span className="text-2xl font-bold text-yellow-600">{upcomingBills.length}</span>
             </div>
           </CardContent>
@@ -349,7 +342,7 @@ export function AlertsAndNotifications() {
           {activeAlerts.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
-                <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-600" />
+                <MaterialIcon name="check-circle" size={48} className="mx-auto mb-4 text-green-600" aria-label="Nenhum alerta ativo" />
                 <h3 className="text-lg font-semibold mb-2">Nenhum alerta ativo</h3>
                 <p className="text-muted-foreground">Você está em dia com todas as suas obrigações financeiras!</p>
               </CardContent>
@@ -369,9 +362,9 @@ export function AlertsAndNotifications() {
                         <p className="text-sm text-muted-foreground">{alert.description}</p>
                         <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                           {alert.amount && <span>Valor: {formatCurrency(alert.amount)}</span>}
-                          {alert.dueDate && (
+                          {alert.due_date && (
                             <span>
-                              Vence em: {getDaysUntilDue(alert.dueDate)} dias ({formatDate(alert.dueDate)})
+                              Vence em: {getDaysUntilDue(alert.due_date)} dias ({formatDate(alert.due_date)})
                             </span>
                           )}
                           <Badge variant="outline" className="text-xs">
@@ -381,7 +374,7 @@ export function AlertsAndNotifications() {
                             {alert.type === "income" && "Receita"}
                             {alert.type === "custom" && "Personalizado"}
                           </Badge>
-                          {alert.recurring && <Badge variant="secondary">Recorrente</Badge>}
+                          {alert.is_recurring && <Badge variant="secondary">Recorrente</Badge>}
                         </div>
                       </div>
                     </div>
@@ -391,10 +384,11 @@ export function AlertsAndNotifications() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => completeAlert(alert.id)}
+                          onClick={() => handleCompleteAlert(alert.id)}
                           aria-label={`Marcar ${alert.title} como pago`}
+                          disabled={loading}
                         >
-                          <CheckCircle className="h-4 w-4" />
+                          <MaterialIcon name="check-circle" size={16} aria-label="Marcar como concluído" />
                         </Button>
                       )}
                       <Button
@@ -402,24 +396,27 @@ export function AlertsAndNotifications() {
                         size="sm"
                         onClick={() => editAlert(alert)}
                         aria-label={`Editar alerta ${alert.title}`}
+                        disabled={loading}
                       >
-                        <Edit className="h-4 w-4" />
+                        <MaterialIcon name="edit" size={16} aria-label="Editar" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => dismissAlert(alert.id)}
+                        onClick={() => handleDismissAlert(alert.id)}
                         aria-label={`Dispensar alerta ${alert.title}`}
+                        disabled={loading}
                       >
-                        <Bell className="h-4 w-4" />
+                        <MaterialIcon name="bell" size={16} aria-label="Dispensar" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => deleteAlert(alert.id)}
+                        onClick={() => handleDeleteAlert(alert.id)}
                         aria-label={`Excluir alerta ${alert.title}`}
+                        disabled={loading}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <MaterialIcon name="trash" size={16} aria-label="Excluir" />
                       </Button>
                     </div>
                   </div>
@@ -462,7 +459,7 @@ export function AlertsAndNotifications() {
                           {alert.status === "completed" && "Concluído"}
                           {alert.status === "dismissed" && "Dispensado"}
                         </Badge>
-                        <span>Criado em: {formatDate(alert.createdAt)}</span>
+                        <span>Criado em: {formatDate(alert.created_at)}</span>
                       </div>
                     </div>
                   </div>
@@ -477,7 +474,7 @@ export function AlertsAndNotifications() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Settings className="h-5 w-5" />
+                <MaterialIcon name="settings" size={20} aria-label="Configurações" />
                 <span>Configurações de Notificação</span>
               </CardTitle>
             </CardHeader>
@@ -568,7 +565,7 @@ export function AlertsAndNotifications() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Plus className="h-5 w-5" />
+                <MaterialIcon name="plus" size={20} aria-label="Adicionar" />
                 <span>{editingAlert ? "Editar Alerta" : "Criar Novo Alerta"}</span>
               </CardTitle>
             </CardHeader>
@@ -617,8 +614,16 @@ export function AlertsAndNotifications() {
                   id="alert-title"
                   placeholder="Ex: Conta de luz"
                   value={newAlert.title}
-                  onChange={(e) => setNewAlert((prev) => ({ ...prev, title: e.target.value }))}
+                  onChange={(e) => {
+                    setNewAlert((prev) => ({ ...prev, title: e.target.value }))
+                    if (errors.title) {
+                      setErrors(prev => ({ ...prev, title: undefined }))
+                    }
+                  }}
                 />
+                {errors.title && (
+                  <p className="text-sm text-red-600">{errors.title}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -640,9 +645,18 @@ export function AlertsAndNotifications() {
                     type="number"
                     step="0.01"
                     placeholder="0,00"
-                    value={newAlert.amount}
-                    onChange={(e) => setNewAlert((prev) => ({ ...prev, amount: e.target.value }))}
+                    value={newAlert.amount || ""}
+                    onChange={(e) => {
+                      const value = e.target.value ? parseFloat(e.target.value) : undefined
+                      setNewAlert((prev) => ({ ...prev, amount: value }))
+                      if (errors.amount) {
+                        setErrors(prev => ({ ...prev, amount: undefined }))
+                      }
+                    }}
                   />
+                  {errors.amount && (
+                    <p className="text-sm text-red-600">{errors.amount}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -650,24 +664,32 @@ export function AlertsAndNotifications() {
                   <Input
                     id="alert-date"
                     type="date"
-                    value={newAlert.dueDate}
-                    onChange={(e) => setNewAlert((prev) => ({ ...prev, dueDate: e.target.value }))}
+                    value={newAlert.due_date || ""}
+                    onChange={(e) => {
+                      setNewAlert((prev) => ({ ...prev, due_date: e.target.value || undefined }))
+                      if (errors.due_date) {
+                        setErrors(prev => ({ ...prev, due_date: undefined }))
+                      }
+                    }}
                   />
+                  {errors.due_date && (
+                    <p className="text-sm text-red-600">{errors.due_date}</p>
+                  )}
                 </div>
               </div>
 
               <div className="flex items-center space-x-2">
                 <Switch
                   id="alert-recurring"
-                  checked={newAlert.recurring}
-                  onCheckedChange={(checked) => setNewAlert((prev) => ({ ...prev, recurring: checked }))}
+                  checked={newAlert.is_recurring}
+                  onCheckedChange={(checked) => setNewAlert((prev) => ({ ...prev, is_recurring: checked }))}
                 />
                 <Label htmlFor="alert-recurring">Alerta recorrente</Label>
               </div>
 
               <div className="flex space-x-2">
-                <Button onClick={addNewAlert} disabled={!newAlert.title.trim()}>
-                  <Plus className="h-4 w-4 mr-2" />
+                <Button onClick={addNewAlert} disabled={!newAlert.title.trim() || loading}>
+                  <MaterialIcon name="plus" size={16} className="mr-2" aria-label="Adicionar" />
                   {editingAlert ? "Atualizar Alerta" : "Criar Alerta"}
                 </Button>
                 <Button
@@ -677,14 +699,16 @@ export function AlertsAndNotifications() {
                       type: "custom",
                       title: "",
                       description: "",
-                      amount: "",
-                      dueDate: "",
+                      amount: undefined,
+                      due_date: undefined,
                       priority: "medium",
-                      recurring: false,
+                      is_recurring: false,
                     })
                     setEditingAlert(null)
                     setShowNewAlertForm(false)
+                    setErrors({})
                   }}
+                  disabled={loading}
                 >
                   {editingAlert ? "Cancelar" : "Limpar"}
                 </Button>

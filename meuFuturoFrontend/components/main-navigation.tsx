@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Home, PlusCircle, BarChart3, Brain, Bell, Menu, X, Shield, LogOut, User, Info, Settings } from "lucide-react"
+import { MaterialIcon } from "@/lib/material-icons"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
@@ -16,14 +16,14 @@ export function MainNavigation() {
   const { user, logout } = useAuth()
 
   const navigationItems = [
-    { icon: Home, label: "Visão Geral", href: "/" },
-    { icon: PlusCircle, label: "Transações", href: "/transactions" },
-    { icon: BarChart3, label: "Relatórios", href: "/reports" },
-    { icon: Brain, label: "IA Financeira", href: "/ai-insights" },
-    { icon: Bell, label: "Alertas", href: "/alerts" },
-    { icon: Shield, label: "Segurança", href: "/security" },
-    { icon: User, label: "Perfil", href: "/profile" },
-    { icon: Info, label: "Sobre", href: "/about" },
+    { icon: "home", label: "Visão Geral", href: "/" },
+    { icon: "plus-circle", label: "Transações", href: "/transactions" },
+    { icon: "bar-chart-3", label: "Relatórios", href: "/reports" },
+    { icon: "brain", label: "IA Financeira", href: "/ai-insights" },
+    { icon: "bell", label: "Alertas", href: "/alerts" },
+    { icon: "shield", label: "Segurança", href: "/security" },
+    { icon: "user", label: "Perfil", href: "/profile" },
+    { icon: "info", label: "Sobre", href: "/about" },
   ]
 
   const handleLogout = () => {
@@ -32,7 +32,7 @@ export function MainNavigation() {
   }
 
   return (
-    <nav className="bg-card border-b border-border sticky top-0 z-50 w-full" role="navigation" aria-label="Navegação principal">
+    <nav id="navigation" className="bg-card border-b border-border sticky top-0 z-50 w-full" role="navigation" aria-label="Navegação principal">
       <div className="w-full px-2 sm:px-4 lg:px-6">
         <div className="flex items-center justify-between h-16 min-w-0">
           <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
@@ -52,7 +52,12 @@ export function MainNavigation() {
                     className="group flex items-center space-x-1 sm:space-x-2 relative whitespace-nowrap transition-all duration-300 ease-in-out hover:bg-accent/50 hover:scale-105 px-2 sm:px-3"
                     aria-current={isActive ? "page" : undefined}
                   >
-                    <item.icon className="w-4 h-4 flex-shrink-0 transition-transform duration-300 group-hover:scale-110" />
+                    <MaterialIcon 
+                      name={item.icon as any} 
+                      size={16} 
+                      className="flex-shrink-0 transition-transform duration-300 group-hover:scale-110" 
+                      aria-hidden="true"
+                    />
                     <span className="text-xs sm:text-sm transition-all duration-300 group-hover:text-foreground hidden xl:inline">
                       {item.label}
                     </span>
@@ -79,7 +84,7 @@ export function MainNavigation() {
                 aria-expanded={isAccessibilityMenuOpen}
                 aria-controls="accessibility-menu"
               >
-                <Settings className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />
+                <MaterialIcon name="settings" size={16} className="transition-transform duration-300 group-hover:scale-110" aria-hidden="true" />
                 <span className="text-xs sm:text-sm transition-all duration-300 group-hover:text-foreground hidden xl:inline">
                   Acessibilidade
                 </span>
@@ -92,7 +97,7 @@ export function MainNavigation() {
                 className="group flex items-center space-x-1 whitespace-nowrap transition-all duration-300 ease-in-out hover:bg-accent/50 hover:scale-105 px-2"
                 aria-label="Sair da conta"
               >
-                <LogOut className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />
+                <MaterialIcon name="log-out" size={16} className="transition-transform duration-300 group-hover:scale-110" aria-hidden="true" />
                 <span className="text-xs sm:text-sm transition-all duration-300 group-hover:text-foreground hidden xl:inline">
                   Sair
                 </span>
@@ -109,7 +114,7 @@ export function MainNavigation() {
               aria-controls="mobile-menu"
               aria-label="Abrir menu de navegação"
             >
-              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {isMobileMenuOpen ? <MaterialIcon name="close" size={20} aria-hidden="true" /> : <MaterialIcon name="menu" size={20} aria-hidden="true" />}
             </Button>
           </div>
         </div>
@@ -140,7 +145,7 @@ export function MainNavigation() {
                       aria-current={isActive ? "page" : undefined}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      <item.icon className="w-4 h-4" />
+                      <MaterialIcon name={item.icon as any} size={16} aria-hidden="true" />
                       <span>{item.label}</span>
                       {item.badge && item.badge > 0 && (
                         <Badge
@@ -166,7 +171,7 @@ export function MainNavigation() {
                   aria-expanded={isAccessibilityMenuOpen}
                   aria-controls="accessibility-menu"
                 >
-                  <Settings className="w-4 h-4" />
+                  <MaterialIcon name="settings" size={16} aria-hidden="true" />
                   <span>Configurações de Acessibilidade</span>
                 </Button>
                 
@@ -175,7 +180,7 @@ export function MainNavigation() {
                   className="w-full justify-start flex items-center space-x-2 text-destructive hover:text-destructive"
                   onClick={handleLogout}
                 >
-                  <LogOut className="w-4 h-4" />
+                  <MaterialIcon name="log-out" size={16} aria-hidden="true" />
                   <span>Sair da Conta</span>
                 </Button>
               </div>

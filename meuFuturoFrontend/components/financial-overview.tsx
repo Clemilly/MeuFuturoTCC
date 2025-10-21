@@ -4,20 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import {
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  PiggyBank,
-  PlusCircle,
-  BarChart3,
-  Target,
-  AlertTriangle,
-  Loader2,
-  CheckCircle,
-  Clock,
-  AlertCircle,
-} from "lucide-react"
+import { MaterialIcon } from "@/lib/material-icons"
 import { useFinancialOverview } from "@/hooks/use-financial-overview"
 import { useFinancialGoals } from "@/hooks/use-financial-goals"
 import { useFinancialAlerts } from "@/hooks/use-financial-alerts"
@@ -41,7 +28,7 @@ export function FinancialOverview() {
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
-              <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
+              <MaterialIcon name="alert-triangle" size={48} className="text-destructive mx-auto mb-4" aria-hidden="true" />
               <h3 className="text-lg font-semibold mb-2">Erro ao carregar dados</h3>
               <p className="text-muted-foreground mb-4">{error}</p>
               <Button onClick={refreshOverview} variant="outline">
@@ -88,11 +75,11 @@ export function FinancialOverview() {
   const getTrendIcon = (trend: string) => {
     switch (trend) {
       case "up":
-        return <TrendingUp className="h-4 w-4 text-green-600" />
+        return <MaterialIcon name="trending-up" size={16} className="text-green-600" aria-hidden="true" />
       case "down":
-        return <TrendingDown className="h-4 w-4 text-red-600" />
+        return <MaterialIcon name="trending-down" size={16} className="text-red-600" aria-hidden="true" />
       default:
-        return <BarChart3 className="h-4 w-4 text-gray-600" />
+        return <MaterialIcon name="bar-chart-3" size={16} className="text-gray-600" aria-hidden="true" />
     }
   }
 
@@ -112,13 +99,13 @@ export function FinancialOverview() {
   const getAlertIcon = (type: string) => {
     switch (type) {
       case "bill":
-        return <DollarSign className="h-4 w-4" />
+        return <MaterialIcon name="dollar-sign" size={16} aria-hidden="true" />
       case "goal":
-        return <Target className="h-4 w-4" />
+        return <MaterialIcon name="target" size={16} aria-hidden="true" />
       case "budget":
-        return <BarChart3 className="h-4 w-4" />
+        return <MaterialIcon name="bar-chart-3" size={16} aria-hidden="true" />
       default:
-        return <AlertCircle className="h-4 w-4" />
+        return <MaterialIcon name="alert-circle" size={16} aria-hidden="true" />
     }
   }
 
@@ -133,7 +120,7 @@ export function FinancialOverview() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Saldo Atual</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <MaterialIcon name="dollar-sign" size={16} className="text-muted-foreground" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(overview.current_balance || 0)}</div>
@@ -150,7 +137,7 @@ export function FinancialOverview() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Receitas do Mês</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
+            <MaterialIcon name="trending-up" size={16} className="text-green-600" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
@@ -169,7 +156,7 @@ export function FinancialOverview() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Despesas do Mês</CardTitle>
-            <TrendingDown className="h-4 w-4 text-red-600" />
+            <MaterialIcon name="trending-down" size={16} className="text-red-600" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
@@ -188,7 +175,7 @@ export function FinancialOverview() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Poupança</CardTitle>
-            <PiggyBank className="h-4 w-4 text-muted-foreground" />
+            <MaterialIcon name="piggy-bank" size={16} className="text-muted-foreground" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(overview.savings || 0)}</div>
@@ -205,7 +192,7 @@ export function FinancialOverview() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
+              <MaterialIcon name="bar-chart-3" size={20} aria-hidden="true" />
               Saúde Financeira
             </CardTitle>
           </CardHeader>
@@ -232,17 +219,17 @@ export function FinancialOverview() {
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5" />
+              <MaterialIcon name="target" size={20} aria-hidden="true" />
               Metas Financeiras
             </CardTitle>
           </CardHeader>
           <CardContent>
             {(overview.financial_goals || []).length === 0 ? (
               <div className="text-center py-8">
-                <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <MaterialIcon name="target" size={48} className="text-muted-foreground mx-auto mb-4" aria-hidden="true" />
                 <p className="text-muted-foreground mb-4">Nenhuma meta definida</p>
                 <Button size="sm" variant="outline">
-                  <PlusCircle className="h-4 w-4 mr-2" />
+                  <MaterialIcon name="plus-circle" size={16} className="mr-2" aria-hidden="true" />
                   Criar Meta
                 </Button>
               </div>
@@ -290,14 +277,14 @@ export function FinancialOverview() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
+              <MaterialIcon name="bar-chart-3" size={20} aria-hidden="true" />
               Transações Recentes
             </CardTitle>
           </CardHeader>
           <CardContent>
             {(overview.recent_transactions || []).length === 0 ? (
               <div className="text-center py-8">
-                <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <MaterialIcon name="bar-chart-3" size={48} className="text-muted-foreground mx-auto mb-4" aria-hidden="true" />
                 <p className="text-muted-foreground">Nenhuma transação recente</p>
               </div>
             ) : (
@@ -335,14 +322,14 @@ export function FinancialOverview() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
+              <MaterialIcon name="alert-triangle" size={20} aria-hidden="true" />
               Alertas Financeiros
             </CardTitle>
           </CardHeader>
           <CardContent>
             {(overview.alerts || []).length === 0 ? (
               <div className="text-center py-8">
-                <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                <MaterialIcon name="check-circle" size={48} className="text-green-600 mx-auto mb-4" aria-hidden="true" />
                 <p className="text-muted-foreground">Nenhum alerta ativo</p>
               </div>
             ) : (
@@ -362,7 +349,7 @@ export function FinancialOverview() {
                       <p className="text-xs text-muted-foreground">{alert.description}</p>
                       {alert.due_date && (
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3" />
+                          <MaterialIcon name="clock" size={12} aria-hidden="true" />
                           <span>
                             {alert.days_until_due !== undefined && alert.days_until_due > 0
                               ? `${alert.days_until_due} dias restantes`
@@ -391,7 +378,7 @@ export function FinancialOverview() {
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
+              <MaterialIcon name="bar-chart-3" size={20} aria-hidden="true" />
               Insights de IA
             </CardTitle>
           </CardHeader>
@@ -444,15 +431,15 @@ export function FinancialOverview() {
         <h3 className="text-lg font-semibold mb-4">Ações Rápidas</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Button className="h-20 flex flex-col gap-2">
-            <PlusCircle className="h-6 w-6" />
+            <MaterialIcon name="plus-circle" size={24} aria-hidden="true" />
             <span>Nova Transação</span>
           </Button>
           <Button variant="outline" className="h-20 flex flex-col gap-2">
-            <Target className="h-6 w-6" />
+            <MaterialIcon name="target" size={24} aria-hidden="true" />
             <span>Nova Meta</span>
           </Button>
           <Button variant="outline" className="h-20 flex flex-col gap-2">
-            <BarChart3 className="h-6 w-6" />
+            <MaterialIcon name="bar-chart-3" size={24} aria-hidden="true" />
             <span>Ver Relatórios</span>
           </Button>
         </div>

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { PlusCircle, DollarSign, Loader2, CheckCircle } from "lucide-react"
+import { MaterialIcon } from "@/lib/material-icons"
 import { apiService } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { CategoryCreationModal } from "@/components/category-creation-modal"
@@ -362,7 +362,7 @@ export function TransactionForm() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
-          <PlusCircle className="h-5 w-5" />
+          <MaterialIcon name="plus-circle" size={20} aria-hidden="true" />
           <span>Nova Transação</span>
         </CardTitle>
       </CardHeader>
@@ -403,7 +403,7 @@ export function TransactionForm() {
               </span>
             </Label>
             <div className="relative">
-              <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <MaterialIcon name="dollar-sign" size={16} className="absolute left-3 top-3 text-muted-foreground" aria-hidden="true" />
               <Input
                 id="amount"
                 type="number"
@@ -538,17 +538,17 @@ export function TransactionForm() {
           >
             {loading ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <MaterialIcon name="loading" size={16} className="mr-2 animate-spin" aria-hidden="true" />
                 Adicionando...
               </>
             ) : success ? (
               <>
-                <CheckCircle className="h-4 w-4 mr-2" />
+                <MaterialIcon name="check-circle" size={16} className="mr-2" aria-hidden="true" />
                 Adicionado!
               </>
             ) : (
               <>
-                <PlusCircle className="h-4 w-4 mr-2" />
+                <MaterialIcon name="plus-circle" size={16} className="mr-2" aria-hidden="true" />
                 Adicionar Transação
               </>
             )}

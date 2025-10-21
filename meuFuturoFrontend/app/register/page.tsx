@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Eye, EyeOff, Lock, Mail, User } from "lucide-react"
+import { MaterialIcon } from "@/lib/material-icons"
 import Link from "next/link"
 
 export default function RegisterPage() {
@@ -25,30 +25,108 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
+  const [errors, setErrors] = useState<{
+    name?: string;
+    email?: string;
+    password?: string;
+    confirmPassword?: string;
+  }>({})
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+    
+    // Real-time validation
+    let error: string | undefined
+    switch (name) {
+      case 'name':
+        error = validateName(value)
+        break
+      case 'email':
+        error = validateEmail(value)
+        break
+      case 'password':
+        error = validatePassword(value)
+        // Also validate confirm password if it exists
+        if (formData.confirmPassword) {
+          const confirmError = validateConfirmPassword(formData.confirmPassword, value)
+          setErrors(prev => ({ ...prev, confirmPassword: confirmError }))
+        }
+        break
+      case 'confirmPassword':
+        error = validateConfirmPassword(value, formData.password)
+        break
+    }
+    
+    setErrors(prev => ({ ...prev, [name]: error }))
+  }
+
+  const validateName = (name: string): string | undefined => {
+    if (!name.trim()) {
+      return "Nome é obrigatório"
+    }
+    if (name.trim().length < 2) {
+      return "Nome deve ter pelo menos 2 caracteres"
+    }
+    return undefined
+  }
+
+  const validateEmail = (email: string): string | undefined => {
+    if (!email.trim()) {
+      return "Email é obrigatório"
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return "Email deve ter um formato válido"
+    }
+    return undefined
+  }
+
+  const validatePassword = (password: string): string | undefined => {
+    if (!password.trim()) {
+      return "Senha é obrigatória"
+    }
+    if (password.length < 8) {
+      return "Senha deve ter pelo menos 8 caracteres"
+    }
+    if (!/(?=.*[a-z])/.test(password)) {
+      return "Senha deve conter pelo menos uma letra minúscula"
+    }
+    if (!/(?=.*[A-Z])/.test(password)) {
+      return "Senha deve conter pelo menos uma letra maiúscula"
+    }
+    if (!/(?=.*\d)/.test(password)) {
+      return "Senha deve conter pelo menos um número"
+    }
+    return undefined
+  }
+
+  const validateConfirmPassword = (confirmPassword: string, password: string): string | undefined => {
+    if (!confirmPassword.trim()) {
+      return "Confirmação de senha é obrigatória"
+    }
+    if (confirmPassword !== password) {
+      return "Senhas não coincidem"
+    }
+    return undefined
   }
 
   const validateForm = () => {
-    if (!formData.name.trim()) {
-      setError("Nome é obrigatório")
-      return false
+    const nameError = validateName(formData.name)
+    const emailError = validateEmail(formData.email)
+    const passwordError = validatePassword(formData.password)
+    const confirmPasswordError = validateConfirmPassword(formData.confirmPassword, formData.password)
+    
+    const newErrors = {
+      name: nameError,
+      email: emailError,
+      password: passwordError,
+      confirmPassword: confirmPasswordError,
     }
-    if (!formData.email.trim()) {
-      setError("Email é obrigatório")
-      return false
-    }
-    if (formData.password.length < 8) {
-      setError("Senha deve ter pelo menos 8 caracteres")
-      return false
-    }
-    if (formData.password !== formData.confirmPassword) {
-      setError("Senhas não coincidem")
-      return false
-    }
-    return true
+    
+    setErrors(newErrors)
+    
+    return !Object.values(newErrors).some(error => error !== undefined)
   }
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -120,7 +198,7 @@ export default function RegisterPage() {
               <div className="space-y-2">
                 <Label htmlFor="name">Nome Completo</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  <MaterialIcon name="user" size={16} className="absolute left-3 top-3 text-muted-foreground" aria-hidden="true" />
                   <Input
                     id="name"
                     name="name"
@@ -128,11 +206,14 @@ export default function RegisterPage() {
                     placeholder="Seu nome completo"
                     value={formData.name}
                     onChange={handleInputChange}
-                    className="pl-10"
+                    className={`pl-10 ${errors.name ? 'border-red-500' : ''}`}
                     required
                     aria-describedby="name-help"
                   />
                 </div>
+                {errors.name && (
+                  <p className="text-sm text-red-600">{errors.name}</p>
+                )}
                 <p id="name-help" className="text-sm text-muted-foreground sr-only">
                   Digite seu nome completo
                 </p>
@@ -141,7 +222,7 @@ export default function RegisterPage() {
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  <MaterialIcon name="mail" size={16} className="absolute left-3 top-3 text-muted-foreground" aria-hidden="true" />
                   <Input
                     id="email"
                     name="email"
@@ -149,11 +230,14 @@ export default function RegisterPage() {
                     placeholder="seu@email.com"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="pl-10"
+                    className={`pl-10 ${errors.email ? 'border-red-500' : ''}`}
                     required
                     aria-describedby="email-help"
                   />
                 </div>
+                {errors.email && (
+                  <p className="text-sm text-red-600">{errors.email}</p>
+                )}
                 <p id="email-help" className="text-sm text-muted-foreground sr-only">
                   Digite seu endereço de email
                 </p>
@@ -162,7 +246,7 @@ export default function RegisterPage() {
               <div className="space-y-2">
                 <Label htmlFor="password">Senha</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  <MaterialIcon name="lock" size={16} className="absolute left-3 top-3 text-muted-foreground" aria-hidden="true" />
                   <Input
                     id="password"
                     name="password"
@@ -170,7 +254,7 @@ export default function RegisterPage() {
                     placeholder="Mínimo 8 caracteres"
                     value={formData.password}
                     onChange={handleInputChange}
-                    className="pl-10 pr-10"
+                    className={`pl-10 pr-10 ${errors.password ? 'border-red-500' : ''}`}
                     required
                     minLength={8}
                     aria-describedby="password-help"
@@ -184,21 +268,24 @@ export default function RegisterPage() {
                     aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                   >
                     {showPassword ? (
-                      <EyeOff className="h-4 w-4" aria-hidden="true" />
+                      <MaterialIcon name="eye-off" size={16} aria-hidden="true" />
                     ) : (
-                      <Eye className="h-4 w-4" aria-hidden="true" />
+                      <MaterialIcon name="eye" size={16} aria-hidden="true" />
                     )}
                   </Button>
                 </div>
+                {errors.password && (
+                  <p className="text-sm text-red-600">{errors.password}</p>
+                )}
                 <p id="password-help" className="text-sm text-muted-foreground">
-                  A senha deve ter pelo menos 8 caracteres
+                  A senha deve ter pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas e números
                 </p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirmar Senha</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  <MaterialIcon name="lock" size={16} className="absolute left-3 top-3 text-muted-foreground" aria-hidden="true" />
                   <Input
                     id="confirmPassword"
                     name="confirmPassword"
@@ -206,7 +293,7 @@ export default function RegisterPage() {
                     placeholder="Digite a senha novamente"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
-                    className="pl-10 pr-10"
+                    className={`pl-10 pr-10 ${errors.confirmPassword ? 'border-red-500' : ''}`}
                     required
                     aria-describedby="confirm-password-help"
                   />
@@ -219,12 +306,15 @@ export default function RegisterPage() {
                     aria-label={showConfirmPassword ? "Ocultar confirmação de senha" : "Mostrar confirmação de senha"}
                   >
                     {showConfirmPassword ? (
-                      <EyeOff className="h-4 w-4" aria-hidden="true" />
+                      <MaterialIcon name="eye-off" size={16} aria-hidden="true" />
                     ) : (
-                      <Eye className="h-4 w-4" aria-hidden="true" />
+                      <MaterialIcon name="eye" size={16} aria-hidden="true" />
                     )}
                   </Button>
                 </div>
+                {errors.confirmPassword && (
+                  <p className="text-sm text-red-600">{errors.confirmPassword}</p>
+                )}
                 <p id="confirm-password-help" className="text-sm text-muted-foreground">
                   Repita a senha para confirmação
                 </p>

@@ -14,10 +14,8 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { MaterialIcon } from "@/lib/material-icons";
 import {
-  TrendingUp,
-  TrendingDown,
-  AlertTriangle,
   Target,
   Brain,
   Sparkles,
@@ -68,12 +66,12 @@ export function AdvancedAIDashboard() {
   if (error || !dashboard) {
     return (
       <Alert variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
+        <MaterialIcon name="alert-triangle" size={16} aria-hidden="true" />
         <AlertTitle>Erro ao carregar dashboard</AlertTitle>
         <AlertDescription className="flex items-center justify-between">
           <span>{error || "Não foi possível carregar os dados"}</span>
           <Button variant="outline" size="sm" onClick={refresh}>
-            <RefreshCw className="mr-2 h-4 w-4" />
+            <MaterialIcon name="refresh-cw" size={16} className="mr-2" aria-hidden="true" />
             Tentar novamente
           </Button>
         </AlertDescription>
@@ -111,10 +109,10 @@ export function AdvancedAIDashboard() {
 
   const getTrendIcon = (trend: string) => {
     if (trend.includes("Positiva") || trend.includes("melhor"))
-      return <TrendingUp className="h-5 w-5 text-green-500" />;
+      return <MaterialIcon name="trending-up" size={20} className="text-green-500" aria-hidden="true" />;
     if (trend.includes("Negativa") || trend.includes("pior"))
-      return <TrendingDown className="h-5 w-5 text-red-500" />;
-    return <Activity className="h-5 w-5 text-blue-500" />;
+      return <MaterialIcon name="trending-down" size={20} className="text-red-500" aria-hidden="true" />;
+    return <MaterialIcon name="activity" size={20} className="text-blue-500" aria-hidden="true" />;
   };
 
   // Prepare chart data
@@ -146,7 +144,7 @@ export function AdvancedAIDashboard() {
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={refresh}>
-          <RefreshCw className="mr-2 h-4 w-4" />
+          <MaterialIcon name="refresh-cw" size={16} className="mr-2" aria-hidden="true" />
           Atualizar
         </Button>
       </div>
@@ -159,7 +157,7 @@ export function AdvancedAIDashboard() {
             <CardTitle className="text-sm font-medium">
               Saúde Financeira
             </CardTitle>
-            <Brain className="h-4 w-4 text-muted-foreground" />
+            <MaterialIcon name="brain" size={16} className="text-muted-foreground" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div
@@ -184,7 +182,7 @@ export function AdvancedAIDashboard() {
             <CardTitle className="text-sm font-medium">
               Nível de Risco
             </CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            <MaterialIcon name="alert-triangle" size={16} className="text-muted-foreground" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <Badge
@@ -206,7 +204,7 @@ export function AdvancedAIDashboard() {
             <CardTitle className="text-sm font-medium">
               Tendência Mensal
             </CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <MaterialIcon name="activity" size={16} className="text-muted-foreground" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-2">
@@ -227,7 +225,7 @@ export function AdvancedAIDashboard() {
             <CardTitle className="text-sm font-medium">
               Taxa de Poupança
             </CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
+            <MaterialIcon name="target" size={16} className="text-muted-foreground" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -410,7 +408,7 @@ export function AdvancedAIDashboard() {
                         anomaly.anomaly_score > 0.7 ? "destructive" : "default"
                       }
                     >
-                      <AlertTriangle className="h-4 w-4" />
+                      <MaterialIcon name="alert-triangle" size={16} aria-hidden="true" />
                       <AlertTitle className="flex items-center justify-between">
                         <span>{anomaly.category}</span>
                         <Badge
@@ -454,7 +452,7 @@ export function AdvancedAIDashboard() {
                   {dashboard.pattern_analysis.behavioral_insights.map(
                     (insight, index) => (
                       <li key={index} className="flex items-start gap-2">
-                        <Sparkles className="h-4 w-4 mt-0.5 text-yellow-500 flex-shrink-0" />
+                        <MaterialIcon name="sparkles" size={16} className="mt-0.5 text-yellow-500 flex-shrink-0" aria-hidden="true" />
                         <span className="text-sm">{insight}</span>
                       </li>
                     )
@@ -516,7 +514,7 @@ export function AdvancedAIDashboard() {
             </div>
           ) : (
             <Alert>
-              <Sparkles className="h-4 w-4" />
+              <MaterialIcon name="sparkles" size={16} aria-hidden="true" />
               <AlertTitle>Nenhuma recomendação disponível</AlertTitle>
               <AlertDescription>
                 Continue registrando suas transações para receber recomendações

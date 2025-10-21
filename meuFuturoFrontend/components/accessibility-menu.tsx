@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
-import { Settings, Type, Contrast, Eye, Keyboard, Zap, RotateCcw, Info, X } from "lucide-react"
+import { MaterialIcon } from "@/lib/material-icons"
+import { saveAccessibilitySettings, loadAccessibilitySettings, clearAccessibilitySettings } from "@/lib/accessibility-storage"
 
 interface AccessibilitySettings {
   fontSize: number
@@ -41,25 +42,22 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
     }
   }, [])
 
-  // Load settings from localStorage on mount
+  // Load settings from storage on mount
   useEffect(() => {
     if (!isMounted.current) return
     
-    const savedSettings = localStorage.getItem("accessibility-settings")
-    if (savedSettings) {
-      const parsed = JSON.parse(savedSettings)
-      if (isMounted.current) {
-        setSettings(parsed)
-        applySettings(parsed)
-      }
+    const savedSettings = loadAccessibilitySettings()
+    if (savedSettings && isMounted.current) {
+      setSettings(savedSettings)
+      applySettings(savedSettings)
     }
   }, [])
 
-  // Save settings to localStorage whenever they change
+  // Save settings to storage whenever they change
   useEffect(() => {
     if (!isMounted.current) return
     
-    localStorage.setItem("accessibility-settings", JSON.stringify(settings))
+    saveAccessibilitySettings(settings)
     applySettings(settings)
   }, [settings])
 
@@ -67,42 +65,66 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
     const root = document.documentElement
     const body = document.body
 
-    // Apply font size
-    root.style.fontSize = `${newSettings.fontSize}px`
-
-    // Apply contrast settings
+    // Apply font size using data attribute for better cascade
+    root.setAttribute('data-font-size', newSettings.fontSize.toString())
+    
+    // Apply contrast settings - FIX: Remove conflicting classes first
     body.classList.remove("high-contrast", "dark", "normal-contrast")
+    root.removeAttribute('data-theme')
+    
     if (newSettings.contrast === "high") {
+      root.setAttribute('data-theme', 'high-contrast')
       body.classList.add("high-contrast")
     } else if (newSettings.contrast === "dark") {
+      root.setAttribute('data-theme', 'dark')
       body.classList.add("dark")
     } else {
+      root.setAttribute('data-theme', 'normal')
       body.classList.add("normal-contrast")
     }
 
-    // Apply reduced motion
+    // Apply reduced motion - Enhanced implementation
     if (newSettings.reducedMotion) {
-      root.style.setProperty("--animation-duration", "0s")
+      root.setAttribute('data-reduce-motion', 'true')
       body.classList.add("reduce-motion")
     } else {
-      root.style.removeProperty("--animation-duration")
+      root.removeAttribute('data-reduce-motion')
       body.classList.remove("reduce-motion")
     }
 
-    // Apply focus indicator enhancement
+    // Apply focus indicator enhancement - Enhanced visibility
     if (newSettings.focusIndicator) {
+      root.setAttribute('data-enhanced-focus', 'true')
       body.classList.add("enhanced-focus")
     } else {
+      root.removeAttribute('data-enhanced-focus')
       body.classList.remove("enhanced-focus")
     }
 
     // Apply keyboard navigation enhancements
     if (newSettings.keyboardNavigation) {
+      root.setAttribute('data-keyboard-nav', 'true')
       body.classList.add("keyboard-navigation")
     } else {
+      root.removeAttribute('data-keyboard-nav')
       body.classList.remove("keyboard-navigation")
     }
 
+    // Apply screen reader optimizations
+    if (newSettings.screenReader) {
+      root.setAttribute('data-screen-reader', 'true')
+      body.classList.add("screen-reader-optimized")
+    } else {
+      root.removeAttribute('data-screen-reader')
+      body.classList.remove("screen-reader-optimized")
+    }
+
+    // Sound feedback flag
+    if (newSettings.soundFeedback) {
+      root.setAttribute('data-sound-feedback', 'true')
+    } else {
+      root.removeAttribute('data-sound-feedback')
+    }
   }
 
   const updateSetting = <K extends keyof AccessibilitySettings>(key: K, value: AccessibilitySettings[K]) => {
@@ -115,21 +137,94 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
   }
 
   const playFeedbackSound = () => {
-    // Simple audio feedback using Web Audio API
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
-    const oscillator = audioContext.createOscillator()
-    const gainNode = audioContext.createGain()
+    if (typeof window === 'undefined') return
+    
+    try {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext
+      if (!AudioContext) return
 
-    oscillator.connect(gainNode)
-    gainNode.connect(audioContext.destination)
+      const audioContext = new AudioContext()
+      const oscillator = audioContext.createOscillator()
+      const gainNode = audioContext.createGain()
 
-    oscillator.frequency.setValueAtTime(800, audioContext.currentTime)
-    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime)
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1)
+      oscillator.connect(gainNode)
+      gainNode.connect(audioContext.destination)
 
-    oscillator.start(audioContext.currentTime)
-    oscillator.stop(audioContext.currentTime + 0.1)
+      oscillator.type = 'sine'
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime)
+      gainNode.gain.setValueAtTime(0.03, audioContext.currentTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.08)
+
+      oscillator.start(audioContext.currentTime)
+      oscillator.stop(audioContext.currentTime + 0.08)
+      
+      setTimeout(() => audioContext.close(), 200)
+    } catch (error) {
+      console.debug('Audio feedback not available:', error)
+    }
   }
+
+  // Adiciona suporte a atalhos de teclado
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Alt + A para abrir menu de acessibilidade
+      if (event.altKey && event.key === 'a') {
+        event.preventDefault()
+        if (onClose) {
+          // Se o menu está aberto, fecha; se fechado, abre
+          onClose()
+        }
+      }
+      
+      // Alt + S para pular para conteúdo principal
+      if (event.altKey && event.key === 's') {
+        event.preventDefault()
+        const main = document.querySelector('main')
+        if (main) {
+          main.focus()
+          main.scrollIntoView({ behavior: 'smooth' })
+        }
+      }
+      
+      // Alt + N para ir para navegação
+      if (event.altKey && event.key === 'n') {
+        event.preventDefault()
+        const nav = document.querySelector('nav')
+        if (nav) {
+          nav.focus()
+          nav.scrollIntoView({ behavior: 'smooth' })
+        }
+      }
+      
+      // Esc para fechar menus
+      if (event.key === 'Escape' && onClose) {
+        onClose()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
+  // Global sound feedback listener
+  useEffect(() => {
+    if (!settings.soundFeedback) return
+
+    const handleInteraction = (event: Event) => {
+      const target = event.target as HTMLElement
+      if (
+        target.tagName === 'BUTTON' ||
+        target.tagName === 'A' ||
+        target.closest('button') ||
+        target.closest('a')
+      ) {
+        playFeedbackSound()
+      }
+    }
+
+    document.addEventListener('click', handleInteraction)
+    return () => document.removeEventListener('click', handleInteraction)
+  }, [settings.soundFeedback])
 
   const resetSettings = () => {
     const defaultSettings: AccessibilitySettings = {
@@ -142,58 +237,79 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
       soundFeedback: false,
     }
     setSettings(defaultSettings)
-    localStorage.removeItem("accessibility-settings")
+    clearAccessibilitySettings()
   }
 
   const announceToScreenReader = (message: string) => {
     const announcement = document.createElement("div")
+    announcement.setAttribute("role", "status")
     announcement.setAttribute("aria-live", "polite")
     announcement.setAttribute("aria-atomic", "true")
     announcement.className = "sr-only"
     announcement.textContent = message
+    
     document.body.appendChild(announcement)
-    setTimeout(() => document.body.removeChild(announcement), 1000)
+    
+    setTimeout(() => {
+      if (document.body.contains(announcement)) {
+        document.body.removeChild(announcement)
+      }
+    }, 3000)
   }
 
   if (!isOpen) return null
 
   return (
-    <div className="p-4">
-          <Card id="accessibility-panel" className="mb-4">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Configurações de Acessibilidade</span>
-                <div className="flex items-center space-x-2">
+    <>
+      {/* Skip Links */}
+      <div className="skip-links">
+        <a href="#main-content" className="skip-link">
+          Pular para conteúdo principal
+        </a>
+        <a href="#navigation" className="skip-link">
+          Pular para navegação
+        </a>
+        <a href="#accessibility-panel" className="skip-link">
+          Pular para configurações de acessibilidade
+        </a>
+      </div>
+
+      <div className="p-4" role="region" aria-labelledby="accessibility-title">
+        <Card id="accessibility-panel" className="mb-4">
+          <CardHeader>
+            <CardTitle id="accessibility-title" className="flex items-center justify-between">
+              <span>Configurações de Acessibilidade</span>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    resetSettings()
+                    announceToScreenReader("Configurações de acessibilidade restauradas para o padrão")
+                  }}
+                  aria-label="Restaurar configurações padrão"
+                >
+                  <MaterialIcon name="rotate-ccw" size={16} className="mr-2" aria-hidden="true" />
+                  Restaurar Padrão
+                </Button>
+                {onClose && (
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      resetSettings()
-                      announceToScreenReader("Configurações de acessibilidade restauradas para o padrão")
-                    }}
-                    aria-label="Restaurar configurações padrão"
+                    onClick={onClose}
+                    aria-label="Fechar menu de acessibilidade"
                   >
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Restaurar Padrão
+                    <MaterialIcon name="close" size={16} aria-hidden="true" />
                   </Button>
-                  {onClose && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={onClose}
-                      aria-label="Fechar menu de acessibilidade"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-              </CardTitle>
-            </CardHeader>
+                )}
+              </div>
+            </CardTitle>
+          </CardHeader>
             <CardContent className="space-y-6">
               {/* Tamanho da Fonte */}
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
-                  <Type className="w-4 h-4" />
+                  <MaterialIcon name="type" size={16} aria-hidden="true" />
                   <label htmlFor="font-size-slider" className="font-semibold">
                     Tamanho da Fonte: {settings.fontSize}px
                   </label>
@@ -217,7 +333,7 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
               {/* Contraste */}
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
-                  <Contrast className="w-4 h-4" />
+                  <MaterialIcon name="contrast" size={16} aria-hidden="true" />
                   <span className="font-semibold">Contraste</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -245,7 +361,7 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
               {/* Configurações de Movimento e Animação */}
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
-                  <Zap className="w-4 h-4" />
+                  <MaterialIcon name="zap" size={16} aria-hidden="true" />
                   <span className="font-semibold">Movimento e Animação</span>
                 </div>
 
@@ -273,7 +389,7 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
               {/* Configurações de Navegação */}
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
-                  <Keyboard className="w-4 h-4" />
+                  <MaterialIcon name="keyboard" size={16} aria-hidden="true" />
                   <span className="font-semibold">Navegação</span>
                 </div>
 
@@ -311,7 +427,7 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
               {/* Configurações de Leitores de Tela */}
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
-                  <Eye className="w-4 h-4" />
+                  <MaterialIcon name="eye" size={16} aria-hidden="true" />
                   <span className="font-semibold">Leitores de Tela</span>
                 </div>
 
@@ -348,7 +464,7 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
               {/* Informações de Compatibilidade */}
               <div className="p-4 bg-muted rounded-lg">
                 <div className="flex items-start space-x-2">
-                  <Info className="w-4 h-4 mt-0.5 text-muted-foreground" />
+                  <MaterialIcon name="info" size={16} className="mt-0.5 text-muted-foreground" aria-hidden="true" />
                   <div className="space-y-2">
                     <h4 className="font-medium">Compatibilidade</h4>
                     <div className="text-sm text-muted-foreground space-y-1">
@@ -385,6 +501,7 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
               </div>
             </CardContent>
           </Card>
-    </div>
-  )
+        </div>
+      </>
+    )
 }

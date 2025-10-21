@@ -184,6 +184,7 @@ class BaseRepository(Generic[ModelType]):
         self.db.add(instance)
         await self.db.flush()  # Flush to get the ID
         await self.db.refresh(instance)  # Refresh to load any default values
+        await self.db.commit()  # Commit the transaction to persist data
         
         logger.info(
             "Record created",
@@ -293,6 +294,8 @@ class BaseRepository(Generic[ModelType]):
         # Refresh all instances
         for instance in instances:
             await self.db.refresh(instance)
+        
+        await self.db.commit()  # Commit the transaction to persist data
         
         logger.info(
             "Bulk create completed",

@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Shield, ShieldCheck, ShieldX, Smartphone, Key, Copy, CheckCircle } from "lucide-react"
+import { MaterialIcon } from "@/lib/material-icons"
 import { MainNavigation } from "@/components/main-navigation"
 
 export default function SecurityPage() {
@@ -134,7 +134,7 @@ export default function SecurityPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" aria-hidden="true" />
+                  <MaterialIcon name="shield" size={20} aria-hidden="true" />
                   Status da Conta
                 </CardTitle>
                 <CardDescription>Informações sobre a segurança da sua conta</CardDescription>
@@ -153,9 +153,9 @@ export default function SecurityPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {user?.twoFactorEnabled ? (
-                      <ShieldCheck className="h-5 w-5 text-green-600" aria-hidden="true" />
+                      <MaterialIcon name="shield-check" size={20} className="text-green-600" aria-hidden="true" />
                     ) : (
-                      <ShieldX className="h-5 w-5 text-orange-600" aria-hidden="true" />
+                      <MaterialIcon name="shield-x" size={20} className="text-orange-600" aria-hidden="true" />
                     )}
                     <div>
                       <p className="font-medium">Autenticação de Dois Fatores</p>
@@ -175,7 +175,7 @@ export default function SecurityPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Smartphone className="h-5 w-5" aria-hidden="true" />
+                  <MaterialIcon name="smartphone" size={20} aria-hidden="true" />
                   Autenticação de Dois Fatores (2FA)
                 </CardTitle>
                 <CardDescription>
@@ -297,7 +297,7 @@ export default function SecurityPage() {
                   <div className="space-y-6">
                     <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
-                        <ShieldCheck className="h-5 w-5 text-green-600" aria-hidden="true" />
+                        <MaterialIcon name="shield-check" size={20} className="text-green-600" aria-hidden="true" />
                         <h4 className="font-medium text-green-900">2FA Ativado</h4>
                       </div>
                       <p className="text-sm text-green-800">

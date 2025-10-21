@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
-import { User, Lock, Bell, Shield, Activity, Eye, EyeOff } from "lucide-react"
+import { MaterialIcon } from "@/lib/material-icons"
 import { MainNavigation } from "@/components/main-navigation"
 
 export default function ProfilePage() {
@@ -138,7 +138,7 @@ export default function ProfilePage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5" aria-hidden="true" />
+                    <MaterialIcon name="user" size={20} aria-hidden="true" />
                     Informações Pessoais
                   </CardTitle>
                   <CardDescription>Atualize suas informações básicas da conta</CardDescription>
@@ -221,7 +221,7 @@ export default function ProfilePage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Lock className="h-5 w-5" aria-hidden="true" />
+                    <MaterialIcon name="lock" size={20} aria-hidden="true" />
                     Alterar Senha
                   </CardTitle>
                   <CardDescription>Mantenha sua conta segura com uma senha forte</CardDescription>
@@ -249,9 +249,9 @@ export default function ProfilePage() {
                           aria-label={showCurrentPassword ? "Ocultar senha atual" : "Mostrar senha atual"}
                         >
                           {showCurrentPassword ? (
-                            <EyeOff className="h-4 w-4" aria-hidden="true" />
+                            <MaterialIcon name="eye-off" size={16} aria-hidden="true" />
                           ) : (
-                            <Eye className="h-4 w-4" aria-hidden="true" />
+                            <MaterialIcon name="eye" size={16} aria-hidden="true" />
                           )}
                         </Button>
                       </div>
@@ -282,9 +282,9 @@ export default function ProfilePage() {
                           aria-label={showNewPassword ? "Ocultar nova senha" : "Mostrar nova senha"}
                         >
                           {showNewPassword ? (
-                            <EyeOff className="h-4 w-4" aria-hidden="true" />
+                            <MaterialIcon name="eye-off" size={16} aria-hidden="true" />
                           ) : (
-                            <Eye className="h-4 w-4" aria-hidden="true" />
+                            <MaterialIcon name="eye" size={16} aria-hidden="true" />
                           )}
                         </Button>
                       </div>
@@ -314,9 +314,9 @@ export default function ProfilePage() {
                           aria-label={showConfirmPassword ? "Ocultar confirmação" : "Mostrar confirmação"}
                         >
                           {showConfirmPassword ? (
-                            <EyeOff className="h-4 w-4" aria-hidden="true" />
+                            <MaterialIcon name="eye-off" size={16} aria-hidden="true" />
                           ) : (
-                            <Eye className="h-4 w-4" aria-hidden="true" />
+                            <MaterialIcon name="eye" size={16} aria-hidden="true" />
                           )}
                         </Button>
                       </div>
@@ -335,7 +335,7 @@ export default function ProfilePage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" aria-hidden="true" />
+                    <MaterialIcon name="shield" size={20} aria-hidden="true" />
                     Configurações de Segurança
                   </CardTitle>
                   <CardDescription>Gerencie recursos avançados de segurança</CardDescription>
@@ -362,7 +362,7 @@ export default function ProfilePage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Bell className="h-5 w-5" aria-hidden="true" />
+                    <MaterialIcon name="bell" size={20} aria-hidden="true" />
                     Notificações
                   </CardTitle>
                   <CardDescription>Configure como e quando você quer receber notificações</CardDescription>
@@ -451,7 +451,7 @@ export default function ProfilePage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Activity className="h-5 w-5" aria-hidden="true" />
+                    <MaterialIcon name="activity" size={20} aria-hidden="true" />
                     Atividade Recente
                   </CardTitle>
                   <CardDescription>Histórico das suas ações na plataforma</CardDescription>

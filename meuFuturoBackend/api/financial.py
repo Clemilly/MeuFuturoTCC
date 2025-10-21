@@ -243,38 +243,7 @@ async def delete_transaction(
 
 # Category Endpoints
 
-@router.post(
-    "/categories",
-    response_model=CategoryResponse,
-    status_code=status.HTTP_201_CREATED,
-    summary="Criar categoria",
-    description="Cria uma nova categoria personalizada",
-)
-async def create_category(
-    category_data: CategoryCreate,
-    current_user: User = Depends(get_current_user),
-    financial_service: FinancialService = Depends(get_financial_service),
-):
-    """
-    Criar uma nova categoria.
-    
-    - **name**: Nome da categoria
-    - **description**: Descrição opcional
-    - **color**: Cor em hexadecimal (#RRGGBB)
-    - **icon**: Identificador do ícone
-    - **parent_id**: ID da categoria pai (para subcategorias)
-    """
-    category = await financial_service.create_category(
-        current_user.id, category_data
-    )
-    
-    logger.info(
-        "Category created via API",
-        user_id=current_user.id,
-        category_id=category.id
-    )
-    
-    return category
+# Removed duplicate endpoint - keeping the one below
 
 
 
