@@ -58,29 +58,57 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
     if (!isMounted.current) return
     
     saveAccessibilitySettings(settings)
-    applySettings(settings)
+    // Don't auto-apply, user must click "Apply" button
   }, [settings])
 
   const applySettings = (newSettings: AccessibilitySettings) => {
     const root = document.documentElement
     const body = document.body
 
-    // Apply font size using data attribute for better cascade
-    root.setAttribute('data-font-size', newSettings.fontSize.toString())
+    // Apply font size using CSS custom property for better control
+    const fontSize = newSettings.fontSize
+    console.log('Setting font size to:', fontSize)
     
-    // Apply contrast settings - FIX: Remove conflicting classes first
+    // Method 1: CSS custom property
+    root.style.setProperty('--font-size', `${fontSize}px`)
+    root.setAttribute('data-font-size', fontSize.toString())
+    
+    // Method 2: Inline style on body
+    body.style.fontSize = `${fontSize}px`
+    
+    // Method 3: Apply to html element directly
+    root.style.fontSize = `${fontSize}px`
+    
+    // Verify it was applied
+    console.log('Font size applied:', root.style.fontSize, root.getAttribute('data-font-size'))
+    
+    // Apply contrast settings - Remove all conflicting classes first
+    const html = document.documentElement
+    html.classList.remove("dark")
     body.classList.remove("high-contrast", "dark", "normal-contrast")
+    
+    // Remove all theme attributes
     root.removeAttribute('data-theme')
     
+    // Apply new theme with proper styling
     if (newSettings.contrast === "high") {
       root.setAttribute('data-theme', 'high-contrast')
       body.classList.add("high-contrast")
+      // Force white background and black text
+      body.style.backgroundColor = '#ffffff'
+      body.style.color = '#000000'
     } else if (newSettings.contrast === "dark") {
       root.setAttribute('data-theme', 'dark')
+      html.classList.add("dark")
       body.classList.add("dark")
+      // Reset styles for dark mode
+      body.style.backgroundColor = ''
+      body.style.color = ''
     } else {
       root.setAttribute('data-theme', 'normal')
-      body.classList.add("normal-contrast")
+      // Reset styles for normal mode
+      body.style.backgroundColor = ''
+      body.style.color = ''
     }
 
     // Apply reduced motion - Enhanced implementation
@@ -129,7 +157,14 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
 
   const updateSetting = <K extends keyof AccessibilitySettings>(key: K, value: AccessibilitySettings[K]) => {
     setSettings((prev) => ({ ...prev, [key]: value }))
+  }
 
+  const handleApplySettings = () => {
+    // Apply settings immediately when button is clicked
+    console.log('Applying settings:', settings)
+    applySettings(settings)
+    announceToScreenReader("Configurações de acessibilidade aplicadas")
+    
     // Provide audio feedback if enabled
     if (settings.soundFeedback) {
       playFeedbackSound()
@@ -260,26 +295,22 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
   if (!isOpen) return null
 
   return (
-    <>
-      {/* Skip Links */}
-      <div className="skip-links">
-        <a href="#main-content" className="skip-link">
-          Pular para conteúdo principal
-        </a>
-        <a href="#navigation" className="skip-link">
-          Pular para navegação
-        </a>
-        <a href="#accessibility-panel" className="skip-link">
-          Pular para configurações de acessibilidade
-        </a>
-      </div>
-
-      <div className="p-4" role="region" aria-labelledby="accessibility-title">
-        <Card id="accessibility-panel" className="mb-4">
+    <div className="p-4" role="region" aria-labelledby="accessibility-title">
+      <Card className="mb-4">
           <CardHeader>
             <CardTitle id="accessibility-title" className="flex items-center justify-between">
               <span>Configurações de Acessibilidade</span>
               <div className="flex items-center space-x-2">
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={handleApplySettings}
+                  aria-label="Aplicar configurações de acessibilidade"
+                  className="bg-primary text-primary-foreground"
+                >
+                  <MaterialIcon name="check" size={16} className="mr-2" aria-hidden="true" />
+                  Aplicar Alterações
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -501,7 +532,6 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
               </div>
             </CardContent>
           </Card>
-        </div>
-      </>
-    )
+    </div>
+  )
 }

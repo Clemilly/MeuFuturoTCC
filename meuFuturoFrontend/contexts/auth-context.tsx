@@ -9,8 +9,6 @@ interface User {
   id: string
   email: string
   name: string
-  twoFactorEnabled: boolean
-  twoFactorSecret: string | null
 }
 
 interface AuthContextType {
@@ -19,20 +17,14 @@ interface AuthContextType {
   login: (
     email: string,
     password: string,
-  ) => Promise<{ success: boolean; requiresTwoFactor?: boolean; message?: string }>
-  verifyTwoFactor: (code: string) => Promise<{ success: boolean; message?: string }>
+  ) => Promise<{ success: boolean; message?: string }>
   logout: () => void
-  enableTwoFactor: () => Promise<{ secret: string; qrCode: string }>
-  confirmTwoFactor: (code: string) => Promise<{ success: boolean; message?: string }>
-  disableTwoFactor: (code: string) => Promise<{ success: boolean; message?: string }>
-  pendingUser: User | null
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [pendingUser, setPendingUser] = useState<User | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
   
@@ -79,24 +71,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { data } = response
       
-      if (data.requiresTwoFactor) {
-        setPendingUser({
-          id: data.user.id,
-          email: data.user.email,
-          name: data.user.name,
-          twoFactorEnabled: data.user.two_factor_enabled,
-          twoFactorSecret: data.user.two_factor_secret
-        })
-        return { success: false, requiresTwoFactor: true, message: "Código de verificação necessário" }
-      }
-
       // Store token and user data
       const userData = {
         id: data.user.id,
         email: data.user.email,
-        name: data.user.name,
-        twoFactorEnabled: data.user.two_factor_enabled,
-        twoFactorSecret: data.user.two_factor_secret
+        name: data.user.name
       }
       
       setStoredToken(data.access_token)
@@ -104,42 +83,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       setUser(userData)
       setIsAuthenticated(true)
-      
-      return { success: true }
-    } catch (error) {
-      return { success: false, message: "Erro de conexão com o servidor" }
-    }
-  }
-
-  const verifyTwoFactor = async (code: string) => {
-    if (!pendingUser) {
-      return { success: false, message: "Sessão expirada" }
-    }
-
-    try {
-      const response = await apiService.verifyTwoFactor(code)
-      
-      if (response.error) {
-        return { success: false, message: response.error }
-      }
-
-      const { data } = response
-      
-      // Store token and user data
-      const userData = {
-        id: data.user.id,
-        email: data.user.email,
-        name: data.user.name,
-        twoFactorEnabled: data.user.two_factor_enabled,
-        twoFactorSecret: data.user.two_factor_secret
-      }
-      
-      setStoredToken(data.access_token)
-      setStoredUser(userData)
-      
-      setUser(userData)
-      setIsAuthenticated(true)
-      setPendingUser(null)
       
       return { success: true }
     } catch (error) {
@@ -158,7 +101,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Clear all state
     setUser(null)
     setIsAuthenticated(false)
-    setPendingUser(null)
     
     // Clear localStorage
     removeStoredUser()
@@ -177,72 +119,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsInitialized(false)
   }
 
-  const enableTwoFactor = async () => {
-    try {
-      const response = await apiService.enableTwoFactor()
-      
-      if (response.error) {
-        throw new Error(response.error)
-      }
-
-      return response.data
-    } catch (error) {
-      throw new Error("Erro ao habilitar autenticação de duas etapas")
-    }
-  }
-
-  const confirmTwoFactor = async (code: string) => {
-    if (!user) return { success: false, message: "Usuário não encontrado" }
-
-    try {
-      const response = await apiService.confirmTwoFactor(code)
-      
-      if (response.error) {
-        return { success: false, message: response.error }
-      }
-
-      const updatedUser = { ...user, twoFactorEnabled: true, twoFactorSecret: response.data.secret }
-      setUser(updatedUser)
-      setStoredUser(updatedUser)
-      
-      return { success: true }
-    } catch (error) {
-      return { success: false, message: "Erro de conexão com o servidor" }
-    }
-  }
-
-  const disableTwoFactor = async (code: string) => {
-    if (!user) return { success: false, message: "Usuário não encontrado" }
-
-    try {
-      const response = await apiService.disableTwoFactor(code)
-      
-      if (response.error) {
-        return { success: false, message: response.error }
-      }
-
-      const updatedUser = { ...user, twoFactorEnabled: false, twoFactorSecret: null }
-      setUser(updatedUser)
-      setStoredUser(updatedUser)
-      
-      return { success: true }
-    } catch (error) {
-      return { success: false, message: "Erro de conexão com o servidor" }
-    }
-  }
-
   return (
     <AuthContext.Provider
       value={{
         user,
         isAuthenticated,
         login,
-        verifyTwoFactor,
         logout,
-        enableTwoFactor,
-        confirmTwoFactor,
-        disableTwoFactor,
-        pendingUser,
       }}
     >
       {children}

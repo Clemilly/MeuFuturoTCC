@@ -13,8 +13,6 @@ from core.security import (
     verify_password,
     get_password_hash,
     create_access_token,
-    generate_totp_secret,
-    verify_totp_token,
 )
 from core.validators import PasswordValidator
 from core.config import settings
@@ -125,15 +123,6 @@ class AuthService:
                 detail="Email ou senha incorretos"
             )
         
-        # Check if 2FA is required
-        if user.is_2fa_enabled:
-            # Return special response indicating 2FA is required
-            return {
-                "requires_2fa": True,
-                "user_id": user.id,
-                "message": "Código de verificação necessário"
-            }
-        
         # Create access token
         access_token = create_access_token(data={"sub": user.id})
         
@@ -145,53 +134,6 @@ class AuthService:
             "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
             "user": user,
             "requires_2fa": False
-        }
-    
-    async def verify_2fa_and_login(self, user_id: str, totp_code: str) -> Dict[str, Any]:
-        """
-        Verify 2FA code and complete login.
-        
-        Args:
-            user_id: User ID
-            totp_code: 6-digit TOTP code
-            
-        Returns:
-            Dictionary with token and user info
-            
-        Raises:
-            HTTPException: If verification fails
-        """
-        user = await self.user_repo.get_by_id(user_id)
-        
-        if not user or not user.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Usuário não encontrado ou inativo"
-            )
-        
-        if not user.is_2fa_enabled or not user.two_factor_secret:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="2FA não está habilitado para este usuário"
-            )
-        
-        # Verify TOTP code
-        if not verify_totp_token(user.two_factor_secret, totp_code):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Código de verificação inválido"
-            )
-        
-        # Create access token
-        access_token = create_access_token(data={"sub": user.id})
-        
-        logger.info("User completed 2FA login", user_id=user.id, email=user.email)
-        
-        return {
-            "access_token": access_token,
-            "token_type": "bearer",
-            "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-            "user": user
         }
     
     async def get_user_profile(self, user_id: str) -> User:
@@ -291,122 +233,6 @@ class AuthService:
         await self.user_repo.update(user_id, hashed_password=new_hashed_password)
         
         logger.info("User password changed", user_id=user_id)
-        
-        return True
-    
-    async def setup_2fa(self, user_id: str) -> Dict[str, str]:
-        """
-        Setup 2FA for a user.
-        
-        Args:
-            user_id: User ID
-            
-        Returns:
-            Dictionary with TOTP secret and QR code URL
-            
-        Raises:
-            HTTPException: If user not found
-        """
-        user = await self.user_repo.get_by_id(user_id)
-        
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Usuário não encontrado"
-            )
-        
-        # Generate TOTP secret
-        secret = generate_totp_secret()
-        
-        # Create QR code URL for authenticator apps
-        qr_code_url = (
-            f"otpauth://totp/MeuFuturo:{user.email}"
-            f"?secret={secret}&issuer=MeuFuturo"
-        )
-        
-        logger.info("2FA setup initiated", user_id=user_id)
-        
-        return {
-            "secret": secret,
-            "qr_code_url": qr_code_url
-        }
-    
-    async def enable_2fa(self, user_id: str, secret: str, totp_code: str) -> bool:
-        """
-        Enable 2FA after verifying the setup.
-        
-        Args:
-            user_id: User ID
-            secret: TOTP secret
-            totp_code: Verification code
-            
-        Returns:
-            True if successful
-            
-        Raises:
-            HTTPException: If verification fails
-        """
-        user = await self.user_repo.get_by_id(user_id)
-        
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Usuário não encontrado"
-            )
-        
-        # Verify TOTP code
-        if not verify_totp_token(secret, totp_code):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Código de verificação inválido"
-            )
-        
-        # Enable 2FA
-        await self.user_repo.enable_2fa(user_id, secret)
-        
-        logger.info("2FA enabled", user_id=user_id)
-        
-        return True
-    
-    async def disable_2fa(self, user_id: str, totp_code: str) -> bool:
-        """
-        Disable 2FA for a user.
-        
-        Args:
-            user_id: User ID
-            totp_code: Verification code
-            
-        Returns:
-            True if successful
-            
-        Raises:
-            HTTPException: If verification fails
-        """
-        user = await self.user_repo.get_by_id(user_id)
-        
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Usuário não encontrado"
-            )
-        
-        if not user.is_2fa_enabled or not user.two_factor_secret:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="2FA não está habilitado"
-            )
-        
-        # Verify TOTP code
-        if not verify_totp_token(user.two_factor_secret, totp_code):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Código de verificação inválido"
-            )
-        
-        # Disable 2FA
-        await self.user_repo.disable_2fa(user_id)
-        
-        logger.info("2FA disabled", user_id=user_id)
         
         return True
     

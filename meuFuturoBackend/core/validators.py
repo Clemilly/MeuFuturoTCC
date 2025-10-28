@@ -315,37 +315,6 @@ class UUIDValidator(BaseValidator):
         return uuid_str
 
 
-class TwoFactorValidator(BaseValidator):
-    """Two-factor authentication validation utilities."""
-    
-    @classmethod
-    def validate_totp_token(cls, token: str) -> str:
-        """Validate TOTP token format."""
-        cls.validate_required(token, "Código de verificação")
-        
-        if not isinstance(token, str):
-            raise ValidationError(
-                message="Código de verificação deve ser uma string",
-                details={"field": "token", "value": token, "type": type(token).__name__}
-            )
-        
-        token = token.strip()
-        
-        if not token.isdigit():
-            raise ValidationError(
-                message="Código de verificação deve conter apenas dígitos",
-                details={"field": "token", "value": token}
-            )
-        
-        if len(token) != ValidationLimits.TOTP_TOKEN_LENGTH:
-            raise ValidationError(
-                message=f"Código de verificação deve ter {ValidationLimits.TOTP_TOKEN_LENGTH} dígitos",
-                details={"field": "token", "value": token, "expected_length": ValidationLimits.TOTP_TOKEN_LENGTH}
-            )
-        
-        return token
-
-
 class TransactionValidator(BaseValidator):
     """Transaction validation utilities."""
     

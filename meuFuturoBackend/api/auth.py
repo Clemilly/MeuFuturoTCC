@@ -20,9 +20,6 @@ from schemas.user import (
     AccessibilityPreferences,
     FinancialProfile,
     PasswordChange,
-    TwoFactorEnable,
-    TwoFactorVerify,
-    TwoFactorSetupResponse,
 )
 from schemas.common import TokenResponse, SuccessResponse, MessageResponse
 from models.user import User
@@ -79,18 +76,6 @@ async def login(
     """
     result = await auth_service.login(login_data)
     
-    if result.get("requires_2fa"):
-        # Return special response for 2FA requirement
-        return {
-            "access_token": "",
-            "token_type": "2fa_required",
-            "expires_in": 0,
-            "user_id": result["user_id"],
-            "message": result["message"],
-            "requiresTwoFactor": True,
-            "user": result.get("user")
-        }
-    
     return {
         "access_token": result["access_token"],
         "token_type": result["token_type"],
@@ -98,34 +83,6 @@ async def login(
         "user": result["user"],
         "requiresTwoFactor": False
     }
-
-
-@router.post(
-    "/verify-2fa",
-    response_model=TokenResponse,
-    summary="Verificar código 2FA",
-    description="Completa o login verificando o código 2FA",
-)
-async def verify_2fa(
-    verify_data: TwoFactorVerify,
-    user_id: str,
-    auth_service: AuthService = Depends(get_auth_service),
-):
-    """
-    Verificar código 2FA e completar login.
-    
-    - **totp_code**: Código de 6 dígitos do aplicativo autenticador
-    - **user_id**: ID do usuário (obtido na resposta do login)
-    """
-    result = await auth_service.verify_2fa_and_login(user_id, verify_data.totp_code)
-    
-    return TokenResponse(
-        access_token=result["access_token"],
-        token_type=result["token_type"],
-        expires_in=result["expires_in"],
-    )
-
-
 
 
 @router.get(
@@ -196,168 +153,6 @@ async def change_password(
     return SuccessResponse(
         message="Senha alterada com sucesso"
     )
-
-
-@router.post(
-    "/2fa/setup",
-    response_model=TwoFactorSetupResponse,
-    summary="Configurar 2FA",
-    description="Inicia a configuração da autenticação de dois fatores",
-)
-async def setup_2fa(
-    current_user: User = Depends(get_current_user),
-    auth_service: AuthService = Depends(get_auth_service),
-):
-    """
-    Configurar autenticação de dois fatores (2FA).
-    
-    Retorna o segredo TOTP e URL do QR code para configurar no app autenticador.
-    """
-    if current_user.two_factor_enabled:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="2FA já está habilitado"
-        )
-    
-    setup_data = await auth_service.setup_2fa(current_user.id)
-    
-    # Generate some backup codes (simplified implementation)
-    backup_codes = ["123456789", "987654321", "456123789", "789456123", "321654987"]
-    
-    return TwoFactorSetupResponse(
-        secret=setup_data["secret"],
-        qr_code_url=setup_data["qr_code_url"],
-        backup_codes=backup_codes,
-    )
-
-
-@router.post(
-    "/enable-2fa",
-    response_model=TwoFactorSetupResponse,
-    summary="Habilitar 2FA",
-    description="Inicia a configuração da autenticação de dois fatores",
-)
-async def enable_2fa(
-    current_user: User = Depends(get_current_user),
-    auth_service: AuthService = Depends(get_auth_service),
-):
-    """
-    Habilitar autenticação de dois fatores (2FA).
-    
-    Retorna o segredo TOTP e URL do QR code para configurar no app autenticador.
-    """
-    if current_user.two_factor_enabled:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="2FA já está habilitado"
-        )
-    
-    setup_data = await auth_service.setup_2fa(current_user.id)
-    
-    # Generate some backup codes (simplified implementation)
-    backup_codes = ["123456789", "987654321", "456123789", "789456123", "321654987"]
-    
-    return TwoFactorSetupResponse(
-        secret=setup_data["secret"],
-        qr_code_url=setup_data["qr_code_url"],
-        backup_codes=backup_codes,
-    )
-
-
-@router.post(
-    "/confirm-2fa",
-    response_model=SuccessResponse,
-    summary="Confirmar 2FA",
-    description="Confirma e habilita a autenticação de dois fatores",
-)
-async def confirm_2fa(
-    enable_data: TwoFactorEnable,
-    secret: str,
-    current_user: User = Depends(get_current_user),
-    auth_service: AuthService = Depends(get_auth_service),
-):
-    """
-    Confirmar e habilitar autenticação de dois fatores.
-    
-    - **totp_code**: Código de verificação do app autenticador
-    - **secret**: Segredo TOTP obtido no setup
-    """
-    if current_user.two_factor_enabled:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="2FA já está habilitado"
-        )
-    
-    await auth_service.enable_2fa(
-        current_user.id, secret, enable_data.totp_code
-    )
-    
-    return SuccessResponse(
-        message="2FA habilitado com sucesso"
-    )
-
-
-@router.post(
-    "/2fa/enable",
-    response_model=SuccessResponse,
-    summary="Habilitar 2FA",
-    description="Confirma e habilita a autenticação de dois fatores",
-)
-async def enable_2fa(
-    enable_data: TwoFactorEnable,
-    secret: str,
-    current_user: User = Depends(get_current_user),
-    auth_service: AuthService = Depends(get_auth_service),
-):
-    """
-    Habilitar autenticação de dois fatores.
-    
-    - **totp_code**: Código de verificação do app autenticador
-    - **secret**: Segredo TOTP obtido no setup
-    """
-    if current_user.two_factor_enabled:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="2FA já está habilitado"
-        )
-    
-    await auth_service.enable_2fa(
-        current_user.id, secret, enable_data.totp_code
-    )
-    
-    return SuccessResponse(
-        message="2FA habilitado com sucesso"
-    )
-
-
-@router.post(
-    "/2fa/disable",
-    response_model=SuccessResponse,
-    summary="Desabilitar 2FA",
-    description="Desabilita a autenticação de dois fatores",
-)
-async def disable_2fa(
-    disable_data: TwoFactorVerify,
-    current_user: User = Depends(get_current_user),
-    auth_service: AuthService = Depends(get_auth_service),
-):
-    """
-    Desabilitar autenticação de dois fatores.
-    
-    - **totp_code**: Código de verificação para confirmar desabilitação
-    """
-    if not current_user.two_factor_enabled:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="2FA não está habilitado"
-        )
-    
-    await auth_service.disable_2fa(current_user.id, disable_data.totp_code)
-    
-    return SuccessResponse(
-        message="2FA desabilitado com sucesso"
-    )
-
 
 @router.put(
     "/preferences/accessibility",

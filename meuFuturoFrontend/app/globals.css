@@ -32,33 +32,26 @@
   --radius: 0.5rem;
 }
 
-/* Font Size Scaling System */
-html[data-font-size="12"] {
-  font-size: 75%; /* 12px base */
+/* Font Size Scaling System - Using inline styles and CSS variables */
+html {
+  font-size: 16px !important; /* Default base size */
 }
 
-html[data-font-size="14"] {
-  font-size: 87.5%; /* 14px base */
+/* Apply custom font size - prefer inline styles */
+html[data-font-size],
+html[data-font-size] body {
+  font-size: var(--font-size, 16px) !important;
 }
 
-html[data-font-size="16"] {
-  font-size: 100%; /* 16px base - default */
+/* Force font size inheritance with maximum priority */
+html[data-font-size] *,
+html[data-font-size] body * {
+  font-size: inherit !important;
 }
 
-html[data-font-size="18"] {
-  font-size: 112.5%; /* 18px base */
-}
-
-html[data-font-size="20"] {
-  font-size: 125%; /* 20px base */
-}
-
-html[data-font-size="22"] {
-  font-size: 137.5%; /* 22px base */
-}
-
-html[data-font-size="24"] {
-  font-size: 150%; /* 24px base */
+/* Ensure all text elements inherit */
+p, span, div, button, input, label, h1, h2, h3, h4, h5, h6, a, li, td, th {
+  font-size: inherit !important;
 }
 
 .dark {
@@ -84,8 +77,7 @@ html[data-font-size="24"] {
 }
 
 /* High Contrast Theme */
-html[data-theme="high-contrast"],
-html[data-theme="high-contrast"] body {
+html[data-theme="high-contrast"] {
   --background: 0 0% 100%;
   --foreground: 0 0% 0%;
   --card: 0 0% 100%;
@@ -107,8 +99,50 @@ html[data-theme="high-contrast"] body {
   --ring: 0 0% 0%;
 }
 
-html[data-theme="high-contrast"] * {
+html[data-theme="high-contrast"],
+html[data-theme="high-contrast"] *,
+html[data-theme="high-contrast"] body,
+html[data-theme="high-contrast"] body * {
   border-width: 2px !important;
+  color-scheme: light dark !important;
+}
+
+body.high-contrast {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+html[data-theme="high-contrast"] body,
+html[data-theme="high-contrast"] body * {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+}
+
+html[data-theme="high-contrast"] h1,
+html[data-theme="high-contrast"] h2,
+html[data-theme="high-contrast"] h3,
+html[data-theme="high-contrast"] h4,
+html[data-theme="high-contrast"] h5,
+html[data-theme="high-contrast"] h6,
+html[data-theme="high-contrast"] p,
+html[data-theme="high-contrast"] span,
+html[data-theme="high-contrast"] a {
+  color: #000000 !important;
+}
+
+html[data-theme="high-contrast"] button {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: 2px solid #000000 !important;
+}
+
+html[data-theme="high-contrast"] [class*="bg-"] {
+  background-color: #ffffff !important;
+}
+
+html[data-theme="high-contrast"] [class*="text-"] {
+  color: #000000 !important;
 }
 
 /* Dark Theme Enhancement */

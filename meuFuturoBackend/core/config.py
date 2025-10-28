@@ -51,12 +51,6 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: Optional[str] = None
     EXCHANGE_RATE_API_KEY: Optional[str] = None
     
-    # Email Configuration
-    SMTP_SERVER: Optional[str] = None
-    SMTP_PORT: int = 587
-    SMTP_USERNAME: Optional[str] = None
-    SMTP_PASSWORD: Optional[str] = None
-    
     # Logging
     LOG_LEVEL: str = LoggingConstants.LOG_LEVEL
     LOG_FORMAT: str = LoggingConstants.LOG_FORMAT

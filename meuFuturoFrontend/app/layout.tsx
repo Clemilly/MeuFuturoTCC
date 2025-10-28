@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/auth-context"
 import { GlobalDataProvider } from "@/contexts/transaction-context"
 import { AuthErrorInterceptor } from "@/components/auth-error-interceptor"
 import { SkipLinks } from "@/components/skip-links"
+import VLibrasOfficial from "@/components/VLibrasOfficial"
 
 export const metadata: Metadata = {
   title: "MeuFuturo - Gestão Financeira Acessível",
@@ -61,6 +62,7 @@ html {
             </AuthErrorInterceptor>
           </GlobalDataProvider>
         </AuthProvider>
+        <VLibrasOfficial />
       </body>
     </html>
   )

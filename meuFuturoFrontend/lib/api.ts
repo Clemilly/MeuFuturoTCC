@@ -220,33 +220,6 @@ class ApiService {
     })
   }
 
-  async verifyTwoFactor(code: string) {
-    return this.request('/auth/verify-2fa', {
-      method: 'POST',
-      body: JSON.stringify({ code }),
-    })
-  }
-
-  async enableTwoFactor() {
-    return this.request('/auth/enable-2fa', {
-      method: 'POST',
-    })
-  }
-
-  async confirmTwoFactor(code: string) {
-    return this.request('/auth/confirm-2fa', {
-      method: 'POST',
-      body: JSON.stringify({ code }),
-    })
-  }
-
-  async disableTwoFactor(code: string) {
-    return this.request('/auth/disable-2fa', {
-      method: 'POST',
-      body: JSON.stringify({ code }),
-    })
-  }
-
   async getProfile() {
     return this.request('/auth/profile')
   }

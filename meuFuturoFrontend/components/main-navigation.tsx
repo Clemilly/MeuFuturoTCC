@@ -84,7 +84,7 @@ export function MainNavigation() {
                 aria-expanded={isAccessibilityMenuOpen}
                 aria-controls="accessibility-menu"
               >
-                <MaterialIcon name="settings" size={16} className="transition-transform duration-300 group-hover:scale-110" aria-hidden="true" />
+                <MaterialIcon name="accessibility" size={16} className="transition-transform duration-300 group-hover:scale-110" aria-hidden="true" />
                 <span className="text-xs sm:text-sm transition-all duration-300 group-hover:text-foreground hidden xl:inline">
                   Acessibilidade
                 </span>

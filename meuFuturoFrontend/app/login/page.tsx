@@ -14,14 +14,12 @@ import { MaterialIcon } from "@/lib/material-icons"
 import Link from "next/link"
 
 export default function LoginPage() {
-  const { login, verifyTwoFactor, pendingUser } = useAuth()
+  const { login } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [twoFactorCode, setTwoFactorCode] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
-  const [showTwoFactor, setShowTwoFactor] = useState(false)
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
   const isMounted = useRef(true)
 
@@ -82,8 +80,6 @@ export default function LoginPage() {
 
       if (result.success) {
         // Login successful, will be redirected by RouteGuard
-      } else if (result.requiresTwoFactor) {
-        setShowTwoFactor(true)
       } else {
         setError(result.message || "Erro no login")
       }
@@ -98,33 +94,6 @@ export default function LoginPage() {
     }
   }
 
-  const handleTwoFactorVerification = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!isMounted.current) return
-    
-    setIsLoading(true)
-    setError("")
-
-    try {
-      const result = await verifyTwoFactor(twoFactorCode)
-
-      if (!isMounted.current) return
-
-      if (result.success) {
-        // Login successful, will be redirected by RouteGuard
-      } else {
-        setError(result.message || "Código inválido")
-      }
-    } catch (err) {
-      if (isMounted.current) {
-        setError("Erro interno do sistema")
-      }
-    } finally {
-      if (isMounted.current) {
-        setIsLoading(false)
-      }
-    }
-  }
 
   return (
     <RouteGuard requireAuth={false}>
@@ -132,12 +101,10 @@ export default function LoginPage() {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold text-primary">
-              {showTwoFactor ? "Verificação em Duas Etapas" : "Entrar no MeuFuturo"}
+              Entrar no MeuFuturo
             </CardTitle>
             <CardDescription>
-              {showTwoFactor
-                ? `Digite o código de verificação para ${pendingUser?.name}`
-                : "Acesse sua conta para gerenciar suas finanças"}
+              Acesse sua conta para gerenciar suas finanças
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -147,8 +114,7 @@ export default function LoginPage() {
               </Alert>
             )}
 
-            {!showTwoFactor ? (
-              <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <div className="relative">
@@ -222,47 +188,6 @@ export default function LoginPage() {
                   </p>
                 </div>
               </form>
-            ) : (
-              <form onSubmit={handleTwoFactorVerification} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="twoFactorCode">Código de Verificação</Label>
-                  <div className="relative">
-                    <MaterialIcon name="shield" size={16} className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                    <Input
-                      id="twoFactorCode"
-                      type="text"
-                      placeholder="000000"
-                      value={twoFactorCode}
-                      onChange={(e) => setTwoFactorCode(e.target.value)}
-                      className="pl-10 text-center tracking-widest"
-                      maxLength={6}
-                      required
-                      aria-describedby="code-help"
-                    />
-                  </div>
-                  <p id="code-help" className="text-sm text-muted-foreground">
-                    Digite o código de 6 dígitos do seu aplicativo autenticador
-                  </p>
-                </div>
-
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Verificando..." : "Verificar Código"}
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full bg-transparent"
-                  onClick={() => {
-                    setShowTwoFactor(false)
-                    setTwoFactorCode("")
-                    setError("")
-                  }}
-                >
-                  Voltar ao Login
-                </Button>
-              </form>
-            )}
           </CardContent>
         </Card>
       </div>

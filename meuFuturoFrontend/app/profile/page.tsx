@@ -39,8 +39,6 @@ export default function ProfilePage() {
   })
 
   const [preferences, setPreferences] = useState({
-    emailNotifications: true,
-    pushNotifications: false,
     weeklyReports: true,
     marketingEmails: false,
     dataSharing: false,
@@ -368,34 +366,6 @@ export default function ProfilePage() {
                   <CardDescription>Configure como e quando você quer receber notificações</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="email-notifications">Notificações por Email</Label>
-                      <p className="text-sm text-muted-foreground">Receba alertas importantes por email</p>
-                    </div>
-                    <Switch
-                      id="email-notifications"
-                      checked={preferences.emailNotifications}
-                      onCheckedChange={(checked) => handlePreferenceChange("emailNotifications", checked)}
-                    />
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="push-notifications">Notificações Push</Label>
-                      <p className="text-sm text-muted-foreground">Receba notificações no navegador</p>
-                    </div>
-                    <Switch
-                      id="push-notifications"
-                      checked={preferences.pushNotifications}
-                      onCheckedChange={(checked) => handlePreferenceChange("pushNotifications", checked)}
-                    />
-                  </div>
-
-                  <Separator />
-
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label htmlFor="weekly-reports">Relatórios Semanais</Label>
