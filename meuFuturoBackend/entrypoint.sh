@@ -43,5 +43,6 @@ fi
 
 # Start the application
 echo "🎉 Starting FastAPI application on port 8000..."
-exec uvicorn main:app --host 0.0.0.0 --port 8000 --log-level info
+# Use apenas 1 worker para economizar memória
+exec uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1 --log-level warning
 
