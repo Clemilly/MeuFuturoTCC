@@ -566,3 +566,4 @@ Desenvolvido com ❤️ usando FastAPI, Next.js e Scikit-learn
 
 
 
+

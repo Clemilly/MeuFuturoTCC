@@ -518,3 +518,4 @@ A versão 1.0.0 da IA Financeira está **100% completa e pronta para produção*
 
 
 
+

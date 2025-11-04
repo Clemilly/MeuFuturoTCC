@@ -537,3 +537,4 @@ O sistema de IA Financeira está totalmente funcional, seguindo os mais altos pa
 
 
 
+
