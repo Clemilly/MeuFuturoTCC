@@ -3,34 +3,42 @@
 # MeuFuturo Backend - Entrypoint Script
 # =============================================================================
 # This script runs when the backend container starts
-# It connects to AWS RDS (or external database) and runs migrations
+# It waits for PostgreSQL and runs migrations automatically
 
 set -e
 
 echo "🚀 Starting MeuFuturo Backend..."
 echo "📊 Environment: ${ENVIRONMENT:-development}"
 
-# Verificar se DATABASE_URL está configurada
-if [ -z "$DATABASE_URL" ]; then
-  echo "❌ ERROR: DATABASE_URL environment variable is not set!"
-  echo "   Please set DATABASE_URL to your AWS RDS connection string"
-  echo "   Example: postgresql+asyncpg://user:password@host:5432/dbname"
+# Extract database connection details from DATABASE_URL
+DB_HOST=$(echo $DATABASE_URL | sed -n 's/.*@\(.*\):.*/\1/p')
+DB_PORT=$(echo $DATABASE_URL | sed -n 's/.*:\([0-9]*\)\/.*/\1/p')
+
+echo "⏳ Waiting for PostgreSQL at $DB_HOST:$DB_PORT..."
+
+# Wait for PostgreSQL to be ready
+MAX_RETRIES=30
+RETRY_COUNT=0
+
+until pg_isready -h "$DB_HOST" -p "$DB_PORT" -U postgres > /dev/null 2>&1 || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
+  RETRY_COUNT=$((RETRY_COUNT+1))
+  echo "⏳ Waiting for database... (Attempt $RETRY_COUNT/$MAX_RETRIES)"
+  sleep 2
+done
+
+if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+  echo "❌ Error: Could not connect to PostgreSQL after $MAX_RETRIES attempts"
   exit 1
 fi
 
-echo "✅ DATABASE_URL is configured"
+echo "✅ PostgreSQL is ready!"
 
-# Extract database host for logging (sem expor senha)
-DB_HOST=$(echo $DATABASE_URL | sed -n 's/.*@\(.*\):.*/\1/p')
-echo "📡 Connecting to database at: $DB_HOST"
-
-# Run database migrations (opcional - descomente se quiser auto-migration)
+# Run database migrations
 echo "🔄 Running database migrations..."
-if alembic upgrade head 2>&1; then
+if alembic upgrade head; then
   echo "✅ Migrations completed successfully!"
 else
   echo "⚠️  Migration failed or no migrations to apply"
-  echo "   You can run migrations manually: docker-compose exec backend alembic upgrade head"
 fi
 
 # Start the application

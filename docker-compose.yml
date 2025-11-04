@@ -2,6 +2,36 @@ version: '3.8'
 
 services:
   # ============================================================================
+  # PostgreSQL Database
+  # ============================================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: meufuturo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-meufuturo}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-meufuturo123}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-meufuturo}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - meufuturo-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================================================
   # Backend FastAPI
   # ============================================================================
   backend:
@@ -15,8 +45,8 @@ services:
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     environment:
-      # Database (AWS RDS ou external)
-      DATABASE_URL: ${DATABASE_URL}
+      # Database (PostgreSQL)
+      DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-meufuturo123}@postgres:5432/${POSTGRES_DB:-meufuturo}"
       
       # Security
       SECRET_KEY: ${SECRET_KEY:-your-super-secret-jwt-key-change-in-production}
@@ -43,6 +73,9 @@ services:
       
       # Rate Limiting
       RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-60}
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -104,6 +137,9 @@ services:
 # Volumes
 # ============================================================================
 volumes:
+  postgres_data:
+    driver: local
+    name: meufuturo-postgres-data
   backend_logs:
     driver: local
     name: meufuturo-backend-logs
