@@ -126,6 +126,7 @@ services:
       dockerfile: Dockerfile
       args:
         - NODE_VERSION=${NODE_VERSION:-18}
+        - CACHEBUST=${CACHEBUST:-1}
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
         - NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME:-MeuFuturo}
         - NEXT_PUBLIC_AI_ENABLED=${NEXT_PUBLIC_AI_ENABLED:-true}

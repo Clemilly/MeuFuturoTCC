@@ -13,6 +13,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { MaterialIcon } from "@/lib/material-icons"
 import Link from "next/link"
 
+// Forçar renderização dinâmica
+export const dynamic = 'force-dynamic'
+
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
     name: "",
