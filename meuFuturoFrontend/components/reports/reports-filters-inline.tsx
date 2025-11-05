@@ -6,15 +6,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Search,
-  Filter,
-  Calendar,
-  DollarSign,
-  Tag,
-  X,
-  ChevronDown,
-} from "lucide-react";
+import { MaterialIcon } from "@/lib/material-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,6 +29,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Filter, X, ChevronDown } from "lucide-react";
 import type { Category } from "@/lib/types";
 import type { ReportFilters } from "@/hooks/reports/use-reports-filters";
 
@@ -76,7 +69,7 @@ export function ReportsFiltersInline({
   };
 
   return (
-    <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+    <Card className="border-0 shadow-lg bg-card/80 backdrop-blur-sm">
       <CardContent className="pt-6">
         {/* Filtros Principais (sempre visíveis) */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
@@ -113,7 +106,7 @@ export function ReportsFiltersInline({
                       "text-muted-foreground"
                   )}
                 >
-                  <Calendar className="mr-2 h-4 w-4" />
+                  <MaterialIcon name="calendar" size={16} className="mr-2" tooltip="Selecionar período" aria-hidden={true} />
                   {formatDateRange(
                     filters.dateRange.start,
                     filters.dateRange.end

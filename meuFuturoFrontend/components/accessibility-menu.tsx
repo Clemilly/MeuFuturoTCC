@@ -34,6 +34,7 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
     soundFeedback: false,
   })
   const isMounted = useRef(true)
+  const isInitialLoad = useRef(true)
 
   // Cleanup on unmount
   useEffect(() => {
@@ -49,16 +50,24 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
     const savedSettings = loadAccessibilitySettings()
     if (savedSettings && isMounted.current) {
       setSettings(savedSettings)
-      applySettings(savedSettings)
+      // Apply loaded settings immediately
+      requestAnimationFrame(() => {
+        applySettings(savedSettings)
+        isInitialLoad.current = false
+      })
+    } else {
+      isInitialLoad.current = false
     }
   }, [])
 
-  // Save settings to storage whenever they change
+  // Save settings to storage whenever they change (async)
   useEffect(() => {
-    if (!isMounted.current) return
+    if (!isMounted.current || isInitialLoad.current) return
     
-    saveAccessibilitySettings(settings)
-    // Don't auto-apply, user must click "Apply" button
+    // Save to storage asynchronously
+    requestAnimationFrame(() => {
+      saveAccessibilitySettings(settings)
+    })
   }, [settings])
 
   const applySettings = (newSettings: AccessibilitySettings) => {
@@ -156,17 +165,35 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
   }
 
   const updateSetting = <K extends keyof AccessibilitySettings>(key: K, value: AccessibilitySettings[K]) => {
-    setSettings((prev) => ({ ...prev, [key]: value }))
-  }
-
-  const handleApplySettings = () => {
-    // Apply settings immediately when button is clicked
-    console.log('Applying settings:', settings)
-    applySettings(settings)
-    announceToScreenReader("Configurações de acessibilidade aplicadas")
+    // Update settings immediately - changes will be applied automatically via useEffect
+    setSettings((prev) => {
+      const newSettings = { ...prev, [key]: value }
+      
+      // Apply change immediately asynchronously for instant feedback
+      requestAnimationFrame(() => {
+        applySettings(newSettings)
+      })
+      
+      return newSettings
+    })
     
-    // Provide audio feedback if enabled
-    if (settings.soundFeedback) {
+    // Announce change to screen reader
+    const settingNames: Record<string, string> = {
+      fontSize: `Tamanho da fonte alterado para ${value}px`,
+      contrast: `Contraste alterado para ${value === "high" ? "alto contraste" : value === "dark" ? "modo escuro" : "normal"}`,
+      screenReader: value ? "Otimização para leitores de tela ativada" : "Otimização para leitores de tela desativada",
+      reducedMotion: value ? "Movimento reduzido ativado" : "Movimento reduzido desativado",
+      keyboardNavigation: value ? "Navegação por teclado aprimorada ativada" : "Navegação por teclado aprimorada desativada",
+      focusIndicator: value ? "Indicador de foco aprimorado ativado" : "Indicador de foco aprimorado desativado",
+      soundFeedback: value ? "Feedback sonoro ativado" : "Feedback sonoro desativado",
+    }
+    
+    if (settingNames[key]) {
+      announceToScreenReader(settingNames[key])
+    }
+    
+    // Provide audio feedback if enabled and this is not the soundFeedback setting itself
+    if (key !== "soundFeedback" && settings.soundFeedback) {
       playFeedbackSound()
     }
   }
@@ -273,6 +300,11 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
     }
     setSettings(defaultSettings)
     clearAccessibilitySettings()
+    
+    // Apply default settings immediately asynchronously
+    requestAnimationFrame(() => {
+      applySettings(defaultSettings)
+    })
   }
 
   const announceToScreenReader = (message: string) => {
@@ -295,22 +327,25 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
   if (!isOpen) return null
 
   return (
-    <div className="p-4" role="region" aria-labelledby="accessibility-title">
-      <Card className="mb-4">
-          <CardHeader>
-            <CardTitle id="accessibility-title" className="flex items-center justify-between">
-              <span>Configurações de Acessibilidade</span>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={handleApplySettings}
-                  aria-label="Aplicar configurações de acessibilidade"
-                  className="bg-primary text-primary-foreground"
-                >
-                  <MaterialIcon name="check" size={16} className="mr-2" aria-hidden="true" />
-                  Aplicar Alterações
-                </Button>
+    <div className="p-4 sm:p-6" role="region" aria-labelledby="accessibility-title">
+      <Card className="mb-0 border-0 shadow-none bg-card text-card-foreground">
+          <CardHeader className="pb-4 space-y-4">
+            <CardTitle 
+              id="accessibility-title" 
+              className="text-foreground"
+              style={{
+                color: 'hsl(var(--foreground))',
+              }}
+            >
+              <span 
+                className="text-lg sm:text-xl font-bold text-foreground block mb-4"
+                style={{
+                  color: 'hsl(var(--foreground))',
+                }}
+              >
+                Configurações de Acessibilidade
+              </span>
+              <div className="flex items-center gap-2 flex-wrap">
                 <Button
                   variant="outline"
                   size="sm"
@@ -319,9 +354,22 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
                     announceToScreenReader("Configurações de acessibilidade restauradas para o padrão")
                   }}
                   aria-label="Restaurar configurações padrão"
+                  className="flex-1 sm:flex-initial min-w-[120px] text-foreground border-border hover:bg-accent hover:text-accent-foreground"
+                  style={{
+                    color: 'hsl(var(--foreground))',
+                  }}
                 >
-                  <MaterialIcon name="rotate-ccw" size={16} className="mr-2" aria-hidden="true" />
-                  Restaurar Padrão
+                  <MaterialIcon 
+                    name="rotate-ccw" 
+                    size={16} 
+                    className="mr-2" 
+                    aria-hidden="true"
+                    style={{
+                      color: 'hsl(var(--foreground))',
+                    }}
+                  />
+                  <span className="hidden sm:inline" style={{ color: 'hsl(var(--foreground))' }}>Restaurar Padrão</span>
+                  <span className="sm:hidden" style={{ color: 'hsl(var(--foreground))' }}>Restaurar</span>
                 </Button>
                 {onClose && (
                   <Button
@@ -329,19 +377,31 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
                     size="sm"
                     onClick={onClose}
                     aria-label="Fechar menu de acessibilidade"
+                    className="flex-1 sm:flex-initial text-foreground hover:bg-accent hover:text-accent-foreground"
+                    style={{
+                      color: 'hsl(var(--foreground))',
+                    }}
                   >
-                    <MaterialIcon name="close" size={16} aria-hidden="true" />
+                    <MaterialIcon 
+                      name="close" 
+                      size={16} 
+                      aria-hidden="true"
+                      style={{
+                        color: 'hsl(var(--foreground))',
+                      }}
+                    />
+                    <span className="ml-2 hidden sm:inline" style={{ color: 'hsl(var(--foreground))' }}>Fechar</span>
                   </Button>
                 )}
               </div>
             </CardTitle>
           </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 pt-0">
               {/* Tamanho da Fonte */}
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <MaterialIcon name="type" size={16} aria-hidden="true" />
-                  <label htmlFor="font-size-slider" className="font-semibold">
+                  <label htmlFor="font-size-slider" className="font-semibold text-foreground">
                     Tamanho da Fonte: {settings.fontSize}px
                   </label>
                 </div>
@@ -365,7 +425,7 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <MaterialIcon name="contrast" size={16} aria-hidden="true" />
-                  <span className="font-semibold">Contraste</span>
+                  <span className="font-semibold text-foreground">Contraste</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {[
@@ -376,10 +436,7 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
                     <Button
                       key={option.value}
                       variant={settings.contrast === option.value ? "default" : "outline"}
-                      onClick={() => {
-                        updateSetting("contrast", option.value as any)
-                        announceToScreenReader(`Contraste alterado para ${option.label}`)
-                      }}
+                      onClick={() => updateSetting("contrast", option.value as any)}
                       className="w-full"
                       aria-pressed={settings.contrast === option.value}
                     >
@@ -393,12 +450,12 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
                   <MaterialIcon name="zap" size={16} aria-hidden="true" />
-                  <span className="font-semibold">Movimento e Animação</span>
+                  <span className="font-semibold text-foreground">Movimento e Animação</span>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <label htmlFor="reduced-motion" className="text-sm font-medium">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <label htmlFor="reduced-motion" className="text-sm font-medium text-foreground">
                       Reduzir Movimento
                     </label>
                     <p className="text-xs text-muted-foreground">
@@ -408,11 +465,9 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
                   <Switch
                     id="reduced-motion"
                     checked={settings.reducedMotion}
-                    onCheckedChange={(checked) => {
-                      updateSetting("reducedMotion", checked)
-                      announceToScreenReader(checked ? "Movimento reduzido ativado" : "Movimento reduzido desativado")
-                    }}
+                    onCheckedChange={(checked) => updateSetting("reducedMotion", checked)}
                     aria-describedby="reduced-motion-desc"
+                    className="flex-shrink-0"
                   />
                 </div>
               </div>
@@ -421,12 +476,12 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
                   <MaterialIcon name="keyboard" size={16} aria-hidden="true" />
-                  <span className="font-semibold">Navegação</span>
+                  <span className="font-semibold text-foreground">Navegação</span>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <label htmlFor="keyboard-nav" className="text-sm font-medium">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <label htmlFor="keyboard-nav" className="text-sm font-medium text-foreground">
                       Navegação por Teclado Aprimorada
                     </label>
                     <p className="text-xs text-muted-foreground">
@@ -437,12 +492,13 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
                     id="keyboard-nav"
                     checked={settings.keyboardNavigation}
                     onCheckedChange={(checked) => updateSetting("keyboardNavigation", checked)}
+                    className="flex-shrink-0"
                   />
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <label htmlFor="focus-indicator" className="text-sm font-medium">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <label htmlFor="focus-indicator" className="text-sm font-medium text-foreground">
                       Indicador de Foco Aprimorado
                     </label>
                     <p className="text-xs text-muted-foreground">Torna mais visível qual elemento está em foco</p>
@@ -451,6 +507,7 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
                     id="focus-indicator"
                     checked={settings.focusIndicator}
                     onCheckedChange={(checked) => updateSetting("focusIndicator", checked)}
+                    className="flex-shrink-0"
                   />
                 </div>
               </div>
@@ -459,12 +516,12 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
                   <MaterialIcon name="eye" size={16} aria-hidden="true" />
-                  <span className="font-semibold">Leitores de Tela</span>
+                  <span className="font-semibold text-foreground">Leitores de Tela</span>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <label htmlFor="screen-reader" className="text-sm font-medium">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <label htmlFor="screen-reader" className="text-sm font-medium text-foreground">
                       Otimização para Leitores de Tela
                     </label>
                     <p className="text-xs text-muted-foreground">Ativa descrições adicionais e navegação otimizada</p>
@@ -473,12 +530,13 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
                     id="screen-reader"
                     checked={settings.screenReader}
                     onCheckedChange={(checked) => updateSetting("screenReader", checked)}
+                    className="flex-shrink-0"
                   />
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <label htmlFor="sound-feedback" className="text-sm font-medium">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <label htmlFor="sound-feedback" className="text-sm font-medium text-foreground">
                       Feedback Sonoro
                     </label>
                     <p className="text-xs text-muted-foreground">Sons sutis para confirmar ações e mudanças</p>
@@ -487,6 +545,7 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
                     id="sound-feedback"
                     checked={settings.soundFeedback}
                     onCheckedChange={(checked) => updateSetting("soundFeedback", checked)}
+                    className="flex-shrink-0"
                   />
                 </div>
 
@@ -497,7 +556,7 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
                 <div className="flex items-start space-x-2">
                   <MaterialIcon name="info" size={16} className="mt-0.5 text-muted-foreground" aria-hidden="true" />
                   <div className="space-y-2">
-                    <h4 className="font-medium">Compatibilidade</h4>
+                    <h4 className="font-medium text-foreground">Compatibilidade</h4>
                     <div className="text-sm text-muted-foreground space-y-1">
                       <p>✓ NVDA, JAWS, VoiceOver e outros leitores de tela</p>
                       <p>✓ Navegação completa por teclado (Tab, Enter, Setas)</p>
@@ -510,23 +569,23 @@ export function AccessibilityMenu({ isOpen = true, onClose }: AccessibilityMenuP
 
               {/* Atalhos de Teclado */}
               <div className="p-4 bg-muted rounded-lg">
-                <h4 className="font-medium mb-2">Atalhos de Teclado</h4>
+                <h4 className="font-medium mb-2 text-foreground">Atalhos de Teclado</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                   <div>
                     <kbd className="px-2 py-1 bg-background rounded text-xs">Alt + A</kbd>
-                    <span className="ml-2">Abrir menu de acessibilidade</span>
+                    <span className="ml-2 text-foreground">Abrir menu de acessibilidade</span>
                   </div>
                   <div>
                     <kbd className="px-2 py-1 bg-background rounded text-xs">Alt + S</kbd>
-                    <span className="ml-2">Pular para conteúdo principal</span>
+                    <span className="ml-2 text-foreground">Pular para conteúdo principal</span>
                   </div>
                   <div>
                     <kbd className="px-2 py-1 bg-background rounded text-xs">Alt + N</kbd>
-                    <span className="ml-2">Ir para navegação</span>
+                    <span className="ml-2 text-foreground">Ir para navegação</span>
                   </div>
                   <div>
                     <kbd className="px-2 py-1 bg-background rounded text-xs">Esc</kbd>
-                    <span className="ml-2">Fechar menus e diálogos</span>
+                    <span className="ml-2 text-foreground">Fechar menus e diálogos</span>
                   </div>
                 </div>
               </div>

@@ -55,10 +55,15 @@ export function useAlerts() {
       setLoading(true);
       setError(null);
       const response = await apiService.get("/financial/alerts");
-      setAlerts(response.data || []);
+      // Ensure we always have an array, filter out any invalid entries
+      const alertsData = Array.isArray(response.data) 
+        ? response.data.filter(alert => alert != null && typeof alert === 'object')
+        : [];
+      setAlerts(alertsData);
     } catch (err) {
       console.error("Error loading alerts:", err);
       setError("Erro ao carregar alertas");
+      setAlerts([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -70,7 +75,9 @@ export function useAlerts() {
       setLoading(true);
       setError(null);
       const response = await apiService.post("/financial/alerts", alertData);
-      setAlerts(prev => [response.data, ...prev]);
+      if (response.data && typeof response.data === 'object') {
+        setAlerts(prev => [response.data, ...prev]);
+      }
       return true;
     } catch (err) {
       console.error("Error creating alert:", err);
@@ -87,9 +94,11 @@ export function useAlerts() {
       setLoading(true);
       setError(null);
       const response = await apiService.put(`/financial/alerts/${alertId}`, alertData);
-      setAlerts(prev => prev.map(alert => 
-        alert.id === alertId ? response.data : alert
-      ));
+      if (response.data && typeof response.data === 'object') {
+        setAlerts(prev => prev.map(alert => 
+          alert && alert.id === alertId ? response.data : alert
+        ).filter(alert => alert != null));
+      }
       return true;
     } catch (err) {
       console.error("Error updating alert:", err);
@@ -123,9 +132,11 @@ export function useAlerts() {
       setLoading(true);
       setError(null);
       const response = await apiService.put(`/financial/alerts/${alertId}/dismiss`);
-      setAlerts(prev => prev.map(alert => 
-        alert.id === alertId ? response.data : alert
-      ));
+      if (response.data && typeof response.data === 'object') {
+        setAlerts(prev => prev.map(alert => 
+          alert && alert.id === alertId ? response.data : alert
+        ).filter(alert => alert != null));
+      }
       return true;
     } catch (err) {
       console.error("Error dismissing alert:", err);
@@ -142,9 +153,11 @@ export function useAlerts() {
       setLoading(true);
       setError(null);
       const response = await apiService.put(`/financial/alerts/${alertId}/complete`);
-      setAlerts(prev => prev.map(alert => 
-        alert.id === alertId ? response.data : alert
-      ));
+      if (response.data && typeof response.data === 'object') {
+        setAlerts(prev => prev.map(alert => 
+          alert && alert.id === alertId ? response.data : alert
+        ).filter(alert => alert != null));
+      }
       return true;
     } catch (err) {
       console.error("Error completing alert:", err);
@@ -161,7 +174,10 @@ export function useAlerts() {
       setLoading(true);
       setError(null);
       const response = await apiService.post("/financial/alerts/generate");
-      setAlerts(prev => [...response.data, ...prev]);
+      if (Array.isArray(response.data)) {
+        const newAlerts = response.data.filter(alert => alert != null && typeof alert === 'object');
+        setAlerts(prev => [...newAlerts, ...prev]);
+      }
       return true;
     } catch (err) {
       console.error("Error generating smart alerts:", err);

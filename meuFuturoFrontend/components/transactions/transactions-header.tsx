@@ -6,19 +6,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Plus,
-  RefreshCw,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  BarChart3,
-  Filter,
-  X,
-  Eye,
-  EyeOff,
-  Tag,
-} from "lucide-react";
+import { MaterialIcon } from "@/lib/material-icons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -83,7 +71,7 @@ export function TransactionsHeader({
     totalTransactions > 0 ? (stats.total_income / totalTransactions) * 100 : 0;
 
   return (
-    <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+    <Card className="border-0 shadow-lg bg-card/80 backdrop-blur-sm">
       <CardContent className="p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           {/* Left side - Title and filters info */}
@@ -95,7 +83,7 @@ export function TransactionsHeader({
                   variant="secondary"
                   className="bg-primary/10 text-primary"
                 >
-                  <Filter className="h-3 w-3 mr-1" />
+                  <MaterialIcon name="filter" size={12} className="mr-1" tooltip="Filtros ativos" aria-hidden={true} />
                   {activeFiltersCount} filtro{activeFiltersCount > 1 ? "s" : ""}
                 </Badge>
               )}
@@ -114,7 +102,7 @@ export function TransactionsHeader({
                   onClick={onClearFilters}
                   className="h-8 px-3 text-xs"
                 >
-                  <X className="h-3 w-3 mr-1" />
+                  <MaterialIcon name="close" size={12} className="mr-1" tooltip="Limpar filtros" aria-hidden={true} />
                   Limpar filtros
                 </Button>
               </div>
@@ -131,9 +119,9 @@ export function TransactionsHeader({
               className="h-10 px-3"
             >
               {showDetailedStats ? (
-                <EyeOff className="h-4 w-4" />
+                <MaterialIcon name="eye-off" size={16} tooltip="Ocultar estatísticas detalhadas" aria-hidden={true} />
               ) : (
-                <Eye className="h-4 w-4" />
+                <MaterialIcon name="eye" size={16} tooltip="Mostrar estatísticas detalhadas" aria-hidden={true} />
               )}
             </Button>
 
@@ -145,11 +133,12 @@ export function TransactionsHeader({
               disabled={loading || isRefreshing}
               className="h-10 px-3"
             >
-              <RefreshCw
-                className={cn(
-                  "h-4 w-4",
-                  (loading || isRefreshing) && "animate-spin"
-                )}
+              <MaterialIcon 
+                name="refresh-cw" 
+                size={16} 
+                className={cn((loading || isRefreshing) && "animate-spin")}
+                tooltip="Atualizar"
+                aria-hidden={true}
               />
             </Button>
 
@@ -159,7 +148,7 @@ export function TransactionsHeader({
               onClick={onCreateCategory}
               className="h-10 px-4"
             >
-              <Tag className="h-4 w-4 mr-2" />
+              <MaterialIcon name="tag" size={16} className="mr-2" tooltip="Nova categoria" aria-hidden={true} />
               Nova Categoria
             </Button>
 
@@ -168,7 +157,7 @@ export function TransactionsHeader({
               onClick={onCreateTransaction}
               className="h-10 px-6 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg"
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <MaterialIcon name="plus" size={16} className="mr-2" tooltip="Nova transação" aria-hidden={true} />
               Nova Transação
             </Button>
           </div>
@@ -196,7 +185,7 @@ export function TransactionsHeader({
               {/* Total Income */}
               <div className="flex items-center gap-4">
                 <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-xl">
-                  <TrendingUp className="h-6 w-6 text-green-600" />
+                  <MaterialIcon name="trending-up" size={24} className="text-green-600" tooltip="Total de receitas" aria-hidden={true} />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-muted-foreground">
@@ -217,7 +206,7 @@ export function TransactionsHeader({
               {/* Total Expenses */}
               <div className="flex items-center gap-4">
                 <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-xl">
-                  <TrendingDown className="h-6 w-6 text-red-600" />
+                  <MaterialIcon name="trending-down" size={24} className="text-red-600" tooltip="Total de despesas" aria-hidden={true} />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-muted-foreground">
@@ -246,13 +235,16 @@ export function TransactionsHeader({
                     stats.net_amount >= 0 ? "bg-blue-100" : "bg-orange-100"
                   )}
                 >
-                  <DollarSign
+                  <MaterialIcon
+                    name="dollar-sign"
+                    size={24}
                     className={cn(
-                      "h-6 w-6",
                       stats.net_amount >= 0
                         ? "text-blue-600"
                         : "text-orange-600"
                     )}
+                    tooltip="Saldo líquido"
+                    aria-hidden={true}
                   />
                 </div>
                 <div className="flex-1">
@@ -285,7 +277,7 @@ export function TransactionsHeader({
             <div className="mt-6 pt-6 border-t border-border/50">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="text-center p-4 bg-muted/30 rounded-lg">
-                  <BarChart3 className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
+                  <MaterialIcon name="bar-chart-3" size={24} className="text-muted-foreground mx-auto mb-2" tooltip="Valor médio" aria-hidden={true} />
                   <p className="text-sm font-medium text-muted-foreground">
                     Valor Médio
                   </p>

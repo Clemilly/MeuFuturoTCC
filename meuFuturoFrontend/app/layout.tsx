@@ -8,6 +8,8 @@ import { GlobalDataProvider } from "@/contexts/transaction-context"
 import { AuthErrorInterceptor } from "@/components/auth-error-interceptor"
 import { SkipLinks } from "@/components/skip-links"
 import VLibrasOfficial from "@/components/VLibrasOfficial"
+import { AccessibilityWidget } from "@/components/accessibility-widget"
+import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
   title: "MeuFuturo - Gestão Financeira Acessível",
@@ -63,6 +65,8 @@ html {
           </GlobalDataProvider>
         </AuthProvider>
         <VLibrasOfficial />
+        <AccessibilityWidget />
+        <Toaster />
       </body>
     </html>
   )

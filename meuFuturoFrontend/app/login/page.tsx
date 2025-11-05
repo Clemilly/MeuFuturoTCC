@@ -11,10 +11,13 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { MaterialIcon } from "@/lib/material-icons"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 
 export default function LoginPage() {
-  const { login } = useAuth()
+  const { login, isAuthenticated } = useAuth()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -79,7 +82,12 @@ export default function LoginPage() {
       if (!isMounted.current) return
 
       if (result.success) {
-        // Login successful, will be redirected by RouteGuard
+        // Login successful - redirect manually to ensure it works
+        const redirectPath = searchParams.get('redirect') || '/'
+        // Use setTimeout to ensure state is updated before redirect
+        setTimeout(() => {
+          router.replace(redirectPath)
+        }, 100)
       } else {
         setError(result.message || "Erro no login")
       }
@@ -93,6 +101,14 @@ export default function LoginPage() {
       }
     }
   }
+
+  // Also handle redirect if user becomes authenticated (backup to manual redirect)
+  useEffect(() => {
+    if (isAuthenticated && isMounted.current) {
+      const redirectPath = searchParams.get('redirect') || '/'
+      router.replace(redirectPath)
+    }
+  }, [isAuthenticated, router, searchParams])
 
 
   return (

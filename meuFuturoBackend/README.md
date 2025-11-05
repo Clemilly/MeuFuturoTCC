@@ -8,7 +8,7 @@ Sistema de gestão financeira pessoal com foco em acessibilidade, desenvolvido c
 - **Arquitetura Clean** com separação de responsabilidades
 - **Acessibilidade** como prioridade no design da API
 - **IA Preditiva** para insights financeiros personalizados  
-- **Autenticação robusta** com JWT e 2FA
+- **Autenticação robusta** com JWT
 - **PostgreSQL** com SQLAlchemy 2.0 e async/await
 - **Testes abrangentes** com pytest e cobertura completa
 - **Migrations** com Alembic para evolução do banco
@@ -22,7 +22,7 @@ app/
 ├── core/               # Configuração e infraestrutura
 │   ├── config.py       # Settings com Pydantic BaseSettings
 │   ├── database.py     # Configuração async do PostgreSQL
-│   └── security.py     # JWT, 2FA e autenticação
+│   └── security.py     # JWT e autenticação
 ├── models/             # Modelos SQLAlchemy (Entities)
 │   ├── user.py        # Modelo de usuário
 │   ├── transaction.py # Transações financeiras
@@ -168,13 +168,9 @@ pytest -m "financial"
 
 - `POST /register` - Registrar novo usuário
 - `POST /login` - Login e obtenção de token
-- `POST /verify-2fa` - Verificação de 2FA
 - `GET /profile` - Obter perfil do usuário
 - `PUT /profile` - Atualizar perfil
 - `POST /change-password` - Alterar senha
-- `POST /2fa/setup` - Configurar 2FA
-- `POST /2fa/enable` - Habilitar 2FA
-- `POST /2fa/disable` - Desabilitar 2FA
 
 #### 💰 Financeiro (`/api/v1/financial`)
 
@@ -277,7 +273,6 @@ mypy app/
 ### 1. Gestão de Usuários
 - Registro com validação de email
 - Autenticação JWT com expiração
-- 2FA opcional com TOTP
 - Preferências de acessibilidade
 - Perfil financeiro personalizado
 
@@ -319,7 +314,6 @@ mypy app/
 - **Rate limiting** configurável
 - **CORS** configurado para frontend
 - **SQL Injection** prevenção via ORM
-- **2FA** opcional para contas sensíveis
 
 ## 🚀 Deploy
 

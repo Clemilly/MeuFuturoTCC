@@ -107,7 +107,7 @@ export function TransactionsPageNew() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <div className="container mx-auto px-4 py-6 space-y-6">
         {/* Header */}
-        <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+        <Card className="border-0 shadow-lg bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>

@@ -5,30 +5,82 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { MaterialIcon } from "@/lib/material-icons"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
-import { AccessibilityMenu } from "@/components/accessibility-menu"
+import { useToast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
+
+interface NavigationItem {
+  icon: string
+  label: string
+  href: string
+  badge?: number
+}
 
 export function MainNavigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [isAccessibilityMenuOpen, setIsAccessibilityMenuOpen] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
   const { user, logout } = useAuth()
+  const { toast } = useToast()
 
-  const navigationItems = [
+  const navigationItems: NavigationItem[] = [
     { icon: "home", label: "Visão Geral", href: "/" },
     { icon: "plus-circle", label: "Transações", href: "/transactions" },
     { icon: "bar-chart-3", label: "Relatórios", href: "/reports" },
     { icon: "brain", label: "IA Financeira", href: "/ai-insights" },
     { icon: "bell", label: "Alertas", href: "/alerts" },
-    { icon: "shield", label: "Segurança", href: "/security" },
     { icon: "user", label: "Perfil", href: "/profile" },
     { icon: "info", label: "Sobre", href: "/about" },
   ]
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    if (isLoggingOut) return // Prevent multiple clicks
+    
+    setIsLoggingOut(true)
     setIsMobileMenuOpen(false)
+    
+    try {
+      const result = await logout()
+      
+      if (result.success) {
+        // Show success message
+        toast({
+          title: "Logout realizado",
+          description: result.message || "Você foi desconectado com sucesso.",
+          duration: 3000,
+        })
+        
+        // Redirect to login page
+        router.replace('/login')
+      } else {
+        // Show error message but still redirect for security
+        toast({
+          title: "Aviso no logout",
+          description: result.message || "Erro ao realizar logout. Você será redirecionado para a tela de login.",
+          variant: "destructive",
+          duration: 5000,
+        })
+        
+        // Still redirect to login for security
+        router.replace('/login')
+      }
+    } catch (error) {
+      // Handle unexpected errors
+      console.error('Logout error:', error)
+      toast({
+        title: "Erro no logout",
+        description: "Ocorreu um erro inesperado. Você será redirecionado para a tela de login. Se o problema persistir, tente novamente ou aguarde alguns instantes.",
+        variant: "destructive",
+        duration: 5000,
+      })
+      
+      // Still redirect to login for security
+      router.replace('/login')
+    } finally {
+      setIsLoggingOut(false)
+    }
   }
 
   return (
@@ -47,18 +99,31 @@ export function MainNavigation() {
               return (
                 <Link key={item.href} href={item.href}>
                   <Button
-                    variant={isActive ? "default" : "ghost"}
+                    variant="ghost"
                     size="sm"
-                    className="group flex items-center space-x-1 sm:space-x-2 relative whitespace-nowrap transition-all duration-300 ease-in-out hover:bg-accent/50 hover:scale-105 px-2 sm:px-3"
+                    className={cn(
+                      "group flex items-center space-x-1 sm:space-x-2 relative whitespace-nowrap transition-all duration-300 ease-in-out hover:scale-105 px-2 sm:px-3",
+                      isActive 
+                        ? "!bg-white dark:!bg-white !text-gray-900 dark:!text-gray-900 hover:!bg-gray-100 dark:hover:!bg-gray-100 shadow-sm" 
+                        : "text-foreground hover:bg-accent/50"
+                    )}
                     aria-current={isActive ? "page" : undefined}
                   >
                     <MaterialIcon 
                       name={item.icon as any} 
                       size={16} 
-                      className="flex-shrink-0 transition-transform duration-300 group-hover:scale-110" 
-                      aria-hidden="true"
+                      className={cn(
+                        "flex-shrink-0 transition-transform duration-300 group-hover:scale-110",
+                        isActive ? "!text-gray-900 dark:!text-gray-900" : "text-foreground"
+                      )} 
+                      aria-hidden={true}
                     />
-                    <span className="text-xs sm:text-sm transition-all duration-300 group-hover:text-foreground hidden xl:inline">
+                    <span className={cn(
+                      "text-xs sm:text-sm transition-all duration-300 hidden xl:inline",
+                      isActive 
+                        ? "!text-gray-900 dark:!text-gray-900" 
+                        : "text-foreground group-hover:text-foreground"
+                    )}>
                       {item.label}
                     </span>
                     {item.badge && item.badge > 0 && (
@@ -78,29 +143,26 @@ export function MainNavigation() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setIsAccessibilityMenuOpen(!isAccessibilityMenuOpen)}
-                className="group flex items-center space-x-1 whitespace-nowrap transition-all duration-300 ease-in-out hover:bg-accent/50 hover:scale-105 px-2"
-                aria-label="Menu de acessibilidade"
-                aria-expanded={isAccessibilityMenuOpen}
-                aria-controls="accessibility-menu"
-              >
-                <MaterialIcon name="accessibility" size={16} className="transition-transform duration-300 group-hover:scale-110" aria-hidden="true" />
-                <span className="text-xs sm:text-sm transition-all duration-300 group-hover:text-foreground hidden xl:inline">
-                  Acessibilidade
-                </span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
                 onClick={handleLogout}
-                className="group flex items-center space-x-1 whitespace-nowrap transition-all duration-300 ease-in-out hover:bg-accent/50 hover:scale-105 px-2"
+                disabled={isLoggingOut}
+                className="group flex items-center space-x-1 whitespace-nowrap transition-all duration-300 ease-in-out hover:bg-accent/50 hover:scale-105 px-2 sm:px-3 text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Sair da conta"
               >
-                <MaterialIcon name="log-out" size={16} className="transition-transform duration-300 group-hover:scale-110" aria-hidden="true" />
-                <span className="text-xs sm:text-sm transition-all duration-300 group-hover:text-foreground hidden xl:inline">
-                  Sair
-                </span>
+                {isLoggingOut ? (
+                  <>
+                    <MaterialIcon name="loading" size={16} className="animate-spin text-foreground" aria-hidden={true} />
+                    <span className="text-xs sm:text-sm transition-all duration-300 group-hover:text-foreground hidden xl:inline text-foreground">
+                      Saindo...
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <MaterialIcon name="log-out" size={16} className="transition-transform duration-300 group-hover:scale-110 text-foreground" aria-hidden={true} />
+                    <span className="text-xs sm:text-sm transition-all duration-300 group-hover:text-foreground hidden xl:inline text-foreground">
+                      Sair
+                    </span>
+                  </>
+                )}
               </Button>
             </div>
           </div>
@@ -114,7 +176,7 @@ export function MainNavigation() {
               aria-controls="mobile-menu"
               aria-label="Abrir menu de navegação"
             >
-              {isMobileMenuOpen ? <MaterialIcon name="close" size={20} aria-hidden="true" /> : <MaterialIcon name="menu" size={20} aria-hidden="true" />}
+              {isMobileMenuOpen ? <MaterialIcon name="close" size={20} aria-hidden={true} /> : <MaterialIcon name="menu" size={20} aria-hidden={true} />}
             </Button>
           </div>
         </div>
@@ -124,13 +186,8 @@ export function MainNavigation() {
             <div className="space-y-2">
               <div className="px-3 py-2 bg-muted rounded-md mb-4">
                 <div className="flex items-center space-x-2">
-                  <User className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                  <MaterialIcon name="user" size={16} className="text-muted-foreground" aria-hidden={true} />
                   <span className="text-sm font-medium">{user?.name}</span>
-                  {user?.twoFactorEnabled && (
-                    <Badge variant="secondary" className="text-xs">
-                      2FA
-                    </Badge>
-                  )}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">{user?.email}</p>
               </div>
@@ -140,13 +197,23 @@ export function MainNavigation() {
                 return (
                   <Link key={item.href} href={item.href}>
                     <Button
-                      variant={isActive ? "default" : "ghost"}
-                      className="w-full justify-start flex items-center space-x-2"
+                      variant="ghost"
+                      className={cn(
+                        "w-full justify-start flex items-center space-x-2",
+                        isActive 
+                          ? "!bg-white dark:!bg-white !text-gray-900 dark:!text-gray-900 hover:!bg-gray-100 dark:hover:!bg-gray-100 shadow-sm" 
+                          : ""
+                      )}
                       aria-current={isActive ? "page" : undefined}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      <MaterialIcon name={item.icon as any} size={16} aria-hidden="true" />
-                      <span>{item.label}</span>
+                      <MaterialIcon 
+                        name={item.icon as any} 
+                        size={16} 
+                        className={isActive ? "!text-gray-900 dark:!text-gray-900" : ""}
+                        aria-hidden={true} 
+                      />
+                      <span className={isActive ? "!text-gray-900 dark:!text-gray-900" : ""}>{item.label}</span>
                       {item.badge && item.badge > 0 && (
                         <Badge
                           variant="destructive"
@@ -163,41 +230,27 @@ export function MainNavigation() {
               <div className="pt-2 border-t border-border space-y-2">
                 <Button
                   variant="ghost"
-                  className="w-full justify-start flex items-center space-x-2"
-                  onClick={() => {
-                    setIsAccessibilityMenuOpen(!isAccessibilityMenuOpen)
-                    setIsMobileMenuOpen(false)
-                  }}
-                  aria-expanded={isAccessibilityMenuOpen}
-                  aria-controls="accessibility-menu"
-                >
-                  <MaterialIcon name="settings" size={16} aria-hidden="true" />
-                  <span>Configurações de Acessibilidade</span>
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start flex items-center space-x-2 text-destructive hover:text-destructive"
+                  className="w-full justify-start flex items-center space-x-2 text-destructive hover:text-destructive disabled:opacity-50"
                   onClick={handleLogout}
+                  disabled={isLoggingOut}
                 >
-                  <MaterialIcon name="log-out" size={16} aria-hidden="true" />
-                  <span>Sair da Conta</span>
+                  {isLoggingOut ? (
+                    <>
+                      <MaterialIcon name="loading" size={16} className="animate-spin" aria-hidden={true} />
+                      <span>Saindo...</span>
+                    </>
+                  ) : (
+                    <>
+                      <MaterialIcon name="log-out" size={16} aria-hidden={true} />
+                      <span>Sair da Conta</span>
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
           </div>
         )}
       </div>
-      
-      {/* Menu de Acessibilidade */}
-      {isAccessibilityMenuOpen && (
-        <div id="accessibility-menu" className="border-t border-border bg-card">
-          <AccessibilityMenu 
-            isOpen={isAccessibilityMenuOpen} 
-            onClose={() => setIsAccessibilityMenuOpen(false)} 
-          />
-        </div>
-      )}
     </nav>
   )
 }

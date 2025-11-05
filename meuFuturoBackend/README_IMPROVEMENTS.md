@@ -19,7 +19,7 @@ Este documento detalha as melhorias implementadas no backend MeuFuturo seguindo 
 ### 3. **Sistema de Validação Robusto** ✅
 - **Arquivo**: `core/validators.py`
 - **Benefícios**: Validação consistente, mensagens de erro claras
-- **Inclui**: Validadores para email, senha, valores monetários, datas, UUIDs, 2FA
+- **Inclui**: Validadores para email, senha, valores monetários, datas, UUIDs
 
 ### 4. **Sistema de Logging Estruturado** ✅
 - **Arquivo**: `core/logging.py`

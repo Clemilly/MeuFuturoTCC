@@ -8,6 +8,7 @@
 import { useState } from "react";
 import { useTransactionsOrchestrator } from "@/hooks/transactions/use-transactions-orchestrator";
 import { useCategories } from "@/hooks/use-categories";
+import { usePageRefresh } from "@/hooks/use-page-refresh";
 import { TransactionsFiltersNew } from "./transactions-filters-new";
 import { TransactionsPaginationNew } from "./transactions-pagination-new";
 import { TransactionsListWrapper } from "./transactions-list-wrapper";
@@ -47,11 +48,40 @@ export function TransactionsPageModular() {
   } = useTransactionsOrchestrator();
 
   // Hook de categorias (independente)
-  const { categories, loading: categoriesLoading } = useCategories();
+  const { categories, loading: categoriesLoading, refreshCategories } = useCategories();
 
   // Estado local apenas para modals (UI state)
   const [modals, setModals] = useState<ModalState>(initialModalState);
   const [isCreateCategoryOpen, setIsCreateCategoryOpen] = useState(false);
+
+  // Hook para recarregar dados após refresh e salvar/restaurar filtros
+  usePageRefresh({
+    onRefresh: async () => {
+      // Recarregar transações e categorias após refresh
+      await refresh();
+      await refreshCategories();
+    },
+    stateKey: 'transactions-page',
+    onSaveState: () => {
+      // Salvar filtros e paginação atuais
+      return {
+        filters: filters,
+        pagination: {
+          current_page: pagination.current_page,
+          page_size: pagination.page_size,
+        },
+      };
+    },
+    onRestoreState: (savedState) => {
+      // Restaurar filtros e paginação
+      if (savedState.filters) {
+        updateFilters(savedState.filters);
+      }
+      if (savedState.pagination) {
+        changePage(savedState.pagination.current_page);
+      }
+    },
+  });
 
   // Modal handlers
   const openCreateModal = () => {
@@ -103,18 +133,24 @@ export function TransactionsPageModular() {
     });
   };
 
-  const handleCategoryCreated = () => {
-    console.log("✅ Category created successfully");
+  const handleCategoryCreated = async (category: any) => {
+    console.log("✅ Category created successfully", category);
     setIsCreateCategoryOpen(false);
-    // Refresh categories list
-    window.location.reload(); // Simple refresh for now
+    
+    // Recarregar categorias para atualizar todos os selects e filtros
+    // Isso garante que a nova categoria apareça imediatamente em todos os lugares
+    await refreshCategories();
+    
+    // Nota: Os filtros e seleções são mantidos automaticamente porque
+    // não estamos recarregando a página, apenas atualizando os dados
+    console.log("✅ Categories refreshed - filters and selections preserved");
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <div className="container mx-auto px-4 py-6 space-y-6">
         {/* Header */}
-        <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+        <Card className="border-0 shadow-lg bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>

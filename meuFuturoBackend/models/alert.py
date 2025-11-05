@@ -4,7 +4,7 @@ Alert model for notifications and reminders.
 Supports various types of financial alerts and notifications.
 """
 
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Optional
 from sqlalchemy import String, Numeric, Date, DateTime, Text, ForeignKey, Boolean, Enum as SQLEnum, JSON
@@ -193,12 +193,12 @@ class Alert(Base, TimestampMixin):
     def dismiss(self) -> None:
         """Mark the alert as dismissed."""
         self.status = AlertStatus.DISMISSED
-        self.dismissed_at = datetime.utcnow()
+        self.dismissed_at = datetime.now(timezone.utc)
     
     def complete(self) -> None:
         """Mark the alert as completed."""
         self.status = AlertStatus.COMPLETED
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(timezone.utc)
     
     def is_owned_by(self, user_id: str) -> bool:
         """Check if this alert belongs to the given user."""

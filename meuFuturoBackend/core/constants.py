@@ -96,11 +96,6 @@ class ValidationLimits:
     # Search
     MIN_SEARCH_LENGTH: int = 1
     MAX_SEARCH_LENGTH: int = 255
-    
-    # 2FA
-    TOTP_SECRET_LENGTH: int = 32
-    TOTP_TOKEN_LENGTH: int = 6
-    TOTP_WINDOW: int = 1  # ±30 seconds
 
 # Database Constants
 class DatabaseConstants:

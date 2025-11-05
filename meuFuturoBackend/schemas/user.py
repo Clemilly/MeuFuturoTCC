@@ -77,7 +77,6 @@ class UserResponse(UserBase):
     id: str = Field(..., description="Unique user identifier")
     is_active: bool = Field(..., description="Whether user account is active")
     is_verified: bool = Field(..., description="Whether email is verified")
-    two_factor_enabled: bool = Field(..., description="Whether 2FA is enabled")
     bio: Optional[str] = Field(None, description="User biography")
     avatar_url: Optional[str] = Field(None, description="URL to user's avatar")
     created_at: datetime = Field(..., description="Account creation timestamp")
@@ -92,7 +91,6 @@ class UserResponse(UserBase):
                 "name": "João Silva",
                 "is_active": True,
                 "is_verified": True,
-                "two_factor_enabled": False,
                 "bio": "Empreendedor apaixonado por finanças",
                 "avatar_url": "https://example.com/avatar.jpg",
                 "created_at": "2025-01-24T10:00:00Z",
@@ -184,52 +182,6 @@ class PasswordChange(BaseModel):
             "example": {
                 "current_password": "senhaAtual123",
                 "new_password": "novaSenha456"
-            }
-        }
-    )
-
-
-class TwoFactorEnable(BaseModel):
-    """Schema for enabling 2FA."""
-    
-    totp_code: str = Field(..., pattern=r"^\d{6}$", description="6-digit TOTP code")
-    
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "totp_code": "123456"
-            }
-        }
-    )
-
-
-class TwoFactorVerify(BaseModel):
-    """Schema for 2FA verification during login."""
-    
-    totp_code: str = Field(..., pattern=r"^\d{6}$", description="6-digit TOTP code")
-    
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "totp_code": "123456"
-            }
-        }
-    )
-
-
-class TwoFactorSetupResponse(BaseModel):
-    """Schema for 2FA setup response."""
-    
-    secret: str = Field(..., description="TOTP secret for manual entry")
-    qr_code_url: str = Field(..., description="QR code URL for scanning")
-    backup_codes: list[str] = Field(..., description="Backup codes for recovery")
-    
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "secret": "JBSWY3DPEHPK3PXP",
-                "qr_code_url": "otpauth://totp/MeuFuturo:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=MeuFuturo",
-                "backup_codes": ["123456789", "987654321"]
             }
         }
     )

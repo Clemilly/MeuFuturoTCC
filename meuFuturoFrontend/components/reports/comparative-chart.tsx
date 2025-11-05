@@ -77,13 +77,13 @@ export function ComparativeChart({ data, loading = false }: ComparativeChartProp
   const getChangeIcon = (change: number) => {
     if (change > 0) return <TrendingUp className="h-3 w-3 text-green-600" />
     if (change < 0) return <TrendingDown className="h-3 w-3 text-red-600" />
-    return <Minus className="h-3 w-3 text-gray-600" />
+    return <Minus className="h-3 w-3 text-muted-foreground" />
   }
 
   const getChangeColor = (change: number) => {
     if (change > 0) return 'text-green-600'
     if (change < 0) return 'text-red-600'
-    return 'text-gray-600'
+    return 'text-muted-foreground'
   }
 
   return (

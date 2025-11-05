@@ -65,7 +65,7 @@ export function MonthlyComparisonChart({
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white p-3 border rounded-lg shadow-lg">
+        <div className="bg-card p-3 border rounded-lg shadow-lg">
           <p className="font-semibold mb-2">{label}</p>
           <div className="space-y-1">
             <div className="flex items-center gap-2">

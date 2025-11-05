@@ -1081,6 +1081,22 @@ async def dismiss_financial_alert(
     return alert
 
 
+@router.put(
+    "/alerts/{alert_id}/complete",
+    response_model=AlertResponse,
+    summary="Marcar alerta como concluído",
+    description="Marca um alerta financeiro como concluído",
+)
+async def complete_financial_alert(
+    alert_id: str,
+    current_user: User = Depends(get_current_user),
+    alert_service: AlertService = Depends(get_alert_service),
+):
+    """Marcar alerta financeiro como concluído."""
+    alert = await alert_service.complete_alert(current_user.id, alert_id)
+    return alert
+
+
 @router.post(
     "/alerts/generate",
     response_model=List[AlertResponse],
