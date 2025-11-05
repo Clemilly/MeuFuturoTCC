@@ -262,7 +262,7 @@ export function TransactionForm({
   }, [mode]);
 
   return (
-    <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+    <Card className="border-0 shadow-lg bg-card/80 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           {getTransactionIcon}
@@ -458,7 +458,7 @@ export function TransactionForm({
                 {categoriesLoading ? (
                   <SelectItem value="loading" disabled>
                     <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-gray-300 animate-pulse" />
+                      <div className="w-3 h-3 rounded-full bg-muted animate-pulse" />
                       Carregando categorias...
                     </div>
                   </SelectItem>

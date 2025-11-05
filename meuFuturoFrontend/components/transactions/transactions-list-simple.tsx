@@ -6,16 +6,7 @@
 "use client"
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { 
-  AlertCircle, 
-  Inbox, 
-  CheckSquare, 
-  Square, 
-  MoreHorizontal,
-  Trash2,
-  Download,
-  Eye
-} from 'lucide-react'
+import { MaterialIcon } from '@/lib/material-icons'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -67,7 +58,7 @@ function EmptyState() {
   return (
     <Card>
       <CardContent className="flex flex-col items-center justify-center py-12">
-        <Inbox className="h-12 w-12 text-muted-foreground mb-4" />
+        <MaterialIcon name="inbox" size={48} className="text-muted-foreground mb-4" tooltip="Nenhuma transação" aria-hidden={true} />
         <h3 className="text-lg font-semibold mb-2">Nenhuma transação encontrada</h3>
         <p className="text-muted-foreground text-center max-w-md">
           Comece adicionando sua primeira transação ou ajuste os filtros para ver mais resultados.
@@ -82,7 +73,7 @@ function ErrorState({ error, onRetry }: { error: string; onRetry: () => void }) 
   return (
     <Card>
       <CardContent className="flex flex-col items-center justify-center py-12">
-        <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+        <MaterialIcon name="alert-circle" size={48} className="text-destructive mb-4" tooltip="Erro" aria-hidden={true} />
         <h3 className="text-lg font-semibold mb-2">Erro ao carregar transações</h3>
         <p className="text-muted-foreground text-center mb-4 max-w-md">
           {error}
@@ -212,12 +203,12 @@ export function TransactionsListSimple({
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
+                        <MaterialIcon name="more-horizontal" size={16} tooltip="Mais opções" aria-hidden={true} />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={handleBulkExport}>
-                        <Download className="h-4 w-4 mr-2" />
+                        <MaterialIcon name="download" size={16} className="mr-2" tooltip="Exportar selecionadas" aria-hidden={true} />
                         Exportar selecionadas
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
@@ -225,7 +216,7 @@ export function TransactionsListSimple({
                         onClick={handleBulkDelete}
                         className="text-destructive focus:text-destructive"
                       >
-                        <Trash2 className="h-4 w-4 mr-2" />
+                        <MaterialIcon name="trash-2" size={16} className="mr-2" tooltip="Excluir selecionadas" aria-hidden={true} />
                         Excluir selecionadas
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -270,7 +261,7 @@ export function TransactionsListSimple({
                     size="sm"
                     onClick={handleBulkExport}
                   >
-                    <Download className="h-4 w-4 mr-1" />
+                    <MaterialIcon name="download" size={16} className="mr-1" tooltip="Exportar" aria-hidden={true} />
                     Exportar
                   </Button>
                   <Button
@@ -279,7 +270,7 @@ export function TransactionsListSimple({
                     onClick={handleBulkDelete}
                     className="text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="h-4 w-4 mr-1" />
+                    <MaterialIcon name="trash-2" size={16} className="mr-1" tooltip="Excluir" aria-hidden={true} />
                     Excluir
                   </Button>
                 </div>
@@ -317,7 +308,7 @@ export function TransactionsListSimple({
             </div>
           ) : (
             <div className="p-8 text-center text-muted-foreground">
-              <Inbox className="h-8 w-8 mx-auto mb-2" />
+              <MaterialIcon name="inbox" size={32} className="mx-auto mb-2" tooltip="Nenhuma transação encontrada" aria-hidden={true} />
               <p>Nenhuma transação encontrada</p>
             </div>
           )}

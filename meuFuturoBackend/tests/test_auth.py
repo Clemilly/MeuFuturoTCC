@@ -1,7 +1,7 @@
 """
 Tests for authentication endpoints.
 
-Tests user registration, login, 2FA, and profile management.
+Tests user registration, login, and profile management.
 """
 
 import pytest

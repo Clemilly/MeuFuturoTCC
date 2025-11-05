@@ -20,8 +20,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Plus } from "lucide-react";
+import { MaterialIcon } from "@/lib/material-icons";
 import { useToast } from "@/hooks/use-toast";
+import { useOperationToast } from "@/hooks/use-operation-toast";
 import { apiService } from "@/lib/api";
 import type { Category, CategoryCreate } from "@/lib/types";
 
@@ -67,12 +68,12 @@ export function CreateCategoryModal({
     description: "",
     color: "#FF6B6B",
     icon: "utensils",
-    type: "expense",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<CategoryCreate>>({});
 
   const { toast } = useToast();
+  const { showToastFromResponse } = useOperationToast();
 
   const validateForm = (): boolean => {
     const newErrors: Partial<CategoryCreate> = {};
@@ -95,10 +96,6 @@ export function CreateCategoryModal({
       newErrors.icon = "Ícone é obrigatório";
     }
 
-    if (!formData.type) {
-      newErrors.type = "Tipo é obrigatório";
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -116,28 +113,31 @@ export function CreateCategoryModal({
       const response = await apiService.createCategory(formData);
 
       if (response.error) {
-        toast({
-          title: "Erro",
-          description: response.error,
-          variant: "destructive",
+        // Mostrar toast de erro usando useOperationToast
+        showToastFromResponse(response, {
+          message: response.error,
         });
         return;
       }
 
-      toast({
-        title: "Sucesso",
-        description: "Categoria criada com sucesso!",
+      // Mostrar toast de sucesso usando useOperationToast
+      showToastFromResponse(response, {
+        message: "Categoria criada com sucesso! Atualize a página para ver as alterações.",
       });
 
-      onSuccess(response.data);
+      // Chamar callback de sucesso para atualizar componentes
+      if (response.data) {
+        onSuccess(response.data as Category);
+      }
       handleClose();
     } catch (error) {
       console.error("Error creating category:", error);
-      toast({
-        title: "Erro",
-        description: "Erro ao criar categoria. Tente novamente.",
-        variant: "destructive",
-      });
+      showToastFromResponse(
+        { error: "Erro ao criar categoria. Tente novamente." },
+        {
+          message: "Erro ao criar categoria. Tente novamente.",
+        }
+      );
     } finally {
       setIsLoading(false);
     }
@@ -149,7 +149,6 @@ export function CreateCategoryModal({
       description: "",
       color: "#FF6B6B",
       icon: "utensils",
-      type: "expense",
     });
     setErrors({});
     onClose();
@@ -169,7 +168,7 @@ export function CreateCategoryModal({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Plus className="h-5 w-5" />
+            <MaterialIcon name="plus-circle" size={20} tooltip="Nova categoria" />
             Nova Categoria
           </DialogTitle>
           <DialogDescription>
@@ -206,27 +205,6 @@ export function CreateCategoryModal({
             />
             {errors.description && (
               <p className="text-sm text-red-500">{errors.description}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="type">Tipo *</Label>
-            <Select
-              value={formData.type}
-              onValueChange={(value) =>
-                handleInputChange("type", value as "income" | "expense")
-              }
-            >
-              <SelectTrigger className={errors.type ? "border-red-500" : ""}>
-                <SelectValue placeholder="Selecione o tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="income">Receita</SelectItem>
-                <SelectItem value="expense">Despesa</SelectItem>
-              </SelectContent>
-            </Select>
-            {errors.type && (
-              <p className="text-sm text-red-500">{errors.type}</p>
             )}
           </div>
 
@@ -301,7 +279,15 @@ export function CreateCategoryModal({
               Cancelar
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isLoading && (
+                <MaterialIcon 
+                  name="loading" 
+                  size={16} 
+                  className="mr-2 animate-spin" 
+                  tooltip="Processando..."
+                  aria-hidden={true}
+                />
+              )}
               Criar Categoria
             </Button>
           </DialogFooter>

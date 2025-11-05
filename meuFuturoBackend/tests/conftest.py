@@ -127,27 +127,6 @@ async def test_user_inactive(test_db: AsyncSession) -> User:
     return user
 
 
-@pytest_asyncio.fixture
-async def test_user_with_2fa(test_db: AsyncSession) -> User:
-    """Create a test user with 2FA enabled."""
-    user = User(
-        id="test-user-2fa-id",
-        email="2fa@example.com",
-        name="2FA User",
-        hashed_password=get_password_hash("testpassword123"),
-        is_active=True,
-        is_verified=True,
-        two_factor_enabled=True,
-        two_factor_secret="JBSWY3DPEHPK3PXP"
-    )
-    
-    test_db.add(user)
-    await test_db.commit()
-    await test_db.refresh(user)
-    
-    return user
-
-
 @pytest.fixture
 def auth_headers(test_user: User) -> dict:
     """Get authentication headers for test user."""
@@ -201,12 +180,6 @@ def sample_login_data() -> dict:
     }
 
 
-@pytest.fixture
-def sample_2fa_data() -> dict:
-    """Sample 2FA data for testing."""
-    return {
-        "code": "123456"
-    }
 
 
 @pytest.fixture

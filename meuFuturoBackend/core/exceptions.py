@@ -321,26 +321,6 @@ class InvalidDateRangeError(ValidationError):
         )
 
 
-class TwoFactorRequiredError(AuthenticationError):
-    """Two-factor authentication required exception."""
-    
-    def __init__(self, user_id: str):
-        super().__init__(
-            message="Autenticação de duas etapas necessária",
-            details={"user_id": user_id}
-        )
-
-
-class InvalidTwoFactorTokenError(AuthenticationError):
-    """Invalid two-factor token exception."""
-    
-    def __init__(self):
-        super().__init__(
-            message="Código de verificação inválido",
-            details={}
-        )
-
-
 class EmailNotVerifiedError(AuthorizationError):
     """Email not verified exception."""
     

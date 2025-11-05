@@ -6,19 +6,7 @@
 "use client"
 
 import { useState, useMemo } from 'react'
-import { 
-  Edit, 
-  Trash2, 
-  MoreHorizontal, 
-  Eye, 
-  Copy, 
-  Calendar, 
-  Tag, 
-  DollarSign,
-  TrendingUp,
-  TrendingDown,
-  Clock
-} from 'lucide-react'
+import { MaterialIcon } from '@/lib/material-icons'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -78,9 +66,9 @@ export function TransactionCard({
   // Get transaction icon
   const getTransactionIcon = useMemo(() => {
     return transaction.type === 'income' ? (
-      <TrendingUp className="h-4 w-4" />
+      <MaterialIcon name="trending-up" size={16} tooltip="Receita" aria-hidden={true} />
     ) : (
-      <TrendingDown className="h-4 w-4" />
+      <MaterialIcon name="trending-down" size={16} tooltip="Despesa" aria-hidden={true} />
     )
   }, [transaction.type])
   
@@ -101,7 +89,7 @@ export function TransactionCard({
   
   // Get category color
   const getCategoryColor = useMemo(() => {
-    if (!transaction.category) return 'bg-gray-100 text-gray-600'
+    if (!transaction.category) return 'bg-muted text-muted-foreground'
     return `bg-[${transaction.category.color}20] text-[${transaction.category.color}]`
   }, [transaction.category])
   
@@ -135,7 +123,7 @@ export function TransactionCard({
     >
       {isGridMode ? (
         /* Grid Mode Layout */
-        <div className="p-4 space-y-3 bg-white border rounded-lg hover:shadow-md transition-shadow">
+        <div className="p-4 space-y-3 bg-card border rounded-lg hover:shadow-md transition-shadow">
           {/* Header with icon and actions */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -164,20 +152,20 @@ export function TransactionCard({
                   className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <MoreHorizontal className="h-4 w-4" />
+                  <MaterialIcon name="more-horizontal" size={16} tooltip="Mais opções" aria-hidden={true} />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onViewDetails(); }}>
-                  <Eye className="h-4 w-4 mr-2" />
+                  <MaterialIcon name="eye" size={16} className="mr-2" tooltip="Ver detalhes" aria-hidden={true} />
                   Ver detalhes
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(); }}>
-                  <Edit className="h-4 w-4 mr-2" />
+                  <MaterialIcon name="edit" size={16} className="mr-2" tooltip="Editar" aria-hidden={true} />
                   Editar
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDuplicate(); }}>
-                  <Copy className="h-4 w-4 mr-2" />
+                  <MaterialIcon name="copy" size={16} className="mr-2" tooltip="Duplicar" aria-hidden={true} />
                   Duplicar
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -185,7 +173,7 @@ export function TransactionCard({
                   onClick={(e) => { e.stopPropagation(); onDelete(); }}
                   className="text-destructive focus:text-destructive"
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
+                  <MaterialIcon name="trash-2" size={16} className="mr-2" tooltip="Excluir" aria-hidden={true} />
                   Excluir
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -223,7 +211,7 @@ export function TransactionCard({
         </div>
       ) : (
         /* List Mode Layout */
-        <div className="flex items-center justify-between p-4 bg-white border rounded-lg hover:shadow-md transition-shadow">
+        <div className="flex items-center justify-between p-4 bg-card border rounded-lg hover:shadow-md transition-shadow">
           <div className="flex items-center gap-4 flex-1 min-w-0">
             <div className={cn(
               'p-2 rounded-full border',
@@ -255,11 +243,11 @@ export function TransactionCard({
               
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
+                  <MaterialIcon name="calendar" size={12} tooltip="Data da transação" aria-hidden={true} />
                   <span>{formatDate(transaction.transaction_date)}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
+                  <MaterialIcon name="clock" size={12} tooltip="Hora de criação" aria-hidden={true} />
                   <span>{formatTime(transaction.created_at)}</span>
                 </div>
               </div>
@@ -280,20 +268,20 @@ export function TransactionCard({
                   className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <MoreHorizontal className="h-4 w-4" />
+                  <MaterialIcon name="more-horizontal" size={16} tooltip="Mais opções" aria-hidden={true} />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onViewDetails(); }}>
-                  <Eye className="h-4 w-4 mr-2" />
+                  <MaterialIcon name="eye" size={16} className="mr-2" tooltip="Ver detalhes" aria-hidden={true} />
                   Ver detalhes
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(); }}>
-                  <Edit className="h-4 w-4 mr-2" />
+                  <MaterialIcon name="edit" size={16} className="mr-2" tooltip="Editar" aria-hidden={true} />
                   Editar
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDuplicate(); }}>
-                  <Copy className="h-4 w-4 mr-2" />
+                  <MaterialIcon name="copy" size={16} className="mr-2" tooltip="Duplicar" aria-hidden={true} />
                   Duplicar
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -301,7 +289,7 @@ export function TransactionCard({
                   onClick={(e) => { e.stopPropagation(); onDelete(); }}
                   className="text-destructive focus:text-destructive"
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
+                  <MaterialIcon name="trash-2" size={16} className="mr-2" tooltip="Excluir" aria-hidden={true} />
                   Excluir
                 </DropdownMenuItem>
               </DropdownMenuContent>

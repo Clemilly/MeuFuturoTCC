@@ -45,10 +45,6 @@ aiosqlite==0.21.0
 # Additional dependencies
 greenlet==3.2.4
 
-# For TOTP 2FA
-pyotp==2.9.0
-qrcode[pil]==8.2
-
 # Email validation
 email-validator==2.2.0
 

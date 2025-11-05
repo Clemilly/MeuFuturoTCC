@@ -1,7 +1,7 @@
 """
 Authentication service for user management and security operations.
 
-Handles user registration, login, 2FA, and profile management.
+Handles user registration, login, and profile management.
 """
 
 from typing import Optional, Tuple, Dict, Any
@@ -63,7 +63,6 @@ class AuthService:
             hashed_password=hashed_password,
             is_active=True,
             is_verified=False,  # Email verification required
-            two_factor_enabled=False,
         )
         
         logger.info("User registered", user_id=user.id, email=user.email)
@@ -133,7 +132,6 @@ class AuthService:
             "token_type": "bearer",
             "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
             "user": user,
-            "requires_2fa": False
         }
     
     async def get_user_profile(self, user_id: str) -> User:

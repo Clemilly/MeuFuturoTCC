@@ -50,11 +50,13 @@ export function AlertsAndNotifications() {
     generateSmartAlerts,
   } = useAlerts()
 
+  // NOTIFICAÇÕES DESABILITADAS: Estado de configurações de notificação comentado
+  // Este estado não é mais usado ativamente, mas mantido para preservação futura
   const [settings, setSettings] = useState<NotificationSettings>({
-    billReminders: true,
-    budgetAlerts: true,
-    goalUpdates: true,
-    weeklyReports: false,
+    billReminders: false, // Desabilitado - notificações não implementadas
+    budgetAlerts: false,  // Desabilitado - notificações não implementadas
+    goalUpdates: false,   // Desabilitado - notificações não implementadas
+    weeklyReports: false, // Desabilitado - notificações não implementadas
     reminderDays: 3,
   })
 
@@ -72,18 +74,21 @@ export function AlertsAndNotifications() {
   const [editingAlert, setEditingAlert] = useState<Alert | null>(null)
   const [errors, setErrors] = useState<Partial<AlertCreate>>({})
 
+  // NOTIFICAÇÕES DESABILITADAS: Sistema de notificações automáticas não está implementado
+  // O código abaixo está comentado para preservação futura, mas totalmente inativo
+  // 
   // Load settings from localStorage
-  useEffect(() => {
-    const savedSettings = localStorage.getItem("notification-settings")
-    if (savedSettings) {
-      setSettings(JSON.parse(savedSettings))
-    }
-  }, [])
+  // useEffect(() => {
+  //   const savedSettings = localStorage.getItem("notification-settings")
+  //   if (savedSettings) {
+  //     setSettings(JSON.parse(savedSettings))
+  //   }
+  // }, [])
 
   // Save settings to localStorage
-  useEffect(() => {
-    localStorage.setItem("notification-settings", JSON.stringify(settings))
-  }, [settings])
+  // useEffect(() => {
+  //   localStorage.setItem("notification-settings", JSON.stringify(settings))
+  // }, [settings])
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -274,7 +279,9 @@ export function AlertsAndNotifications() {
     setTimeout(() => document.body.removeChild(announcement), 1000)
   }
 
-  const activeAlerts = alerts.filter((alert) => alert.status === "active")
+  // Filter out any undefined/null alerts and ensure we have valid data
+  const validAlerts = (alerts || []).filter((alert) => alert != null && typeof alert === 'object')
+  const activeAlerts = validAlerts.filter((alert) => alert.status === "active")
   const urgentAlerts = activeAlerts.filter((alert) => alert.priority === "high")
   const upcomingBills = activeAlerts.filter(
     (alert) => alert.type === "bill" && alert.due_date && getDaysUntilDue(alert.due_date) <= 7,
@@ -330,10 +337,9 @@ export function AlertsAndNotifications() {
       </div>
 
       <Tabs defaultValue="active" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="active">Ativos ({activeAlerts.length})</TabsTrigger>
           <TabsTrigger value="all">Todos</TabsTrigger>
-          <TabsTrigger value="settings">Configurações</TabsTrigger>
           <TabsTrigger value="new">Novo Alerta</TabsTrigger>
         </TabsList>
 
@@ -428,48 +434,65 @@ export function AlertsAndNotifications() {
 
         {/* Todos os Alertas */}
         <TabsContent value="all" className="space-y-4">
-          {alerts.map((alert) => (
-            <Card
-              key={alert.id}
-              className={`${alert.status !== "active" ? "opacity-60" : ""} border-l-4 ${getPriorityColor(
-                alert.priority,
-              )}`}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-3">
-                    <div className="flex items-center space-x-2">
-                      {getTypeIcon(alert.type)}
-                      {getPriorityIcon(alert.priority)}
-                    </div>
-                    <div className="space-y-1">
-                      <h4 className="font-semibold">{alert.title}</h4>
-                      <p className="text-sm text-muted-foreground">{alert.description}</p>
-                      <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                        <Badge
-                          variant={
-                            alert.status === "active"
-                              ? "default"
-                              : alert.status === "completed"
-                                ? "secondary"
-                                : "outline"
-                          }
-                        >
-                          {alert.status === "active" && "Ativo"}
-                          {alert.status === "completed" && "Concluído"}
-                          {alert.status === "dismissed" && "Dispensado"}
-                        </Badge>
-                        <span>Criado em: {formatDate(alert.created_at)}</span>
+          {!loading && validAlerts.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <MaterialIcon name="inbox" size={48} className="text-muted-foreground mb-4" tooltip="Nenhum alerta" aria-hidden={true} />
+                <h3 className="text-lg font-semibold mb-2">Nada para mostrar aqui</h3>
+                <p className="text-muted-foreground text-center max-w-md">
+                  Não há alertas disponíveis no momento. Crie um novo alerta para começar.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            validAlerts.map((alert) => (
+              <Card
+                key={alert.id}
+                className={`${alert.status !== "active" ? "opacity-60" : ""} border-l-4 ${getPriorityColor(
+                  alert.priority,
+                )}`}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex items-center space-x-2">
+                        {getTypeIcon(alert.type)}
+                        {getPriorityIcon(alert.priority)}
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="font-semibold">{alert.title}</h4>
+                        <p className="text-sm text-muted-foreground">{alert.description}</p>
+                        <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                          <Badge
+                            variant={
+                              alert.status === "active"
+                                ? "default"
+                                : alert.status === "completed"
+                                  ? "secondary"
+                                  : "outline"
+                            }
+                          >
+                            {alert.status === "active" && "Ativo"}
+                            {alert.status === "completed" && "Concluído"}
+                            {alert.status === "dismissed" && "Dispensado"}
+                          </Badge>
+                          <span>Criado em: {formatDate(alert.created_at)}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))
+          )}
         </TabsContent>
 
-        {/* Configurações */}
+        {/* ABA "CONFIGURAÇÕES" REMOVIDA: A categoria de configurações foi inibida conforme solicitado
+            O código abaixo está preservado para possível reativação futura.
+            NOTIFICAÇÕES DESABILITADAS: Configurações de notificação automática comentadas
+            O sistema não envia notificações automáticas (email, SMS, push, etc.) no momento.
+        */}
+        {/* 
         <TabsContent value="settings">
           <Card>
             <CardHeader>
@@ -479,6 +502,15 @@ export function AlertsAndNotifications() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
+              <Alert>
+                <MaterialIcon name="info" size={16} aria-label="Informação" />
+                <AlertDescription>
+                  <strong>Notificações automáticas não disponíveis</strong>
+                  <br />
+                  O sistema de notificações automáticas (email, SMS, push notifications) ainda não está implementado.
+                  As configurações abaixo estão desabilitadas e não geram envio de notificações.
+                </AlertDescription>
+              </Alert>
 
               <div className="space-y-4">
                 <h4 className="font-semibold">Tipos de Alerta</h4>
@@ -559,6 +591,7 @@ export function AlertsAndNotifications() {
             </CardContent>
           </Card>
         </TabsContent>
+        */}
 
         {/* Novo Alerta */}
         <TabsContent value="new">

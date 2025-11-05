@@ -78,7 +78,7 @@ export function TransactionsPaginationNew({
   }
 
   return (
-    <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+    <Card className="border-0 shadow-lg bg-card/80 backdrop-blur-sm">
       <CardContent className="p-4">
         <div className="flex items-center justify-between flex-wrap gap-4">
           {/* Info */}

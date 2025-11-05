@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { useToast } from '@/hooks/use-toast'
 
 interface AuthErrorHandler {
-  handleAuthError: (error: any) => boolean
+  handleAuthError: (error: any) => Promise<boolean>
   isAuthError: (error: any) => boolean
 }
 
@@ -42,7 +42,7 @@ export function useAuthErrorHandler(): AuthErrorHandler {
     )
   }, [])
 
-  const handleAuthError = useCallback((error: any): boolean => {
+  const handleAuthError = useCallback(async (error: any): Promise<boolean> => {
     if (!isAuthError(error)) {
       return false
     }
@@ -58,10 +58,14 @@ export function useAuthErrorHandler(): AuthErrorHandler {
     })
 
     // Logout user and clear stored data
-    logout()
+    // This will set isAuthenticated to false but keep isInitialized as true
+    await logout()
 
-    // Redirect to login page
-    router.push('/login')
+    // Ensure we're not already on login page to avoid unnecessary redirect
+    if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+      // Redirect to login page immediately (use replace to avoid history stack)
+      router.replace('/login')
+    }
 
     return true
   }, [isAuthError, logout, router, toast])

@@ -128,7 +128,8 @@ class AlertRepository(BaseRepository[Alert]):
         if not alert or alert.user_id != user_id:
             return None
         
-        alert.status = AlertStatus.DISMISSED
+        # Use the model's dismiss method to properly set status and timestamp
+        alert.dismiss()
         await self.db.commit()
         await self.db.refresh(alert)
         return alert
@@ -139,7 +140,8 @@ class AlertRepository(BaseRepository[Alert]):
         if not alert or alert.user_id != user_id:
             return None
         
-        alert.status = AlertStatus.COMPLETED
+        # Use the model's complete method to properly set status and timestamp
+        alert.complete()
         await self.db.commit()
         await self.db.refresh(alert)
         return alert

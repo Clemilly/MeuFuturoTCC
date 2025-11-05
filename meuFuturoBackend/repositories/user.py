@@ -86,23 +86,6 @@ class UserRepository(BaseRepository[User]):
             filters={"is_verified": True}
         )
     
-    async def get_users_with_2fa(self, skip: int = 0, limit: int = 100) -> list[User]:
-        """
-        Get all users with 2FA enabled.
-        
-        Args:
-            skip: Number of records to skip
-            limit: Maximum number of records to return
-            
-        Returns:
-            List of users with 2FA enabled
-        """
-        return await self.get_all(
-            skip=skip,
-            limit=limit,
-            filters={"two_factor_enabled": True}
-        )
-    
     async def update_last_login(self, user_id: str) -> Optional[User]:
         """
         Update user's last login timestamp.
@@ -151,39 +134,6 @@ class UserRepository(BaseRepository[User]):
             Updated user instance or None if not found
         """
         return await self.update(user_id, is_verified=True)
-    
-    async def enable_2fa(self, user_id: str, secret: str) -> Optional[User]:
-        """
-        Enable 2FA for a user.
-        
-        Args:
-            user_id: User ID
-            secret: TOTP secret
-            
-        Returns:
-            Updated user instance or None if not found
-        """
-        return await self.update(
-            user_id,
-            two_factor_enabled=True,
-            two_factor_secret=secret
-        )
-    
-    async def disable_2fa(self, user_id: str) -> Optional[User]:
-        """
-        Disable 2FA for a user.
-        
-        Args:
-            user_id: User ID
-            
-        Returns:
-            Updated user instance or None if not found
-        """
-        return await self.update(
-            user_id,
-            two_factor_enabled=False,
-            two_factor_secret=None
-        )
     
     async def update_accessibility_preferences(
         self, 

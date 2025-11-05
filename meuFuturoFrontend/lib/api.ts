@@ -143,10 +143,27 @@ class ApiService {
           errorMessage.toLowerCase().includes('invalid')
         
         if (isAuthError) {
-          // Clear stored token and user data
+          // Clear stored token and user data immediately
           if (typeof window !== 'undefined') {
             localStorage.removeItem('meufuturo_token')
             localStorage.removeItem('meufuturo_user')
+            
+            // Trigger global auth error event to handle logout and redirect
+            // Use dynamic import to avoid circular dependencies
+            Promise.resolve().then(async () => {
+              try {
+                const { authEvents } = await import('./auth-events')
+                authEvents.triggerAuthError()
+              } catch (err) {
+                console.error('Failed to trigger auth error event:', err)
+                // Fallback: redirect directly if event system fails
+                // Only redirect if we're not already on login page
+                const currentPath = window.location.pathname
+                if (currentPath !== '/login') {
+                  window.location.replace('/login')
+                }
+              }
+            })
           }
         }
         
@@ -671,9 +688,29 @@ class ApiService {
     return this.request('/financial/overview')
   }
 
-  // Generic GET method for AI endpoints
+  // Generic HTTP methods
   async get<T = any>(endpoint: string): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint)
+  }
+
+  async post<T = any>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
+    })
+  }
+
+  async put<T = any>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: 'PUT',
+      body: data ? JSON.stringify(data) : undefined,
+    })
+  }
+
+  async delete<T = any>(endpoint: string): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: 'DELETE',
+    })
   }
 
   // AI Predictions endpoints

@@ -53,7 +53,7 @@ export function ComparativeAnalysisChart({
   const getChangeColor = (percentage: number) => {
     if (percentage > 0) return "text-green-600";
     if (percentage < 0) return "text-red-600";
-    return "text-gray-600";
+    return "text-muted-foreground";
   };
 
   const getChangeIcon = (percentage: number) => {
@@ -61,13 +61,13 @@ export function ComparativeAnalysisChart({
       return <ArrowUpRight className="h-4 w-4 text-green-600" />;
     if (percentage < 0)
       return <ArrowDownRight className="h-4 w-4 text-red-600" />;
-    return <Minus className="h-4 w-4 text-gray-600" />;
+    return <Minus className="h-4 w-4 text-muted-foreground" />;
   };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 border rounded-lg shadow-lg">
+        <div className="bg-card p-3 border rounded-lg shadow-lg">
           <p className="font-semibold mb-2">{label}</p>
           <div className="space-y-1">
             <div className="flex items-center gap-2">

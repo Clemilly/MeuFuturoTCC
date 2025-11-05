@@ -23,15 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Lightbulb,
-  Target,
-  TrendingUp,
-  CheckCircle,
-  Clock,
-  Zap,
-  RefreshCw,
-} from "lucide-react";
+import { MaterialIcon } from "@/lib/material-icons";
 import type { PersonalizedRecommendation } from "@/hooks/use-advanced-ai-dashboard";
 
 export function AIRecommendations() {
@@ -52,8 +44,8 @@ export function AIRecommendations() {
 
   const getPriorityIcon = (priority: string) => {
     if (priority === "urgent" || priority === "high")
-      return <Zap className="h-4 w-4" />;
-    return <Lightbulb className="h-4 w-4" />;
+      return <MaterialIcon name="zap" size={16} tooltip="Urgente" aria-hidden={true} />;
+    return <MaterialIcon name="lightbulb" size={16} tooltip="Recomendação" aria-hidden={true} />;
   };
 
   const handleImplemented = async (rec: PersonalizedRecommendation) => {
@@ -82,7 +74,7 @@ export function AIRecommendations() {
   if (recommendations.length === 0) {
     return (
       <Alert>
-        <Lightbulb className="h-4 w-4" />
+        <MaterialIcon name="lightbulb" size={16} tooltip="Nenhuma recomendação" aria-hidden={true} />
         <AlertDescription>
           Nenhuma recomendação disponível no momento. Continue registrando suas
           transações para receber insights personalizados.
@@ -103,7 +95,7 @@ export function AIRecommendations() {
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={refresh}>
-          <RefreshCw className="mr-2 h-4 w-4" />
+          <MaterialIcon name="refresh-cw" size={16} className="mr-2" tooltip="Atualizar" aria-hidden={true} />
           Atualizar
         </Button>
       </div>
@@ -165,7 +157,7 @@ export function AIRecommendations() {
               </div>
               <div className="flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <MaterialIcon name="clock" size={16} className="text-muted-foreground" tooltip="Tempo estimado" aria-hidden={true} />
                   <span>{rec.estimated_time}</span>
                 </div>
                 <Badge variant="outline">{rec.difficulty}</Badge>
@@ -232,7 +224,7 @@ export function AIRecommendations() {
                         className="flex-1"
                         onClick={() => handleImplemented(rec)}
                       >
-                        <CheckCircle className="mr-2 h-4 w-4" />
+                        <MaterialIcon name="check-circle" size={16} className="mr-2" tooltip="Marcar como implementado" aria-hidden={true} />
                         Já Implementei
                       </Button>
                       <Button variant="outline" className="flex-1">
@@ -243,7 +235,7 @@ export function AIRecommendations() {
                 </DialogContent>
               </Dialog>
               <Button className="flex-1" onClick={() => handleImplemented(rec)}>
-                <CheckCircle className="mr-2 h-4 w-4" />
+                <MaterialIcon name="check-circle" size={16} className="mr-2" tooltip="Concluir" aria-hidden={true} />
                 Concluir
               </Button>
             </CardFooter>

@@ -50,7 +50,7 @@ export function TrendsAnalysisChart({
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white p-3 border rounded-lg shadow-lg">
+        <div className="bg-card p-3 border rounded-lg shadow-lg">
           <p className="font-semibold mb-2">{label}</p>
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -176,7 +176,7 @@ export function TrendsAnalysisChart({
                 ) : insights.incomeTrend === "declining" ? (
                   <TrendingDown className="h-3 w-3 text-red-600" />
                 ) : (
-                  <DollarSign className="h-3 w-3 text-gray-600" />
+                  <DollarSign className="h-3 w-3 text-muted-foreground" />
                 )}
                 Receitas
               </Badge>

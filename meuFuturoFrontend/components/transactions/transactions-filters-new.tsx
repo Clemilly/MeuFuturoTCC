@@ -77,7 +77,7 @@ export function TransactionsFiltersNew({
   };
 
   return (
-    <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+    <Card className="border-0 shadow-lg bg-card/80 backdrop-blur-sm">
       <CardContent className="p-4">
         <div className="space-y-4">
           {/* Main filters row */}

@@ -1,7 +1,7 @@
 """
 Authentication API endpoints.
 
-Handles user registration, login, 2FA, and profile management.
+Handles user registration, login, and profile management.
 """
 
 from typing import Dict, Any
@@ -72,7 +72,7 @@ async def login(
     - **email**: Email do usuário
     - **password**: Senha do usuário
     
-    Retorna token de acesso ou solicita código 2FA se habilitado.
+    Retorna token de acesso.
     """
     result = await auth_service.login(login_data)
     
@@ -81,7 +81,6 @@ async def login(
         "token_type": result["token_type"],
         "expires_in": result["expires_in"],
         "user": result["user"],
-        "requiresTwoFactor": False
     }
 
 

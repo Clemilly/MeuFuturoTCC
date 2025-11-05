@@ -13,6 +13,7 @@ from repositories.alert import AlertRepository
 from repositories.transaction import TransactionRepository
 from schemas.alert import AlertCreate, AlertUpdate, AlertResponse
 from models.alert import Alert, AlertType, AlertPriority, AlertStatus
+from models.transaction import TransactionType
 
 logger = structlog.get_logger()
 
@@ -189,8 +190,9 @@ class AlertService:
             # Calculate monthly spending by category
             monthly_spending = {}
             for transaction in transactions:
-                if transaction.type == "expense":
-                    category = transaction.category_name or "Outros"
+                if transaction.type == TransactionType.EXPENSE:
+                    # Get category name from relationship or use default
+                    category = transaction.category.name if transaction.category else "Outros"
                     monthly_spending[category] = monthly_spending.get(category, 0) + float(transaction.amount)
             
             # Generate alerts for high spending

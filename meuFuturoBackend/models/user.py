@@ -1,7 +1,7 @@
 """
 User model for authentication and profile management.
 
-Includes support for 2FA and accessibility preferences.
+Includes support for accessibility preferences.
 """
 
 from typing import List, Optional
@@ -24,8 +24,6 @@ class User(Base, TimestampMixin):
         hashed_password: Bcrypt hashed password
         is_active: Whether the user account is active
         is_verified: Whether the email is verified
-        two_factor_enabled: Whether 2FA is enabled
-        two_factor_secret: TOTP secret for 2FA (nullable)
         accessibility_preferences: JSON field for accessibility settings
         financial_profile: JSON field for financial preferences
     """
@@ -74,20 +72,6 @@ class User(Base, TimestampMixin):
         default=True,  # Changed to True for development
         nullable=False,
         doc="Whether the email is verified"
-    )
-    
-    # Two-factor authentication
-    two_factor_enabled: Mapped[bool] = mapped_column(
-        Boolean,
-        default=False,
-        nullable=False,
-        doc="Whether 2FA is enabled"
-    )
-    
-    two_factor_secret: Mapped[Optional[str]] = mapped_column(
-        String(32),
-        nullable=True,
-        doc="TOTP secret for 2FA"
     )
     
     # User preferences (JSON fields for flexibility)
@@ -185,11 +169,6 @@ class User(Base, TimestampMixin):
     
     def __repr__(self) -> str:
         return f"<User(id='{self.id}', email='{self.email}', name='{self.name}')>"
-    
-    @property
-    def is_2fa_enabled(self) -> bool:
-        """Check if 2FA is properly configured."""
-        return self.two_factor_enabled and self.two_factor_secret is not None
     
     def get_accessibility_preference(self, key: str, default=None):
         """Get a specific accessibility preference."""

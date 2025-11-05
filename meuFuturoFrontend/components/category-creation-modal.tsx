@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -8,9 +8,10 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { PlusCircle, Loader2, CheckCircle, Palette } from "lucide-react"
+import { MaterialIcon } from "@/lib/material-icons"
 import { apiService } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
+import { useOperationToast } from "@/hooks/use-operation-toast"
 import { useGlobalDataContext } from "@/contexts/transaction-context"
 
 interface CategoryCreationModalProps {
@@ -23,7 +24,6 @@ interface CategoryFormData {
   description: string
   color: string
   icon: string
-  type: "income" | "expense" | ""
   parent_id?: string
 }
 
@@ -58,31 +58,17 @@ export function CategoryCreationModal({ onCategoryCreated, transactionType }: Ca
     description: "",
     color: "#3b82f6",
     icon: "home",
-    type: transactionType || "",
   })
   const [errors, setErrors] = useState<Partial<CategoryFormData>>({})
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   
   const { toast } = useToast()
+  const { showToastFromResponse } = useOperationToast()
   const { triggerRefresh } = useGlobalDataContext()
-
-  // Sync form type with transactionType prop
-  useEffect(() => {
-    if (transactionType && transactionType !== formData.type) {
-      setFormData(prev => ({
-        ...prev,
-        type: transactionType as "income" | "expense"
-      }))
-    }
-  }, [transactionType])
 
   const validateForm = (): boolean => {
     const newErrors: Partial<CategoryFormData> = {}
-
-    if (!formData.type) {
-      newErrors.type = "Tipo da categoria é obrigatório"
-    }
 
     if (!formData.name.trim()) {
       newErrors.name = "Nome da categoria é obrigatório"
@@ -118,30 +104,24 @@ export function CategoryCreationModal({ onCategoryCreated, transactionType }: Ca
       const response = await apiService.createCategory(categoryData)
 
       if (response.error) {
-        toast({
-          title: "Erro",
-          description: response.error,
-          variant: "destructive"
+        // Mostrar toast de erro usando useOperationToast
+        showToastFromResponse(response, {
+          message: response.error,
         })
         return
       }
 
       // Success
       setSuccess(true)
-      toast({
-        title: "Sucesso",
-        description: "Categoria criada com sucesso!"
+      
+      // Mostrar toast de sucesso usando useOperationToast
+      showToastFromResponse(response, {
+        message: "Categoria criada com sucesso! Os dados foram atualizados automaticamente.",
       })
 
       // Trigger global refresh
       triggerRefresh()
 
-      // Store category type context in localStorage for filtering
-      if (formData.type && response.data?.id) {
-        const categoryTypeMap = JSON.parse(localStorage.getItem('categoryTypeMap') || '{}')
-        categoryTypeMap[response.data.id] = formData.type
-        localStorage.setItem('categoryTypeMap', JSON.stringify(categoryTypeMap))
-      }
 
       // Reset form
       setFormData({
@@ -149,11 +129,11 @@ export function CategoryCreationModal({ onCategoryCreated, transactionType }: Ca
         description: "",
         color: "#3b82f6",
         icon: "home",
-        type: transactionType || "",
       })
       setErrors({})
 
       // Close modal and refresh categories
+      // Chamar callback para atualizar categorias no componente pai
       setTimeout(() => {
         setIsOpen(false)
         onCategoryCreated()
@@ -161,12 +141,13 @@ export function CategoryCreationModal({ onCategoryCreated, transactionType }: Ca
       }, 1500)
 
     } catch (err) {
-      toast({
-        title: "Erro",
-        description: "Erro ao criar categoria",
-        variant: "destructive"
-      })
       console.error("Error creating category:", err)
+      showToastFromResponse(
+        { error: "Erro ao criar categoria. Tente novamente." },
+        {
+          message: "Erro ao criar categoria. Tente novamente.",
+        }
+      )
     } finally {
       setLoading(false)
     }
@@ -182,37 +163,18 @@ export function CategoryCreationModal({ onCategoryCreated, transactionType }: Ca
   }
 
   const getSuggestedCategories = useCallback(() => {
-    // Use the form type if available, otherwise use the transactionType prop
-    const currentType = formData.type || transactionType
-    
-    if (currentType === "income") {
-      return [
-        { name: "Salário", color: "#22c55e", icon: "dollar-sign" },
-        { name: "Freelance", color: "#3b82f6", icon: "user" },
-        { name: "Investimento", color: "#a855f7", icon: "trending-up" },
-        { name: "Venda", color: "#f97316", icon: "shopping-cart" },
-        { name: "Bônus", color: "#06b6d4", icon: "gift" },
-        { name: "Comissão", color: "#84cc16", icon: "percent" },
-        { name: "Dividendos", color: "#10b981", icon: "trending-up" },
-        { name: "Aluguel", color: "#8b5cf6", icon: "home" },
-      ]
-    } else if (currentType === "expense") {
-      return [
-        { name: "Alimentação", color: "#ef4444", icon: "utensils" },
-        { name: "Transporte", color: "#3b82f6", icon: "car" },
-        { name: "Moradia", color: "#6b7280", icon: "home" },
-        { name: "Saúde", color: "#ec4899", icon: "heart" },
-        { name: "Educação", color: "#a855f7", icon: "book" },
-        { name: "Lazer", color: "#eab308", icon: "gamepad2" },
-        { name: "Utilidades", color: "#f59e0b", icon: "zap" },
-        { name: "Roupas", color: "#8b5cf6", icon: "shirt" },
-      ]
-    }
-    return []
-  }, [formData.type, transactionType])
-
-  const suggestedCategories = getSuggestedCategories()
-  const currentType = formData.type || transactionType
+    // Mostrar sugestões gerais de categorias
+    return [
+      { name: "Alimentação", color: "#ef4444", icon: "utensils" },
+      { name: "Transporte", color: "#3b82f6", icon: "car" },
+      { name: "Moradia", color: "#6b7280", icon: "home" },
+      { name: "Saúde", color: "#ec4899", icon: "heart" },
+      { name: "Educação", color: "#a855f7", icon: "book" },
+      { name: "Lazer", color: "#eab308", icon: "gamepad2" },
+      { name: "Salário", color: "#22c55e", icon: "dollar-sign" },
+      { name: "Freelance", color: "#3b82f6", icon: "user" },
+    ]
+  }, [])
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -223,7 +185,7 @@ export function CategoryCreationModal({ onCategoryCreated, transactionType }: Ca
           size="sm" 
           className="flex items-center space-x-2 text-xs"
         >
-          <PlusCircle className="h-3 w-3" />
+          <MaterialIcon name="plus-circle" size={12} tooltip="Criar nova categoria" />
           <span>+ Categoria</span>
         </Button>
       </DialogTrigger>
@@ -231,20 +193,20 @@ export function CategoryCreationModal({ onCategoryCreated, transactionType }: Ca
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
-            <PlusCircle className="h-5 w-5" />
+            <MaterialIcon name="plus-circle" size={20} tooltip="Nova categoria" />
             <span>Criar Nova Categoria</span>
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Suggested categories */}
-          {suggestedCategories.length > 0 ? (
+          {getSuggestedCategories().length > 0 && (
             <div className="space-y-2">
               <Label className="text-sm font-medium">
-                Sugestões para {currentType === "income" ? "receitas" : "despesas"}:
+                Sugestões de categorias:
               </Label>
               <div className="grid grid-cols-2 gap-2">
-                {suggestedCategories.map((suggestion, index) => (
+                {getSuggestedCategories().map((suggestion, index) => (
                   <Button
                     key={index}
                     type="button"
@@ -257,7 +219,6 @@ export function CategoryCreationModal({ onCategoryCreated, transactionType }: Ca
                         name: suggestion.name,
                         color: suggestion.color,
                         icon: suggestion.icon,
-                        type: currentType as "income" | "expense"
                       }))
                     }}
                   >
@@ -270,39 +231,7 @@ export function CategoryCreationModal({ onCategoryCreated, transactionType }: Ca
                 ))}
               </div>
             </div>
-          ) : (
-            <div className="space-y-2">
-              <div className="p-3 bg-muted rounded-lg text-center">
-                <p className="text-sm text-muted-foreground">
-                  {!currentType 
-                    ? "Selecione primeiro o tipo de transação para ver sugestões de categoria"
-                    : "Nenhuma sugestão disponível para este tipo"
-                  }
-                </p>
-              </div>
-            </div>
           )}
-
-          <div className="space-y-2">
-            <Label htmlFor="category-type">
-              Tipo da Categoria{" "}
-              <span className="text-red-500" aria-label="campo obrigatório">
-                *
-              </span>
-            </Label>
-            <Select 
-              value={formData.type} 
-              onValueChange={(value) => handleInputChange("type", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="income">Receita</SelectItem>
-                <SelectItem value="expense">Despesa</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
 
           <div className="space-y-2">
             <Label htmlFor="category-name">
@@ -397,17 +326,17 @@ export function CategoryCreationModal({ onCategoryCreated, transactionType }: Ca
             >
               {loading ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <MaterialIcon name="loading" size={16} className="mr-2 animate-spin" tooltip="Processando..." aria-hidden={true} />
                   Criando...
                 </>
               ) : success ? (
                 <>
-                  <CheckCircle className="h-4 w-4 mr-2" />
+                  <MaterialIcon name="check-circle" size={16} className="mr-2" tooltip="Categoria criada" aria-hidden={true} />
                   Criada!
                 </>
               ) : (
                 <>
-                  <PlusCircle className="h-4 w-4 mr-2" />
+                  <MaterialIcon name="plus-circle" size={16} className="mr-2" tooltip="Criar categoria" aria-hidden={true} />
                   Criar Categoria
                 </>
               )}

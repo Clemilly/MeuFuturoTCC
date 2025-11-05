@@ -1,4 +1,7 @@
+"use client"
+
 import React from 'react';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 
 // Mapeamento de ícones Lucide para Material Icons seguindo Material Design, Nielsen e WCAG 2.2 AA
 export const IconMapping = {
@@ -175,6 +178,8 @@ export const IconMapping = {
   'fingerprint': 'fingerprint',
   
   // Acessibilidade
+  'accessibility': 'accessibility_new',
+  'accessible': 'accessible',
   'volume': 'volume_up',
   'volume-off': 'volume_off',
   'volume-low': 'volume_down',
@@ -626,6 +631,13 @@ export const IconMapping = {
   'hand': 'pan_tool',
   'cursor': 'mouse',
   'pointer': 'mouse',
+  
+  // Ícones adicionais para migração completa
+  'lightbulb': 'lightbulb',
+  'more-horizontal': 'more_horiz',
+  'inbox': 'inbox',
+  'check-square': 'check_box',
+  'square': 'check_box_outline_blank',
 } as const;
 
 export type IconName = keyof typeof IconMapping;
@@ -647,6 +659,9 @@ interface MaterialIconProps {
   onKeyDown?: (e: React.KeyboardEvent) => void;
   tabIndex?: number;
   disabled?: boolean;
+  tooltip?: string | boolean; // Descrição do tooltip. Se true, usa aria-label ou gera automaticamente
+  tooltipSide?: 'top' | 'bottom' | 'left' | 'right';
+  tooltipDelay?: number;
 }
 
 export const MaterialIcon: React.FC<MaterialIconProps> = ({
@@ -665,6 +680,9 @@ export const MaterialIcon: React.FC<MaterialIconProps> = ({
   onKeyDown,
   tabIndex = 0,
   disabled = false,
+  tooltip,
+  tooltipSide = 'top',
+  tooltipDelay = 300,
 }) => {
   const iconName = IconMapping[name as keyof typeof IconMapping];
   
@@ -699,11 +717,43 @@ export const MaterialIcon: React.FC<MaterialIconProps> = ({
     'select-none',
     'transition-colors',
     'duration-200',
-    disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
+    disabled ? 'opacity-50 cursor-not-allowed' : onClick ? 'cursor-pointer' : '',
     className,
   ].filter(Boolean).join(' ');
 
-  return (
+  // Determinar o texto do tooltip
+  const getTooltipText = (): string | null => {
+    // Se tooltip é explicitamente false, não mostrar tooltip
+    if (tooltip === false) {
+      return null;
+    }
+    
+    // Se tooltip é uma string, usar ela
+    if (typeof tooltip === 'string') {
+      return tooltip;
+    }
+    
+    // Se tooltip é true ou undefined, usar aria-label ou gerar automaticamente
+    if (tooltip === true || tooltip === undefined) {
+      // Se há aria-label, usar ele
+      if (ariaLabel) {
+        return ariaLabel;
+      }
+      
+      // Gerar tooltip automático para todos os ícones (mesmo decorativos)
+      // Isso melhora a experiência do usuário ao passar o mouse
+      return IconAccessibility.generateAriaLabel(name);
+    }
+    
+    return null;
+  };
+
+  const tooltipText = getTooltipText();
+  // Mostrar tooltip se houver texto e não foi explicitamente desabilitado
+  // Mesmo ícones com aria-hidden="true" podem ter tooltip visual
+  const shouldShowTooltip = tooltipText !== null && tooltip !== false;
+
+  const iconElement = (
     <span
       className={baseClasses}
       style={iconStyle}
@@ -719,6 +769,24 @@ export const MaterialIcon: React.FC<MaterialIconProps> = ({
       {iconName}
     </span>
   );
+
+  // Se deve mostrar tooltip, envolver com Tooltip
+  if (shouldShowTooltip) {
+    return (
+      <TooltipProvider delayDuration={tooltipDelay}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {iconElement}
+          </TooltipTrigger>
+          <TooltipContent side={tooltipSide} sideOffset={4}>
+            {tooltipText}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return iconElement;
 };
 
 // Hook para usar ícones com acessibilidade
@@ -762,14 +830,17 @@ export const IconAccessibility = {
       'close': 'Fechar',
       'check': 'Confirmar',
       'plus': 'Adicionar',
+      'plus-circle': 'Adicionar',
       'minus': 'Remover',
       'edit': 'Editar',
       'delete': 'Excluir',
       'trash': 'Excluir',
+      'trash-2': 'Excluir',
       'save': 'Salvar',
       'download': 'Baixar',
       'upload': 'Enviar',
       'copy': 'Copiar',
+      'log-out': 'Sair da conta',
       'bell': 'Notificações',
       'alert-triangle': 'Aviso',
       'alert-circle': 'Erro',
@@ -783,7 +854,10 @@ export const IconAccessibility = {
       'trending-up': 'Tendência de alta',
       'trending-down': 'Tendência de baixa',
       'chart': 'Gráfico',
+      'bar-chart-3': 'Gráfico de barras',
       'pie-chart': 'Gráfico de pizza',
+      'brain': 'IA Financeira',
+      'accessibility': 'Acessibilidade',
       'mail': 'Email',
       'lock': 'Senha',
       'eye': 'Mostrar',
@@ -927,6 +1001,11 @@ export const IconAccessibility = {
       'heartbeat': 'Batimento cardíaco',
       'activity': 'Atividade',
       'pulse': 'Pulso',
+      'lightbulb': 'Ideia',
+      'more-horizontal': 'Mais opções',
+      'inbox': 'Caixa de entrada',
+      'check-square': 'Selecionar todos',
+      'square': 'Desselecionar',
       'thermometer': 'Termômetro',
       'droplet': 'Gota',
       'pill': 'Medicamento',

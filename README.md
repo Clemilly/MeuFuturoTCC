@@ -34,7 +34,6 @@ MeuFuturo/
 
 ### 🔐 Autenticação & Segurança
 - ✅ Login/Registro com JWT
-- ✅ Autenticação Two-Factor (2FA/TOTP)
 - ✅ Gestão de perfil de usuário
 - ✅ Controle de sessões
 

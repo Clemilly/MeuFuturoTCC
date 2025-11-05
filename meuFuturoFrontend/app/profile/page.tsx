@@ -38,19 +38,13 @@ export default function ProfilePage() {
     confirmPassword: "",
   })
 
+  // NOTIFICAÇÕES DESABILITADAS: Preferências de notificação comentadas
+  // O sistema não envia notificações automáticas (email, SMS, push, etc.) no momento
   const [preferences, setPreferences] = useState({
-    weeklyReports: true,
-    marketingEmails: false,
+    // weeklyReports: true,  // DESABILITADO - notificações não implementadas
+    // marketingEmails: false,  // DESABILITADO - notificações não implementadas
     dataSharing: false,
   })
-
-  const [recentActivity] = useState([
-    { action: "Login realizado", date: "2024-01-15 14:30", ip: "192.168.1.1" },
-    { action: "Transação adicionada", date: "2024-01-15 10:15", ip: "192.168.1.1" },
-    { action: "Relatório visualizado", date: "2024-01-14 16:45", ip: "192.168.1.1" },
-    { action: "Configurações alteradas", date: "2024-01-14 09:20", ip: "192.168.1.1" },
-    { action: "Login realizado", date: "2024-01-13 18:10", ip: "192.168.1.2" },
-  ])
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -125,18 +119,17 @@ export default function ProfilePage() {
           )}
 
           <Tabs defaultValue="profile" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="profile">Perfil</TabsTrigger>
               <TabsTrigger value="security">Segurança</TabsTrigger>
               <TabsTrigger value="preferences">Preferências</TabsTrigger>
-              <TabsTrigger value="activity">Atividade</TabsTrigger>
             </TabsList>
 
             <TabsContent value="profile" className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <MaterialIcon name="user" size={20} aria-hidden="true" />
+                    <MaterialIcon name="user" size={20} aria-hidden={true} />
                     Informações Pessoais
                   </CardTitle>
                   <CardDescription>Atualize suas informações básicas da conta</CardDescription>
@@ -175,16 +168,6 @@ export default function ProfilePage() {
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <Badge variant={user?.twoFactorEnabled ? "default" : "secondary"}>
-                        {user?.twoFactorEnabled ? "2FA Ativado" : "2FA Inativo"}
-                      </Badge>
-                      <span className="text-sm text-muted-foreground">
-                        {user?.twoFactorEnabled
-                          ? "Sua conta está protegida com autenticação de dois fatores"
-                          : "Configure 2FA nas configurações de segurança"}
-                      </span>
-                    </div>
 
                     <div className="flex gap-2">
                       {!isEditing ? (
@@ -219,7 +202,7 @@ export default function ProfilePage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <MaterialIcon name="lock" size={20} aria-hidden="true" />
+                    <MaterialIcon name="lock" size={20} aria-hidden={true} />
                     Alterar Senha
                   </CardTitle>
                   <CardDescription>Mantenha sua conta segura com uma senha forte</CardDescription>
@@ -247,9 +230,9 @@ export default function ProfilePage() {
                           aria-label={showCurrentPassword ? "Ocultar senha atual" : "Mostrar senha atual"}
                         >
                           {showCurrentPassword ? (
-                            <MaterialIcon name="eye-off" size={16} aria-hidden="true" />
+                            <MaterialIcon name="eye-off" size={16} aria-hidden={true} />
                           ) : (
-                            <MaterialIcon name="eye" size={16} aria-hidden="true" />
+                            <MaterialIcon name="eye" size={16} aria-hidden={true} />
                           )}
                         </Button>
                       </div>
@@ -280,9 +263,9 @@ export default function ProfilePage() {
                           aria-label={showNewPassword ? "Ocultar nova senha" : "Mostrar nova senha"}
                         >
                           {showNewPassword ? (
-                            <MaterialIcon name="eye-off" size={16} aria-hidden="true" />
+                            <MaterialIcon name="eye-off" size={16} aria-hidden={true} />
                           ) : (
-                            <MaterialIcon name="eye" size={16} aria-hidden="true" />
+                            <MaterialIcon name="eye" size={16} aria-hidden={true} />
                           )}
                         </Button>
                       </div>
@@ -312,9 +295,9 @@ export default function ProfilePage() {
                           aria-label={showConfirmPassword ? "Ocultar confirmação" : "Mostrar confirmação"}
                         >
                           {showConfirmPassword ? (
-                            <MaterialIcon name="eye-off" size={16} aria-hidden="true" />
+                            <MaterialIcon name="eye-off" size={16} aria-hidden={true} />
                           ) : (
-                            <MaterialIcon name="eye" size={16} aria-hidden="true" />
+                            <MaterialIcon name="eye" size={16} aria-hidden={true} />
                           )}
                         </Button>
                       </div>
@@ -330,70 +313,9 @@ export default function ProfilePage() {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MaterialIcon name="shield" size={20} aria-hidden="true" />
-                    Configurações de Segurança
-                  </CardTitle>
-                  <CardDescription>Gerencie recursos avançados de segurança</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">Autenticação de Dois Fatores</p>
-                        <p className="text-sm text-muted-foreground">
-                          {user?.twoFactorEnabled ? "Ativada e protegendo sua conta" : "Configure para maior segurança"}
-                        </p>
-                      </div>
-                      <Button variant="outline" asChild>
-                        <a href="/security">Gerenciar 2FA</a>
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
             </TabsContent>
 
             <TabsContent value="preferences" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MaterialIcon name="bell" size={20} aria-hidden="true" />
-                    Notificações
-                  </CardTitle>
-                  <CardDescription>Configure como e quando você quer receber notificações</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="weekly-reports">Relatórios Semanais</Label>
-                      <p className="text-sm text-muted-foreground">Receba resumos semanais das suas finanças</p>
-                    </div>
-                    <Switch
-                      id="weekly-reports"
-                      checked={preferences.weeklyReports}
-                      onCheckedChange={(checked) => handlePreferenceChange("weeklyReports", checked)}
-                    />
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="marketing-emails">Emails de Marketing</Label>
-                      <p className="text-sm text-muted-foreground">Receba dicas e novidades sobre finanças</p>
-                    </div>
-                    <Switch
-                      id="marketing-emails"
-                      checked={preferences.marketingEmails}
-                      onCheckedChange={(checked) => handlePreferenceChange("marketingEmails", checked)}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
               <Card>
                 <CardHeader>
                   <CardTitle>Privacidade</CardTitle>
@@ -412,36 +334,6 @@ export default function ProfilePage() {
                       checked={preferences.dataSharing}
                       onCheckedChange={(checked) => handlePreferenceChange("dataSharing", checked)}
                     />
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="activity" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MaterialIcon name="activity" size={20} aria-hidden="true" />
-                    Atividade Recente
-                  </CardTitle>
-                  <CardDescription>Histórico das suas ações na plataforma</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {recentActivity.map((activity, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between py-2 border-b border-border last:border-0"
-                      >
-                        <div>
-                          <p className="font-medium">{activity.action}</p>
-                          <p className="text-sm text-muted-foreground">IP: {activity.ip}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm text-muted-foreground">{activity.date}</p>
-                        </div>
-                      </div>
-                    ))}
                   </div>
                 </CardContent>
               </Card>
