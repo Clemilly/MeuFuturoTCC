@@ -115,7 +115,10 @@ export function AIRecommendations() {
                   </div>
                 </div>
                 <Badge variant={getPriorityColor(rec.priority) as any}>
-                  {rec.priority}
+                  {rec.priority === "urgent" ? "Urgente" : 
+                   rec.priority === "high" ? "Alta" : 
+                   rec.priority === "medium" ? "Média" : 
+                   rec.priority === "low" ? "Baixa" : rec.priority}
                 </Badge>
               </div>
             </CardHeader>
@@ -127,9 +130,18 @@ export function AIRecommendations() {
                   </p>
                   <p className="text-xl font-bold text-green-600">
                     +R${" "}
-                    {typeof rec.potential_impact === "number"
-                      ? rec.potential_impact.toFixed(2)
-                      : "0.00"}
+                    {(() => {
+                      // Convert potential_impact to number if it's a string (from Decimal)
+                      let impactValue: number;
+                      if (typeof rec.potential_impact === "number") {
+                        impactValue = rec.potential_impact;
+                      } else if (typeof rec.potential_impact === "string") {
+                        impactValue = parseFloat(rec.potential_impact) || 0;
+                      } else {
+                        impactValue = 0;
+                      }
+                      return impactValue > 0 ? impactValue.toFixed(2) : "0.00";
+                    })()}
                     /mês
                   </p>
                 </div>
@@ -160,7 +172,11 @@ export function AIRecommendations() {
                   <MaterialIcon name="clock" size={16} className="text-muted-foreground" tooltip="Tempo estimado" aria-hidden={true} />
                   <span>{rec.estimated_time}</span>
                 </div>
-                <Badge variant="outline">{rec.difficulty}</Badge>
+                <Badge variant="outline">
+                  {rec.difficulty === "easy" ? "Fácil" : 
+                   rec.difficulty === "medium" ? "Médio" : 
+                   rec.difficulty === "hard" ? "Difícil" : rec.difficulty}
+                </Badge>
               </div>
             </CardContent>
             <CardFooter className="flex gap-2">
@@ -185,9 +201,18 @@ export function AIRecommendations() {
                         <p className="text-sm font-medium">Impacto Mensal</p>
                         <p className="text-2xl font-bold text-green-600">
                           +R${" "}
-                          {typeof rec.potential_impact === "number"
-                            ? rec.potential_impact.toFixed(2)
-                            : "0.00"}
+                          {(() => {
+                            // Convert potential_impact to number if it's a string (from Decimal)
+                            let impactValue: number;
+                            if (typeof rec.potential_impact === "number") {
+                              impactValue = rec.potential_impact;
+                            } else if (typeof rec.potential_impact === "string") {
+                              impactValue = parseFloat(rec.potential_impact) || 0;
+                            } else {
+                              impactValue = 0;
+                            }
+                            return impactValue > 0 ? impactValue.toFixed(2) : "0.00";
+                          })()}
                         </p>
                       </div>
                       <div>
@@ -226,9 +251,6 @@ export function AIRecommendations() {
                       >
                         <MaterialIcon name="check-circle" size={16} className="mr-2" tooltip="Marcar como implementado" aria-hidden={true} />
                         Já Implementei
-                      </Button>
-                      <Button variant="outline" className="flex-1">
-                        Lembrar Depois
                       </Button>
                     </div>
                   </div>

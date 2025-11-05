@@ -43,12 +43,11 @@ class AlertService:
     
     async def create_alert(self, user_id: str, alert_data: AlertCreate) -> AlertResponse:
         """Create a new financial alert."""
-        alert = Alert(
+        # BaseRepository.create() expects **kwargs, not a model instance
+        created_alert = await self.alert_repo.create(
             user_id=user_id,
             **alert_data.model_dump()
         )
-        
-        created_alert = await self.alert_repo.create(alert)
         
         logger.info(
             "Financial alert created",
@@ -75,10 +74,9 @@ class AlertService:
             )
         
         update_data = alert_data.model_dump(exclude_unset=True)
-        for field, value in update_data.items():
-            setattr(alert, field, value)
         
-        updated_alert = await self.alert_repo.update(alert)
+        # BaseRepository.update() expects id and **kwargs, not a model instance
+        updated_alert = await self.alert_repo.update(alert_id, **update_data)
         
         logger.info(
             "Financial alert updated",
@@ -206,8 +204,11 @@ class AlertService:
                         priority=AlertPriority.HIGH
                     )
                     
-                    alert = Alert(user_id=user_id, **alert_data.model_dump())
-                    created_alert = await self.alert_repo.create(alert)
+                    # BaseRepository.create() expects **kwargs, not a model instance
+                    created_alert = await self.alert_repo.create(
+                        user_id=user_id,
+                        **alert_data.model_dump()
+                    )
                     alerts.append(self._alert_to_response(created_alert))
             
         except Exception as e:
@@ -240,8 +241,11 @@ class AlertService:
                         priority=AlertPriority.MEDIUM
                     )
                     
-                    alert = Alert(user_id=user_id, **alert_data.model_dump())
-                    created_alert = await self.alert_repo.create(alert)
+                    # BaseRepository.create() expects **kwargs, not a model instance
+                    created_alert = await self.alert_repo.create(
+                        user_id=user_id,
+                        **alert_data.model_dump()
+                    )
                     alerts.append(self._alert_to_response(created_alert))
             
             # Get goals near completion
@@ -256,8 +260,11 @@ class AlertService:
                         priority=AlertPriority.LOW
                     )
                     
-                    alert = Alert(user_id=user_id, **alert_data.model_dump())
-                    created_alert = await self.alert_repo.create(alert)
+                    # BaseRepository.create() expects **kwargs, not a model instance
+                    created_alert = await self.alert_repo.create(
+                        user_id=user_id,
+                        **alert_data.model_dump()
+                    )
                     alerts.append(self._alert_to_response(created_alert))
             
         except Exception as e:

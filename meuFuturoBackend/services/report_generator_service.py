@@ -371,7 +371,7 @@ class ReportGeneratorService:
         
         # Check if any goals were completed
         try:
-            goals = await self.goal_repo.get_all(user_id=user_id)
+            goals = await self.goal_repo.get_user_goals(user_id)
             completed_goals = [g for g in goals if g.status.value == "completed"]
             
             if completed_goals:
@@ -487,7 +487,7 @@ class ReportGeneratorService:
         progress_list = []
         
         try:
-            goals = await self.goal_repo.get_all(user_id=user_id)
+            goals = await self.goal_repo.get_user_goals(user_id)
             
             for goal in goals:
                 if goal.status.value in ["active", "completed"]:

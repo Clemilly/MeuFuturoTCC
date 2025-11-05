@@ -100,6 +100,17 @@ class ApiService {
         }
       }
 
+      // Validate URL format
+      try {
+        new URL(url)
+      } catch (urlError) {
+        console.error('Invalid URL format:', url, urlError)
+        return {
+          error: 'URL inválida',
+          message: `URL da requisição está em formato inválido: ${url}`
+        }
+      }
+
       if (!config || typeof config !== 'object') {
         console.error('Invalid config:', config)
         return {
@@ -108,6 +119,10 @@ class ApiService {
         }
       }
 
+      // Log request in development only
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Making request to:', url, 'with config:', { method: config.method || 'GET', headers: config.headers })
+      }
       
       const response = await fetch(url, config)
       
@@ -186,33 +201,55 @@ class ApiService {
       return { data }
     } catch (error) {
       console.error('Request error:', error)
+      console.error('Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        url,
+        baseURL: this.baseURL,
+        endpoint
+      })
       
       // Check if it's a network error (API not available)
-      if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        return {
-          error: 'API não disponível',
-          message: 'Servidor não está respondendo. Verifique se o backend está rodando.'
+      if (error instanceof TypeError) {
+        const errorMessage = error.message || ''
+        
+        // Failed to fetch typically means server is not reachable
+        if (errorMessage === 'Failed to fetch' || errorMessage.includes('Failed to fetch')) {
+          return {
+            error: 'Servidor não disponível',
+            message: `Não foi possível conectar ao servidor em ${this.baseURL}. Verifique se o backend está rodando e acessível.`
+          }
+        }
+        
+        // Network request failed
+        if (errorMessage.includes('Network request failed') || errorMessage.includes('NetworkError')) {
+          return {
+            error: 'Erro de rede',
+            message: 'Erro ao conectar com o servidor. Verifique sua conexão com a internet.'
+          }
+        }
+        
+        // CORS error
+        if (errorMessage.includes('CORS') || errorMessage.includes('cross-origin')) {
+          return {
+            error: 'Erro de CORS',
+            message: 'Erro de configuração de CORS. Verifique se o backend está configurado corretamente.'
+          }
+        }
+        
+        // Timeout error
+        if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
+          return {
+            error: 'Timeout da requisição',
+            message: 'A requisição demorou muito para responder. Tente novamente.'
+          }
         }
       }
       
-      // Check if it's a CORS error
-      if (error instanceof TypeError && error.message.includes('CORS')) {
-        return {
-          error: 'Erro de CORS',
-          message: 'Erro de configuração de CORS. Verifique se o backend está configurado corretamente.'
-        }
-      }
-      
-      // Check if it's a network timeout
-      if (error instanceof TypeError && error.message.includes('timeout')) {
-        return {
-          error: 'Timeout da requisição',
-          message: 'A requisição demorou muito para responder.'
-        }
-      }
-      
+      // Generic network error
       return {
-        error: 'Erro de conexão com o servidor',
+        error: 'Erro de conexão',
         message: 'Erro de conexão com o servidor'
       }
     }
@@ -239,6 +276,20 @@ class ApiService {
 
   async getProfile() {
     return this.request('/auth/profile')
+  }
+
+  async updateProfile(profileData: { name?: string; email?: string }) {
+    return this.request('/auth/profile', {
+      method: 'PUT',
+      body: JSON.stringify(profileData),
+    })
+  }
+
+  async changePassword(passwordData: { current_password: string; new_password: string }) {
+    return this.request('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify(passwordData),
+    })
   }
 
   async logout() {

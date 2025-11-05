@@ -147,12 +147,17 @@ export default function RegisterPage() {
       })
 
       if (response.error) {
-        setError(response.error)
+        // Use message if available, otherwise use error
+        const errorMessage = response.message || response.error || 'Erro ao criar conta'
+        setError(errorMessage)
+        console.error('Registration error:', response)
       } else {
         setSuccess(true)
       }
     } catch (err) {
-      setError("Erro interno do sistema")
+      console.error('Registration exception:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Erro interno do sistema'
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }

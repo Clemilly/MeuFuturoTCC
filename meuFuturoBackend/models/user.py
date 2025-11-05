@@ -74,6 +74,13 @@ class User(Base, TimestampMixin):
         doc="Whether the email is verified"
     )
     
+    two_factor_enabled: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+        doc="Whether two-factor authentication is enabled"
+    )
+    
     # User preferences (JSON fields for flexibility)
     accessibility_preferences: Mapped[Optional[dict]] = mapped_column(
         JSON,

@@ -79,9 +79,9 @@ class SimulationService:
         
         return SimulationResult(
             scenario_name=simulation.scenario_name,
-            final_balance=simulated_trajectory["final_balance"],
-            total_savings=simulated_trajectory["total_savings"],
-            monthly_average_balance=simulated_trajectory["monthly_average"],
+            final_balance=float(simulated_trajectory["final_balance"]),
+            total_savings=float(simulated_trajectory["total_savings"]),
+            monthly_average_balance=float(simulated_trajectory["monthly_average"]),
             goals_achievable=goals_achievable,
             timeline_data=simulated_trajectory["timeline"],
             comparison_to_current=comparison,
@@ -193,7 +193,7 @@ class SimulationService:
         trajectory: Dict[str, Any]
     ) -> List[str]:
         """Check which goals are achievable with simulated trajectory."""
-        goals = await self.goal_repo.get_all(user_id=user_id)
+        goals = await self.goal_repo.get_user_goals(user_id)
         achievable = []
         
         final_balance = trajectory["final_balance"]

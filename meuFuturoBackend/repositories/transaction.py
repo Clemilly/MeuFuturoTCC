@@ -6,7 +6,7 @@ with proper func.case syntax for SQLAlchemy.
 """
 
 from typing import Optional, List, Dict, Any
-from datetime import date
+from datetime import date, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_, desc, asc
 from sqlalchemy.orm import selectinload
@@ -411,70 +411,58 @@ class TransactionRepository(BaseRepository[Transaction]):
         self,
         user_id: str,
         year: int,
+        month: Optional[int] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-    ) -> List[Dict[str, Any]]:
+    ) -> Dict[str, Any]:
         """
         Get monthly summary for a user.
         
         Args:
             user_id: User ID
             year: Year to get summary for
-            start_date: Start date filter
-            end_date: End date filter
+            month: Month (1-12) - if provided, returns summary for that specific month
+            start_date: Start date filter (alternative to month)
+            end_date: End date filter (alternative to month)
             
         Returns:
-            List of monthly summaries
+            Dictionary with monthly summary including categories
         """
-        # Build base query
-        query = (
-            select(
-                func.extract('month', Transaction.transaction_date).label('month'),
-                func.sum(
-                    func.case(
-                        (Transaction.type == TransactionType.INCOME, Transaction.amount),
-                        else_=0
-                    )
-                ).label('total_income'),
-                func.sum(
-                    func.case(
-                        (Transaction.type == TransactionType.EXPENSE, Transaction.amount),
-                        else_=0
-                    )
-                ).label('total_expenses'),
-                func.count(Transaction.id).label('transaction_count')
-            )
-            .where(Transaction.user_id == user_id)
-            .where(func.extract('year', Transaction.transaction_date) == year)
+        # If month is provided, calculate date range for that month
+        if month is not None:
+            start_date = date(year, month, 1)
+            if month == 12:
+                end_date = date(year + 1, 1, 1) - timedelta(days=1)
+            else:
+                end_date = date(year, month + 1, 1) - timedelta(days=1)
+        elif start_date is None or end_date is None:
+            # If no month and no date range provided, raise error
+            raise ValueError("Either 'month' must be provided or both 'start_date' and 'end_date' must be provided")
+        
+        # Get transaction summary for the date range
+        summary = await self.get_transaction_summary(
+            user_id=user_id,
+            start_date=start_date,
+            end_date=end_date
         )
         
-        # Add date filters if provided
-        if start_date:
-            query = query.where(Transaction.transaction_date >= start_date)
-        if end_date:
-            query = query.where(Transaction.transaction_date <= end_date)
+        # Get category breakdown for expenses
+        categories = await self.get_category_summary(
+            user_id=user_id,
+            start_date=start_date,
+            end_date=end_date,
+            transaction_type="expense"
+        )
         
-        # Group by month
-        query = query.group_by(func.extract('month', Transaction.transaction_date))
-        
-        # Order by month
-        query = query.order_by('month')
-        
-        result = await self.db.execute(query)
-        rows = result.fetchall()
-        
-        # Convert to list of dictionaries
-        monthly_summaries = []
-        for row in rows:
-            monthly_summaries.append({
-                'month': int(row.month),
-                'total_income': float(row.total_income or 0),
-                'total_expenses': float(row.total_expenses or 0),
-                'net_amount': float(row.total_income or 0) - float(row.total_expenses or 0),
-                'transaction_count': int(row.transaction_count or 0)
-            })
-        
-        return monthly_summaries
+        return {
+            "year": year,
+            "month": month if month is not None else (start_date.month if start_date else None),
+            "total_income": summary["total_income"],
+            "total_expenses": summary["total_expenses"],
+            "net_amount": summary["net_amount"],
+            "transaction_count": summary["transaction_count"],
+            "categories": categories,
+        }
     
     async def get_recent_transactions(
         self,

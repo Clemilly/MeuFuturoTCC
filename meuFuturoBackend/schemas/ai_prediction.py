@@ -380,9 +380,9 @@ class SimulationResult(BaseModel):
     """Schema for simulation results."""
     
     scenario_name: str = Field(..., description="Scenario name")
-    final_balance: Decimal = Field(..., description="Final projected balance")
-    total_savings: Decimal = Field(..., description="Total savings accumulated")
-    monthly_average_balance: Decimal = Field(..., description="Average monthly balance")
+    final_balance: float = Field(..., description="Final projected balance")
+    total_savings: float = Field(..., description="Total savings accumulated")
+    monthly_average_balance: float = Field(..., description="Average monthly balance")
     goals_achievable: List[str] = Field(..., description="Goals achievable with this scenario")
     timeline_data: List[Dict[str, Any]] = Field(..., description="Month-by-month projection")
     comparison_to_current: Dict[str, Any] = Field(..., description="Comparison to current trajectory")

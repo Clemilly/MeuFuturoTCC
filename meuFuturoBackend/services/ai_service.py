@@ -414,11 +414,11 @@ class AIService:
         patterns = []
         for cat in category_summary:
             # Determine trend (simplified)
-            trend = "stable"
+            trend = "estável"
             if cat["percentage"] > 40:
-                trend = "increasing"
+                trend = "crescente"
             elif cat["percentage"] < 5:
-                trend = "decreasing"
+                trend = "decrescente"
             
             # Generate recommendation
             recommendation = "Dentro do esperado"
@@ -463,7 +463,7 @@ class AIService:
                 ))
         
         # General recommendations
-        if len([p for p in spending_patterns if p.trend == "increasing"]) > 2:
+        if len([p for p in spending_patterns if p.trend == "crescente"]) > 2:
             recommendations.append(FinancialRecommendation(
                 title="Controle de Gastos Gerais",
                 description=(

@@ -63,6 +63,7 @@ class AuthService:
             hashed_password=hashed_password,
             is_active=True,
             is_verified=False,  # Email verification required
+            two_factor_enabled=False,  # Default to disabled
         )
         
         logger.info("User registered", user_id=user.id, email=user.email)

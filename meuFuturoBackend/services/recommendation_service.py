@@ -204,6 +204,9 @@ class RecommendationService:
             # If category is more than 30% of spending
             if percentage > 30:
                 potential_savings = amount * Decimal("0.15")  # 15% reduction
+                # Ensure positive value and minimum threshold
+                if potential_savings < Decimal("0.01"):
+                    continue
                 
                 rec = PersonalizedRecommendation(
                     id=f"rec_{uuid4().hex[:8]}",
@@ -264,10 +267,13 @@ class RecommendationService:
             
             # If goal is taking too long
             if goal.target_date:
-                target_months = (goal.target_date - date.today()).days // 30
+                target_months = max(1, (goal.target_date - date.today()).days // 30)
                 
-                if months_needed > target_months:
+                if months_needed > target_months and target_months > 0:
                     additional_needed = (remaining / target_months) - monthly_savings
+                    # Ensure positive value and minimum threshold
+                    if additional_needed < Decimal("0.01"):
+                        continue
                     
                     rec = PersonalizedRecommendation(
                         id=f"rec_{uuid4().hex[:8]}",
@@ -318,6 +324,9 @@ class RecommendationService:
             target_savings = total_income * Decimal("0.20")
             current_savings = total_income - total_expenses
             additional_needed = (target_savings - current_savings) / 3  # Per month
+            # Ensure positive value and minimum threshold
+            if additional_needed < Decimal("0.01"):
+                return recommendations
             
             rec = PersonalizedRecommendation(
                 id=f"rec_{uuid4().hex[:8]}",
@@ -353,7 +362,8 @@ class RecommendationService:
         recommendations = []
         
         try:
-            budgets = await self.budget_repo.get_all(user_id=user_id)
+            # Budget repository not implemented yet, skip budget recommendations
+            budgets = []
             
             for budget in budgets:
                 # Check if budget is near or exceeded

@@ -10,31 +10,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Alert as AlertComponent, AlertDescription } from "@/components/ui/alert"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { useAlerts, type Alert, type AlertCreate, type NotificationSettings } from "@/hooks/use-alerts"
 import { MaterialIcon, IconAccessibility } from "@/lib/material-icons"
-
-interface Alert {
-  id: number
-  type: "bill" | "goal" | "budget" | "income" | "custom"
-  title: string
-  description: string
-  amount?: number
-  dueDate?: string
-  priority: "low" | "medium" | "high"
-  status: "active" | "dismissed" | "completed"
-  recurring: boolean
-  createdAt: string
-}
-
-interface NotificationSettings {
-  billReminders: boolean
-  budgetAlerts: boolean
-  goalUpdates: boolean
-  weeklyReports: boolean
-  reminderDays: number
-}
 
 export function AlertsAndNotifications() {
   const { toast } = useToast()
@@ -72,7 +61,14 @@ export function AlertsAndNotifications() {
 
   const [showNewAlertForm, setShowNewAlertForm] = useState(false)
   const [editingAlert, setEditingAlert] = useState<Alert | null>(null)
-  const [errors, setErrors] = useState<Partial<AlertCreate>>({})
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [dismissConfirmOpen, setDismissConfirmOpen] = useState(false)
+  const [alertToDismiss, setAlertToDismiss] = useState<string | null>(null)
+  const [completeConfirmOpen, setCompleteConfirmOpen] = useState(false)
+  const [alertToComplete, setAlertToComplete] = useState<string | null>(null)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [alertToDelete, setAlertToDelete] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState("active")
 
   // NOTIFICAÇÕES DESABILITADAS: Sistema de notificações automáticas não está implementado
   // O código abaixo está comentado para preservação futura, mas totalmente inativo
@@ -98,16 +94,97 @@ export function AlertsAndNotifications() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR")
+    const date = new Date(dateString)
+    return date.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    })
   }
 
-  const getDaysUntilDue = (dueDate?: string) => {
-    if (!dueDate) return 0
+  /**
+   * Calcula a data de vencimento ajustada para alertas recorrentes.
+   * Se a data já passou e o alerta é recorrente, avança para o próximo mês mantendo o mesmo dia.
+   */
+  const getAdjustedDueDate = (alert: Alert): Date | null => {
+    if (!alert.due_date) return null
+    
+    // Parse da data garantindo que extraímos apenas a parte da data (YYYY-MM-DD)
+    // Isso evita problemas com fuso horário ou horário na string
+    const dateStr = alert.due_date.split('T')[0] // Pega apenas a parte da data (YYYY-MM-DD)
+    const [year, month, day] = dateStr.split('-').map(Number)
+    const dueDate = new Date(year, month - 1, day) // month - 1 porque Date usa 0-11
+    dueDate.setHours(0, 0, 0, 0)
+    
     const today = new Date()
-    const due = new Date(dueDate)
-    const diffTime = due.getTime() - today.getTime()
+    today.setHours(0, 0, 0, 0)
+    
+    // Extrair o dia do mês original
+    const dayOfMonth = dueDate.getDate()
+    
+    // Se o alerta é recorrente
+    if (alert.is_recurring) {
+      // Calcular a próxima ocorrência baseada no mês/ano atual e no dia original
+      const currentYear = today.getFullYear()
+      const currentMonth = today.getMonth() // 0-11
+      
+      // Tentar usar o mesmo dia no mês atual
+      let adjustedDate = new Date(currentYear, currentMonth, dayOfMonth)
+      adjustedDate.setHours(0, 0, 0, 0)
+      
+      // Se a data calculada já passou ou é hoje, avançar para o próximo mês
+      if (adjustedDate <= today) {
+        // Avançar para o próximo mês
+        adjustedDate = new Date(currentYear, currentMonth + 1, dayOfMonth)
+        adjustedDate.setHours(0, 0, 0, 0)
+        
+        // Se o dia não existe no mês (ex: 31/02), usar o último dia do mês
+        if (adjustedDate.getDate() !== dayOfMonth) {
+          // Criar data para o primeiro dia do mês seguinte, depois voltar 1 dia
+          adjustedDate = new Date(currentYear, currentMonth + 2, 0)
+          adjustedDate.setHours(0, 0, 0, 0)
+        }
+      }
+      
+      return adjustedDate
+    }
+    
+    // Para alertas não recorrentes, retornar a data original
+    return dueDate
+  }
+
+  /**
+   * Obtém o número de dias até o vencimento, considerando ajustes para alertas recorrentes.
+   */
+  const getDaysUntilDue = (alert: Alert): number => {
+    if (!alert.due_date) return 0
+    
+    const adjustedDate = getAdjustedDueDate(alert)
+    if (!adjustedDate) return 0
+    
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    const diffTime = adjustedDate.getTime() - today.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays
+    
+    return Math.max(0, diffDays)
+  }
+
+  /**
+   * Formata a data de vencimento mostrando o dia do mês, considerando ajustes para alertas recorrentes.
+   */
+  const formatDueDate = (alert: Alert): string | null => {
+    if (!alert.due_date) return null
+    
+    const adjustedDate = getAdjustedDueDate(alert)
+    if (!adjustedDate) return formatDate(alert.due_date)
+    
+    return adjustedDate.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    })
   }
 
   const getPriorityColor = (priority: Alert["priority"]) => {
@@ -154,7 +231,14 @@ export function AlertsAndNotifications() {
   }
 
   const handleDismissAlert = async (id: string) => {
-    const success = await dismissAlert(id)
+    setAlertToDismiss(id)
+    setDismissConfirmOpen(true)
+  }
+
+  const confirmDismissAlert = async () => {
+    if (!alertToDismiss) return
+    
+    const success = await dismissAlert(alertToDismiss)
     if (success) {
       toast({
         title: "Sucesso",
@@ -162,10 +246,19 @@ export function AlertsAndNotifications() {
       })
       announceToScreenReader("Alerta dispensado")
     }
+    setDismissConfirmOpen(false)
+    setAlertToDismiss(null)
   }
 
-  const handleCompleteAlert = async (id: string) => {
-    const success = await completeAlert(id)
+  const handleCompleteAlert = (id: string) => {
+    setAlertToComplete(id)
+    setCompleteConfirmOpen(true)
+  }
+
+  const confirmCompleteAlert = async () => {
+    if (!alertToComplete) return
+    
+    const success = await completeAlert(alertToComplete)
     if (success) {
       toast({
         title: "Sucesso",
@@ -173,10 +266,19 @@ export function AlertsAndNotifications() {
       })
       announceToScreenReader("Alerta marcado como concluído")
     }
+    setCompleteConfirmOpen(false)
+    setAlertToComplete(null)
   }
 
-  const handleDeleteAlert = async (id: string) => {
-    const success = await deleteAlert(id)
+  const handleDeleteAlert = (id: string) => {
+    setAlertToDelete(id)
+    setDeleteConfirmOpen(true)
+  }
+
+  const confirmDeleteAlert = async () => {
+    if (!alertToDelete) return
+    
+    const success = await deleteAlert(alertToDelete)
     if (success) {
       toast({
         title: "Sucesso",
@@ -184,6 +286,8 @@ export function AlertsAndNotifications() {
       })
       announceToScreenReader("Alerta excluído")
     }
+    setDeleteConfirmOpen(false)
+    setAlertToDelete(null)
   }
 
   const editAlert = (alert: Alert) => {
@@ -198,10 +302,11 @@ export function AlertsAndNotifications() {
       is_recurring: alert.is_recurring,
     })
     setShowNewAlertForm(true)
+    setActiveTab("new") // Muda para a aba "Novo Alerta" ao editar
   }
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<AlertCreate> = {}
+    const newErrors: Record<string, string> = {}
 
     if (!newAlert.title.trim()) {
       newErrors.title = "Título é obrigatório"
@@ -209,10 +314,6 @@ export function AlertsAndNotifications() {
 
     if (newAlert.amount !== undefined && newAlert.amount <= 0) {
       newErrors.amount = "Valor deve ser maior que zero"
-    }
-
-    if (newAlert.due_date && new Date(newAlert.due_date) < new Date()) {
-      newErrors.due_date = "Data não pode ser no passado"
     }
 
     setErrors(newErrors)
@@ -267,6 +368,7 @@ export function AlertsAndNotifications() {
     setEditingAlert(null)
     setShowNewAlertForm(false)
     setErrors({})
+    setActiveTab("active") // Volta para a aba "Ativos" após criar/atualizar
   }
 
   const announceToScreenReader = (message: string) => {
@@ -284,17 +386,17 @@ export function AlertsAndNotifications() {
   const activeAlerts = validAlerts.filter((alert) => alert.status === "active")
   const urgentAlerts = activeAlerts.filter((alert) => alert.priority === "high")
   const upcomingBills = activeAlerts.filter(
-    (alert) => alert.type === "bill" && alert.due_date && getDaysUntilDue(alert.due_date) <= 7,
+    (alert) => alert.type === "bill" && alert.due_date && getDaysUntilDue(alert) <= 7,
   )
 
   return (
     <div className="space-y-8">
         {/* Error Alert */}
         {error && (
-          <Alert variant="destructive">
+          <AlertComponent variant="destructive">
             <MaterialIcon name="alert-circle" size={16} aria-label="Erro" />
             <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          </AlertComponent>
         )}
 
         {/* Resumo de Alertas */}
@@ -336,7 +438,7 @@ export function AlertsAndNotifications() {
         </Card>
       </div>
 
-      <Tabs defaultValue="active" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="active">Ativos ({activeAlerts.length})</TabsTrigger>
           <TabsTrigger value="all">Todos</TabsTrigger>
@@ -370,7 +472,7 @@ export function AlertsAndNotifications() {
                           {alert.amount && <span>Valor: {formatCurrency(alert.amount)}</span>}
                           {alert.due_date && (
                             <span>
-                              Vence em: {getDaysUntilDue(alert.due_date)} dias ({formatDate(alert.due_date)})
+                              Vence em: {getDaysUntilDue(alert)} dias ({formatDueDate(alert)})
                             </span>
                           )}
                           <Badge variant="outline" className="text-xs">
@@ -385,46 +487,48 @@ export function AlertsAndNotifications() {
                       </div>
                     </div>
 
-                    <div className="flex space-x-1">
-                      {alert.type === "bill" && (
+                    {alert.status === "active" && (
+                      <div className="flex space-x-1">
+                        {alert.type === "bill" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleCompleteAlert(alert.id)}
+                            aria-label={`Marcar ${alert.title} como pago`}
+                            disabled={loading}
+                          >
+                            <MaterialIcon name="check-circle" size={16} aria-label="Marcar como concluído" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleCompleteAlert(alert.id)}
-                          aria-label={`Marcar ${alert.title} como pago`}
+                          onClick={() => editAlert(alert)}
+                          aria-label={`Editar alerta ${alert.title}`}
                           disabled={loading}
                         >
-                          <MaterialIcon name="check-circle" size={16} aria-label="Marcar como concluído" />
+                          <MaterialIcon name="edit" size={16} aria-label="Editar" />
                         </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => editAlert(alert)}
-                        aria-label={`Editar alerta ${alert.title}`}
-                        disabled={loading}
-                      >
-                        <MaterialIcon name="edit" size={16} aria-label="Editar" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDismissAlert(alert.id)}
-                        aria-label={`Dispensar alerta ${alert.title}`}
-                        disabled={loading}
-                      >
-                        <MaterialIcon name="bell" size={16} aria-label="Dispensar" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteAlert(alert.id)}
-                        aria-label={`Excluir alerta ${alert.title}`}
-                        disabled={loading}
-                      >
-                        <MaterialIcon name="trash" size={16} aria-label="Excluir" />
-                      </Button>
-                    </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDismissAlert(alert.id)}
+                          aria-label={`Dispensar alerta ${alert.title}`}
+                          disabled={loading}
+                        >
+                          <MaterialIcon name="bell" size={16} aria-label="Dispensar" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteAlert(alert.id)}
+                          aria-label={`Excluir alerta ${alert.title}`}
+                          disabled={loading}
+                        >
+                          <MaterialIcon name="trash" size={16} aria-label="Excluir" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -480,6 +584,49 @@ export function AlertsAndNotifications() {
                         </div>
                       </div>
                     </div>
+
+                    {alert.status === "active" && (
+                      <div className="flex space-x-1">
+                        {alert.type === "bill" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleCompleteAlert(alert.id)}
+                            aria-label={`Marcar ${alert.title} como pago`}
+                            disabled={loading}
+                          >
+                            <MaterialIcon name="check-circle" size={16} aria-label="Marcar como concluído" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => editAlert(alert)}
+                          aria-label={`Editar alerta ${alert.title}`}
+                          disabled={loading}
+                        >
+                          <MaterialIcon name="edit" size={16} aria-label="Editar" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDismissAlert(alert.id)}
+                          aria-label={`Dispensar alerta ${alert.title}`}
+                          disabled={loading}
+                        >
+                          <MaterialIcon name="bell" size={16} aria-label="Dispensar" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteAlert(alert.id)}
+                          aria-label={`Excluir alerta ${alert.title}`}
+                          disabled={loading}
+                        >
+                          <MaterialIcon name="trash" size={16} aria-label="Excluir" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -502,7 +649,7 @@ export function AlertsAndNotifications() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <Alert>
+              <AlertComponent>
                 <MaterialIcon name="info" size={16} aria-label="Informação" />
                 <AlertDescription>
                   <strong>Notificações automáticas não disponíveis</strong>
@@ -510,7 +657,7 @@ export function AlertsAndNotifications() {
                   O sistema de notificações automáticas (email, SMS, push notifications) ainda não está implementado.
                   As configurações abaixo estão desabilitadas e não geram envio de notificações.
                 </AlertDescription>
-              </Alert>
+              </AlertComponent>
 
               <div className="space-y-4">
                 <h4 className="font-semibold">Tipos de Alerta</h4>
@@ -649,9 +796,12 @@ export function AlertsAndNotifications() {
                   value={newAlert.title}
                   onChange={(e) => {
                     setNewAlert((prev) => ({ ...prev, title: e.target.value }))
-                    if (errors.title) {
-                      setErrors(prev => ({ ...prev, title: undefined }))
-                    }
+                                          if (errors.title) {
+                        setErrors(prev => {
+                          const { title, ...rest } = prev
+                          return rest
+                        })
+                      }
                   }}
                 />
                 {errors.title && (
@@ -683,7 +833,10 @@ export function AlertsAndNotifications() {
                       const value = e.target.value ? parseFloat(e.target.value) : undefined
                       setNewAlert((prev) => ({ ...prev, amount: value }))
                       if (errors.amount) {
-                        setErrors(prev => ({ ...prev, amount: undefined }))
+                        setErrors(prev => {
+                          const { amount, ...rest } = prev
+                          return rest
+                        })
                       }
                     }}
                   />
@@ -701,7 +854,10 @@ export function AlertsAndNotifications() {
                     onChange={(e) => {
                       setNewAlert((prev) => ({ ...prev, due_date: e.target.value || undefined }))
                       if (errors.due_date) {
-                        setErrors(prev => ({ ...prev, due_date: undefined }))
+                        setErrors(prev => {
+                          const { due_date, ...rest } = prev
+                          return rest
+                        })
                       }
                     }}
                   />
@@ -750,6 +906,64 @@ export function AlertsAndNotifications() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Dialog de confirmação para dispensar alerta */}
+      <AlertDialog open={dismissConfirmOpen} onOpenChange={setDismissConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Dispensar Alerta</AlertDialogTitle>
+            <AlertDialogDescription>
+              Dispensar um alerta significa desativá-lo definitivamente. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setAlertToDismiss(null)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDismissAlert}>
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={completeConfirmOpen} onOpenChange={setCompleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Conclusão do Alerta</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você tem certeza que deseja concluir este alerta? Após concluído, não será possível reativá-lo. Será necessário criar um novo alerta.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setAlertToComplete(null)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmCompleteAlert}>
+              Sim, Concluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Exclusão do Alerta</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você tem certeza que deseja excluir este alerta? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setAlertToDelete(null)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteAlert}>
+              Sim, Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

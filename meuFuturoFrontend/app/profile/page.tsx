@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { RouteGuard } from "@/components/route-guard"
 import { Button } from "@/components/ui/button"
@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { MaterialIcon } from "@/lib/material-icons"
 import { MainNavigation } from "@/components/main-navigation"
+import { apiService } from "@/lib/api"
 
 export default function ProfilePage() {
   const { user } = useAuth()
@@ -32,6 +33,23 @@ export default function ProfilePage() {
     email: user?.email || "",
   })
 
+  const [originalProfileData, setOriginalProfileData] = useState({
+    name: user?.name || "",
+    email: user?.email || "",
+  })
+
+  // Sincronizar os dados do perfil quando o usuário carregar ou mudar
+  useEffect(() => {
+    if (user) {
+      const initialData = {
+        name: user.name || "",
+        email: user.email || "",
+      }
+      setProfileData(initialData)
+      setOriginalProfileData(initialData)
+    }
+  }, [user])
+
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -46,6 +64,30 @@ export default function ProfilePage() {
     dataSharing: false,
   })
 
+  const handleEditClick = () => {
+    // Quando clicar em "Editar Perfil", apenas ativa o modo de edição
+    // Sincroniza os dados atuais do usuário nos campos editáveis
+    if (user) {
+      const currentData = {
+        name: user.name || "",
+        email: user.email || "",
+      }
+      setProfileData(currentData)
+      setOriginalProfileData(currentData)
+    }
+    setIsEditing(true)
+    setError("")
+    setSuccess("")
+  }
+
+  const handleCancelEdit = () => {
+    // Restaura os dados originais e desativa o modo de edição
+    setProfileData(originalProfileData)
+    setIsEditing(false)
+    setError("")
+    setSuccess("")
+  }
+
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -53,12 +95,63 @@ export default function ProfilePage() {
     setSuccess("")
 
     try {
-      // TODO: Implement API call for profile update
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Preparar apenas os campos que foram modificados
+      const updateData: { name?: string; email?: string } = {}
+      
+      if (profileData.name !== originalProfileData.name) {
+        updateData.name = profileData.name
+      }
+      
+      if (profileData.email !== originalProfileData.email) {
+        updateData.email = profileData.email
+      }
+
+      // Verificar se há alguma alteração
+      if (Object.keys(updateData).length === 0) {
+        setError("Nenhuma alteração foi feita")
+        setIsLoading(false)
+        return
+      }
+
+      // Fazer a chamada à API
+      const response = await apiService.updateProfile(updateData)
+
+      if (response.error) {
+        setError(response.error || "Erro ao atualizar perfil")
+        setIsLoading(false)
+        return
+      }
+
+      // Atualizar os dados originais com os novos valores
+      const updatedData = {
+        name: updateData.name !== undefined ? updateData.name : originalProfileData.name,
+        email: updateData.email !== undefined ? updateData.email : originalProfileData.email,
+      }
+      setOriginalProfileData(updatedData)
+
+      // Recarregar o perfil do usuário para atualizar o contexto
+      const profileResponse = await apiService.getProfile()
+      if (profileResponse.data && typeof profileResponse.data === 'object' && 'name' in profileResponse.data) {
+        // Atualizar o localStorage e recarregar a página para sincronizar o contexto
+        if (typeof window !== 'undefined') {
+          const storedUserStr = localStorage.getItem("meufuturo_user")
+          if (storedUserStr) {
+            const storedUser = JSON.parse(storedUserStr)
+            const profileData = profileResponse.data as { name?: string; email?: string }
+            if (profileData.name) storedUser.name = profileData.name
+            if (profileData.email) storedUser.email = profileData.email
+            localStorage.setItem("meufuturo_user", JSON.stringify(storedUser))
+          }
+          // Recarregar a página para atualizar o contexto de autenticação
+          window.location.reload()
+        }
+      }
+
       setSuccess("Perfil atualizado com sucesso!")
       setIsEditing(false)
     } catch (err) {
-      setError("Erro ao atualizar perfil")
+      console.error("Erro ao atualizar perfil:", err)
+      setError("Erro ao atualizar perfil. Tente novamente.")
     } finally {
       setIsLoading(false)
     }
@@ -70,25 +163,74 @@ export default function ProfilePage() {
     setError("")
     setSuccess("")
 
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setError("As senhas não coincidem")
+    // Validação: Verificar se todos os campos estão preenchidos
+    if (!passwordData.currentPassword.trim()) {
+      setError("Por favor, informe a senha atual")
       setIsLoading(false)
       return
     }
 
+    if (!passwordData.newPassword.trim()) {
+      setError("Por favor, informe a nova senha")
+      setIsLoading(false)
+      return
+    }
+
+    if (!passwordData.confirmPassword.trim()) {
+      setError("Por favor, confirme a nova senha")
+      setIsLoading(false)
+      return
+    }
+
+    // Validação: Verificar se a nova senha tem pelo menos 8 caracteres
     if (passwordData.newPassword.length < 8) {
       setError("A nova senha deve ter pelo menos 8 caracteres")
       setIsLoading(false)
       return
     }
 
+    // Validação: Verificar se a nova senha e confirmação coincidem
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setError("As senhas não coincidem. Verifique a nova senha e a confirmação.")
+      setIsLoading(false)
+      return
+    }
+
+    // Validação: Verificar se a nova senha é diferente da atual
+    if (passwordData.currentPassword === passwordData.newPassword) {
+      setError("A nova senha deve ser diferente da senha atual")
+      setIsLoading(false)
+      return
+    }
+
     try {
-      // TODO: Implement API call for password change
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Chamada à API para alterar a senha
+      const response = await apiService.changePassword({
+        current_password: passwordData.currentPassword,
+        new_password: passwordData.newPassword,
+      })
+
+      if (response.error) {
+        // Tratar erros específicos do backend
+        const errorMessage = response.error || response.message || "Erro ao alterar senha"
+        setError(errorMessage)
+        setIsLoading(false)
+        return
+      }
+
+      // Sucesso: Limpar os campos e exibir mensagem
       setSuccess("Senha alterada com sucesso!")
       setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" })
+      
+      // Limpar mensagem de sucesso após 5 segundos
+      setTimeout(() => {
+        setSuccess("")
+      }, 5000)
     } catch (err) {
-      setError("Erro ao alterar senha")
+      console.error("Erro ao alterar senha:", err)
+      // Tratar erros de rede ou outros erros inesperados
+      const errorMessage = err instanceof Error ? err.message : "Erro ao alterar senha. Verifique sua conexão e tente novamente."
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -171,7 +313,7 @@ export default function ProfilePage() {
 
                     <div className="flex gap-2">
                       {!isEditing ? (
-                        <Button type="button" onClick={() => setIsEditing(true)}>
+                        <Button type="button" onClick={handleEditClick}>
                           Editar Perfil
                         </Button>
                       ) : (
@@ -182,11 +324,8 @@ export default function ProfilePage() {
                           <Button
                             type="button"
                             variant="outline"
-                            onClick={() => {
-                              setIsEditing(false)
-                              setProfileData({ name: user?.name || "", email: user?.email || "" })
-                              setError("")
-                            }}
+                            onClick={handleCancelEdit}
+                            disabled={isLoading}
                           >
                             Cancelar
                           </Button>
@@ -250,7 +389,7 @@ export default function ProfilePage() {
                           value={passwordData.newPassword}
                           onChange={(e) => setPasswordData((prev) => ({ ...prev, newPassword: e.target.value }))}
                           className="pr-10"
-                          minLength={6}
+                          minLength={8}
                           required
                           aria-describedby="new-password-help"
                         />

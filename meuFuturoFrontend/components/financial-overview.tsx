@@ -11,9 +11,11 @@ import { useFinancialAlerts } from "@/hooks/use-financial-alerts"
 import { FinancialOverviewSkeleton } from "./financial-overview-skeleton"
 import { formatCurrency } from "@/lib/utils"
 import { FinancialGoal, FinancialAlert } from "@/lib/types"
+import { useRouter } from "next/navigation"
 
 export function FinancialOverview() {
   const { overview, loading, error, refreshOverview } = useFinancialOverview()
+  const router = useRouter()
 
   if (loading) {
     return <FinancialOverviewSkeleton />
@@ -28,7 +30,7 @@ export function FinancialOverview() {
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
-              <MaterialIcon name="alert-triangle" size={48} className="text-destructive mx-auto mb-4" aria-hidden="true" />
+              <MaterialIcon name="alert-triangle" size={48} className="text-destructive mx-auto mb-4" aria-hidden={true} />
               <h3 className="text-lg font-semibold mb-2">Erro ao carregar dados</h3>
               <p className="text-muted-foreground mb-4">{error}</p>
               <Button onClick={refreshOverview} variant="outline">
@@ -50,12 +52,30 @@ export function FinancialOverview() {
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
-              <p className="text-muted-foreground">Nenhum dado disponível</p>
+              <MaterialIcon name="alert-circle" size={48} className="text-muted-foreground mx-auto mb-4" aria-hidden={true} />
+              <p className="text-muted-foreground mb-4">Nenhum dado disponível</p>
+              <Button onClick={refreshOverview} variant="outline">
+                Recarregar dados
+              </Button>
             </div>
           </CardContent>
         </Card>
       </section>
     )
+  }
+
+  // Debug: Log overview data to console
+  if (typeof window !== 'undefined') {
+    console.log('📊 Financial Overview Component - Data:', {
+      current_balance: overview.current_balance,
+      monthly_income: overview.monthly_income,
+      monthly_expenses: overview.monthly_expenses,
+      savings: overview.savings,
+      health_score: overview.health_score,
+      recent_transactions_count: overview.recent_transactions?.length || 0,
+      goals_count: overview.financial_goals?.length || 0,
+      alerts_count: overview.alerts?.length || 0
+    })
   }
 
   const getHealthScoreColor = (score: number) => {
@@ -75,11 +95,11 @@ export function FinancialOverview() {
   const getTrendIcon = (trend: string) => {
     switch (trend) {
       case "up":
-        return <MaterialIcon name="trending-up" size={16} className="text-green-600" aria-hidden="true" />
+        return <MaterialIcon name="trending-up" size={16} className="text-green-600" aria-hidden={true} />
       case "down":
-        return <MaterialIcon name="trending-down" size={16} className="text-red-600" aria-hidden="true" />
+        return <MaterialIcon name="trending-down" size={16} className="text-red-600" aria-hidden={true} />
       default:
-        return <MaterialIcon name="bar-chart-3" size={16} className="text-gray-600" aria-hidden="true" />
+        return <MaterialIcon name="bar-chart-3" size={16} className="text-gray-600" aria-hidden={true} />
     }
   }
 
@@ -99,13 +119,13 @@ export function FinancialOverview() {
   const getAlertIcon = (type: string) => {
     switch (type) {
       case "bill":
-        return <MaterialIcon name="dollar-sign" size={16} aria-hidden="true" />
+        return <MaterialIcon name="dollar-sign" size={16} aria-hidden={true} />
       case "goal":
-        return <MaterialIcon name="target" size={16} aria-hidden="true" />
+        return <MaterialIcon name="target" size={16} aria-hidden={true} />
       case "budget":
-        return <MaterialIcon name="bar-chart-3" size={16} aria-hidden="true" />
+        return <MaterialIcon name="bar-chart-3" size={16} aria-hidden={true} />
       default:
-        return <MaterialIcon name="alert-circle" size={16} aria-hidden="true" />
+        return <MaterialIcon name="alert-circle" size={16} aria-hidden={true} />
     }
   }
 
@@ -120,7 +140,7 @@ export function FinancialOverview() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Saldo Atual</CardTitle>
-            <MaterialIcon name="dollar-sign" size={16} className="text-muted-foreground" aria-hidden="true" />
+            <MaterialIcon name="dollar-sign" size={16} className="text-muted-foreground" aria-hidden={true} />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(overview.current_balance || 0)}</div>
@@ -137,13 +157,13 @@ export function FinancialOverview() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Receitas do Mês</CardTitle>
-            <MaterialIcon name="trending-up" size={16} className="text-green-600" aria-hidden="true" />
+            <MaterialIcon name="trending-up" size={16} className="text-green-600" aria-hidden={true} />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
               {formatCurrency(overview.monthly_income || 0)}
             </div>
-            <div className="flex items-center text-xs text-muted-foreground">
+            <div className="flex items-center text-xs text-muted-foreground mt-2">
               {getTrendIcon(overview.trends?.income_trend || "stable")}
               <span className="ml-1">
                 {overview.trends?.income_trend === "up" ? "Crescendo" : 
@@ -156,13 +176,13 @@ export function FinancialOverview() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Despesas do Mês</CardTitle>
-            <MaterialIcon name="trending-down" size={16} className="text-red-600" aria-hidden="true" />
+            <MaterialIcon name="trending-down" size={16} className="text-red-600" aria-hidden={true} />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
               {formatCurrency(overview.monthly_expenses || 0)}
             </div>
-            <div className="flex items-center text-xs text-muted-foreground">
+            <div className="flex items-center text-xs text-muted-foreground mt-2">
               {getTrendIcon(overview.trends?.expense_trend || "stable")}
               <span className="ml-1">
                 {overview.trends?.expense_trend === "up" ? "Crescendo" : 
@@ -171,28 +191,14 @@ export function FinancialOverview() {
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Poupança</CardTitle>
-            <MaterialIcon name="piggy-bank" size={16} className="text-muted-foreground" aria-hidden="true" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(overview.savings || 0)}</div>
-            <p className="text-xs text-muted-foreground">
-              {(overview.savings || 0) > 0 ? "Saldo positivo" : "Saldo negativo"}
-            </p>
-          </CardContent>
-        </Card>
       </div>
 
-      {/* Health Score and Goals */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Financial Health Score */}
+      {/* Health Score */}
+      <div className="mb-8">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <MaterialIcon name="bar-chart-3" size={20} aria-hidden="true" />
+              <MaterialIcon name="bar-chart-3" size={20} aria-hidden={true} />
               Saúde Financeira
             </CardTitle>
           </CardHeader>
@@ -214,61 +220,6 @@ export function FinancialOverview() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Financial Goals */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MaterialIcon name="target" size={20} aria-hidden="true" />
-              Metas Financeiras
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {(overview.financial_goals || []).length === 0 ? (
-              <div className="text-center py-8">
-                <MaterialIcon name="target" size={48} className="text-muted-foreground mx-auto mb-4" aria-hidden="true" />
-                <p className="text-muted-foreground mb-4">Nenhuma meta definida</p>
-                <Button size="sm" variant="outline">
-                  <MaterialIcon name="plus-circle" size={16} className="mr-2" aria-hidden="true" />
-                  Criar Meta
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {overview.financial_goals.slice(0, 3).map((goal) => (
-                  <div key={goal.id} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">{goal.name}</span>
-                      <Badge variant={goal.is_completed ? "default" : "secondary"}>
-                        {goal.is_completed ? "Concluída" : goal.status}
-                      </Badge>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>{formatCurrency(goal.current_amount)}</span>
-                        <span>{formatCurrency(goal.target_amount)}</span>
-                      </div>
-                      <Progress value={goal.progress_percentage} className="h-2" />
-                      <div className="text-xs text-muted-foreground">
-                        {goal.progress_percentage.toFixed(1)}% concluído
-                        {goal.days_remaining && (
-                          <span className="ml-2">
-                            • {goal.days_remaining} dias restantes
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {overview.financial_goals.length > 3 && (
-                  <Button variant="outline" size="sm" className="w-full">
-                    Ver todas as metas ({overview.financial_goals.length})
-                  </Button>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
 
       {/* Recent Transactions and Alerts */}
@@ -277,14 +228,14 @@ export function FinancialOverview() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <MaterialIcon name="bar-chart-3" size={20} aria-hidden="true" />
+              <MaterialIcon name="bar-chart-3" size={20} aria-hidden={true} />
               Transações Recentes
             </CardTitle>
           </CardHeader>
           <CardContent>
             {(overview.recent_transactions || []).length === 0 ? (
               <div className="text-center py-8">
-                <MaterialIcon name="bar-chart-3" size={48} className="text-muted-foreground mx-auto mb-4" aria-hidden="true" />
+                <MaterialIcon name="bar-chart-3" size={48} className="text-muted-foreground mx-auto mb-4" aria-hidden={true} />
                 <p className="text-muted-foreground">Nenhuma transação recente</p>
               </div>
             ) : (
@@ -310,7 +261,12 @@ export function FinancialOverview() {
                     </div>
                   </div>
                 ))}
-                <Button variant="outline" size="sm" className="w-full">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={() => router.push('/transactions')}
+                >
                   Ver todas as transações
                 </Button>
               </div>
@@ -322,14 +278,14 @@ export function FinancialOverview() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <MaterialIcon name="alert-triangle" size={20} aria-hidden="true" />
+              <MaterialIcon name="alert-triangle" size={20} aria-hidden={true} />
               Alertas Financeiros
             </CardTitle>
           </CardHeader>
           <CardContent>
             {(overview.alerts || []).length === 0 ? (
               <div className="text-center py-8">
-                <MaterialIcon name="check-circle" size={48} className="text-green-600 mx-auto mb-4" aria-hidden="true" />
+                <MaterialIcon name="check-circle" size={48} className="text-green-600 mx-auto mb-4" aria-hidden={true} />
                 <p className="text-muted-foreground">Nenhum alerta ativo</p>
               </div>
             ) : (
@@ -349,7 +305,7 @@ export function FinancialOverview() {
                       <p className="text-xs text-muted-foreground">{alert.description}</p>
                       {alert.due_date && (
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <MaterialIcon name="clock" size={12} aria-hidden="true" />
+                          <MaterialIcon name="clock" size={12} aria-hidden={true} />
                           <span>
                             {alert.days_until_due !== undefined && alert.days_until_due > 0
                               ? `${alert.days_until_due} dias restantes`
@@ -363,7 +319,12 @@ export function FinancialOverview() {
                   </div>
                 ))}
                 {overview.alerts.length > 3 && (
-                  <Button variant="outline" size="sm" className="w-full">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => router.push('/alerts')}
+                  >
                     Ver todos os alertas ({overview.alerts.length})
                   </Button>
                 )}
@@ -378,7 +339,7 @@ export function FinancialOverview() {
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <MaterialIcon name="bar-chart-3" size={20} aria-hidden="true" />
+              <MaterialIcon name="bar-chart-3" size={20} aria-hidden={true} />
               Insights de IA
             </CardTitle>
           </CardHeader>
@@ -413,12 +374,24 @@ export function FinancialOverview() {
               <div className="mt-6">
                 <h4 className="text-sm font-medium mb-3">Recomendações</h4>
                 <ul className="space-y-2">
-                  {overview.insights.recommendations.map((recommendation, index) => (
-                    <li key={index} className="flex items-start gap-2 text-sm">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                      <span>{recommendation}</span>
-                    </li>
-                  ))}
+                  {overview.insights.recommendations.map((recommendation, index) => {
+                    // Handle both string and object formats
+                    let recommendationText: string;
+                    if (typeof recommendation === 'string') {
+                      recommendationText = recommendation;
+                    } else {
+                      // Type assertion for object format
+                      const rec = recommendation as any;
+                      recommendationText = rec.title || rec.description || 'Recomendação';
+                    }
+                    
+                    return (
+                      <li key={index} className="flex items-start gap-2 text-sm">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                        <span>{recommendationText}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             )}
@@ -430,16 +403,19 @@ export function FinancialOverview() {
       <div className="mt-8">
         <h3 className="text-lg font-semibold mb-4">Ações Rápidas</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Button className="h-20 flex flex-col gap-2">
-            <MaterialIcon name="plus-circle" size={24} aria-hidden="true" />
+          <Button 
+            className="h-20 flex flex-col gap-2"
+            onClick={() => router.push('/transactions?action=create')}
+          >
+            <MaterialIcon name="plus-circle" size={24} aria-hidden={true} />
             <span>Nova Transação</span>
           </Button>
-          <Button variant="outline" className="h-20 flex flex-col gap-2">
-            <MaterialIcon name="target" size={24} aria-hidden="true" />
-            <span>Nova Meta</span>
-          </Button>
-          <Button variant="outline" className="h-20 flex flex-col gap-2">
-            <MaterialIcon name="bar-chart-3" size={24} aria-hidden="true" />
+          <Button 
+            variant="outline" 
+            className="h-20 flex flex-col gap-2"
+            onClick={() => router.push('/reports')}
+          >
+            <MaterialIcon name="bar-chart-3" size={24} aria-hidden={true} />
             <span>Ver Relatórios</span>
           </Button>
         </div>

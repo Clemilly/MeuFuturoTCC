@@ -479,7 +479,10 @@ export function AdvancedAIDashboard() {
                             : "secondary"
                         }
                       >
-                        {rec.priority}
+                        {rec.priority === "urgent" ? "Urgente" : 
+                         rec.priority === "high" ? "Alta" : 
+                         rec.priority === "medium" ? "Média" : 
+                         rec.priority === "low" ? "Baixa" : rec.priority}
                       </Badge>
                     </div>
                   </CardHeader>
@@ -490,10 +493,18 @@ export function AdvancedAIDashboard() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-semibold text-green-600">
                         +R${" "}
-                        {(typeof rec.potential_impact === "number"
-                          ? rec.potential_impact
-                          : 0
-                        ).toFixed(2)}
+                        {(() => {
+                          // Convert potential_impact to number if it's a string (from Decimal)
+                          let impactValue: number;
+                          if (typeof rec.potential_impact === "number") {
+                            impactValue = rec.potential_impact;
+                          } else if (typeof rec.potential_impact === "string") {
+                            impactValue = parseFloat(rec.potential_impact) || 0;
+                          } else {
+                            impactValue = 0;
+                          }
+                          return impactValue > 0 ? impactValue.toFixed(2) : "0.00";
+                        })()}
                         /mês
                       </span>
                       <span className="text-muted-foreground">

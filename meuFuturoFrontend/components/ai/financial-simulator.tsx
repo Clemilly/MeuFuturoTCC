@@ -292,7 +292,7 @@ export function FinancialSimulator() {
                         Saldo Final
                       </p>
                       <p className="text-2xl font-bold">
-                        R$ {result.final_balance.toFixed(2)}
+                        R$ {Number(result.final_balance).toFixed(2)}
                       </p>
                     </div>
                     <div>
@@ -300,7 +300,7 @@ export function FinancialSimulator() {
                         Total Poupado
                       </p>
                       <p className="text-2xl font-bold text-green-600">
-                        R$ {result.total_savings.toFixed(2)}
+                        R$ {Number(result.total_savings).toFixed(2)}
                       </p>
                     </div>
                     <div>
@@ -308,7 +308,7 @@ export function FinancialSimulator() {
                         Média Mensal
                       </p>
                       <p className="text-lg font-semibold">
-                        R$ {result.monthly_average_balance.toFixed(2)}
+                        R$ {Number(result.monthly_average_balance).toFixed(2)}
                       </p>
                     </div>
                     <div>
@@ -326,7 +326,7 @@ export function FinancialSimulator() {
                               : "text-red-600"
                           }`}
                         >
-                          {result.comparison_to_current.percentage_improvement.toFixed(
+                          {Number(result.comparison_to_current.percentage_improvement).toFixed(
                             1
                           )}
                           %
@@ -343,7 +343,7 @@ export function FinancialSimulator() {
                       {result.comparison_to_current.better_outcome ? (
                         <span className="text-green-600">
                           Você teria R${" "}
-                          {result.comparison_to_current.balance_difference.toFixed(
+                          {Number(result.comparison_to_current.balance_difference).toFixed(
                             2
                           )}{" "}
                           a mais no final do período!
@@ -352,7 +352,7 @@ export function FinancialSimulator() {
                         <span className="text-red-600">
                           Você teria R${" "}
                           {Math.abs(
-                            result.comparison_to_current.balance_difference
+                            Number(result.comparison_to_current.balance_difference)
                           ).toFixed(2)}{" "}
                           a menos no final do período.
                         </span>

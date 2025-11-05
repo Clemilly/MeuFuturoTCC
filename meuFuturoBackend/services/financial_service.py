@@ -787,31 +787,105 @@ class FinancialService:
         Returns:
             Financial overview data
         """
+        logger.info("Getting financial overview", user_id=user_id)
+        
         # Get current month summary
         today = date.today()
-        current_month = await self.get_monthly_summary(
-            user_id=user_id,
-            year=today.year,
-            month=today.month
-        )
+        try:
+            current_month = await self.get_monthly_summary(
+                user_id=user_id,
+                year=today.year,
+                month=today.month
+            )
+            logger.info(
+                "Current month summary loaded",
+                user_id=user_id,
+                income=float(current_month.total_income),
+                expenses=float(current_month.total_expenses)
+            )
+        except Exception as e:
+            logger.error(f"Error loading current month summary: {e}", exc_info=True)
+            # Create empty monthly summary
+            from schemas.transaction import MonthlySummary
+            current_month = MonthlySummary(
+                year=today.year,
+                month=today.month,
+                total_income=Decimal(0),
+                total_expenses=Decimal(0),
+                net_amount=Decimal(0),
+                transaction_count=0,
+                categories=[]
+            )
         
         # Get recent transactions
-        recent_transactions = await self.transaction_repo.get_recent_transactions(
-            user_id=user_id,
-            limit=5
-        )
+        try:
+            recent_transactions = await self.transaction_repo.get_recent_transactions(
+                user_id=user_id,
+                limit=5
+            )
+            logger.info(
+                "Recent transactions loaded",
+                user_id=user_id,
+                count=len(recent_transactions)
+            )
+        except Exception as e:
+            logger.error(f"Error loading recent transactions: {e}", exc_info=True)
+            recent_transactions = []
         
         # Get overall summary
-        overall_summary = await self.get_transaction_summary(user_id=user_id)
+        try:
+            overall_summary = await self.get_transaction_summary(user_id=user_id)
+            logger.info(
+                "Overall summary loaded",
+                user_id=user_id,
+                net_amount=float(overall_summary.net_amount),
+                total_income=float(overall_summary.total_income),
+                total_expenses=float(overall_summary.total_expenses)
+            )
+        except Exception as e:
+            logger.error(f"Error loading overall summary: {e}", exc_info=True)
+            # Create empty summary
+            from schemas.transaction import TransactionSummary
+            overall_summary = TransactionSummary(
+                total_income=Decimal(0),
+                total_expenses=Decimal(0),
+                net_amount=Decimal(0),
+                transaction_count=0,
+                income_count=0,
+                expense_count=0,
+                average_transaction=Decimal(0),
+                largest_income=Decimal(0),
+                largest_expense=Decimal(0)
+            )
         
         # Get previous month for comparison
         from datetime import timedelta
         prev_month = today.replace(day=1) - timedelta(days=1)
-        previous_month = await self.get_monthly_summary(
-            user_id=user_id,
-            year=prev_month.year,
-            month=prev_month.month
-        )
+        try:
+            previous_month = await self.get_monthly_summary(
+                user_id=user_id,
+                year=prev_month.year,
+                month=prev_month.month
+            )
+            logger.info(
+                "Previous month summary loaded",
+                user_id=user_id,
+                year=prev_month.year,
+                month=prev_month.month
+            )
+        except Exception as e:
+            logger.warning(f"Error loading previous month summary: {e}")
+            # Create empty previous month summary
+            from schemas.transaction import MonthlySummary
+            previous_month = MonthlySummary(
+                year=prev_month.year,
+                month=prev_month.month,
+                total_income=Decimal(0),
+                total_expenses=Decimal(0),
+                net_amount=Decimal(0),
+                transaction_count=0,
+                categories=[]
+            )
         
         # Get financial goals
         try:
@@ -831,88 +905,125 @@ class FinancialService:
             logger.warning(f"Error loading alerts: {e}")
             alerts = []
         
+        # Calculate health score first (needed for insights fallback)
+        health_score = self._calculate_health_score(
+            current_month, previous_month, goals, overall_summary
+        )
+        
+        # Calculate trends (needed for insights fallback)
+        trends = self._calculate_trends(current_month, previous_month)
+        
         # Get AI insights
+        insights = None
         try:
             from services.ai_service import AIService
             ai_service = AIService(self.db)
             insights = await ai_service.get_financial_insights(user_id)
         except Exception as e:
             logger.warning(f"Error loading AI insights: {e}")
-            insights = {
-                "health_score": 0,
-                "health_label": "Indisponível",
-                "risk_level": "low",
-                "monthly_trend": "stable",
+            # Will use calculated health_score and trends as fallback
+        
+        # Build recent transactions with proper category handling
+        recent_transactions_data = []
+        for t in recent_transactions:
+            # Ensure category relationship is loaded
+            category_name = "Sem categoria"
+            if t.category:
+                category_name = t.category.name
+            elif hasattr(t, 'category_name'):
+                category_name = t.category_name
+            
+            recent_transactions_data.append({
+                "id": t.id,
+                "description": t.description,
+                "amount": float(t.amount),
+                "type": t.type.value,
+                "transaction_date": t.transaction_date.isoformat(),
+                "category": {
+                    "name": category_name
+                }
+            })
+        
+        # Build financial goals data
+        financial_goals_data = []
+        for g in goals:
+            financial_goals_data.append({
+                "id": g.id,
+                "name": g.name,
+                "description": g.description or "",
+                "type": g.type.value,
+                "target_amount": float(g.target_amount),
+                "current_amount": float(g.current_amount),
+                "progress_percentage": g.progress_percentage,
+                "days_remaining": g.days_remaining,
+                "is_completed": g.is_completed,
+                "status": g.status.value
+            })
+        
+        # Build alerts data
+        alerts_data = []
+        for a in alerts:
+            alerts_data.append({
+                "id": a.id,
+                "type": a.type.value,
+                "title": a.title,
+                "description": a.description or "",
+                "amount": float(a.amount) if a.amount else None,
+                "due_date": a.due_date.isoformat() if a.due_date else None,
+                "priority": a.priority.value,
+                "status": a.status.value,
+                "days_until_due": a.days_until_due,
+                "is_overdue": a.is_overdue
+            })
+        
+        # Build insights data - use AI insights if available, otherwise use calculated values
+        if insights:
+            insights_data = {
+                "health_score": insights.health_score,
+                "health_label": insights.health_label,
+                "risk_level": insights.risk_level,
+                "monthly_trend": insights.monthly_trend,
+                "recommendations": insights.recommendations if insights.recommendations else []
+            }
+        else:
+            # Fallback to calculated values when AI insights are unavailable
+            insights_data = {
+                "health_score": health_score["score"],
+                "health_label": health_score["label"],
+                "risk_level": "low" if health_score["score"] >= 60 else ("medium" if health_score["score"] >= 40 else "high"),
+                "monthly_trend": trends.get("income_trend", "stable"),
                 "recommendations": []
             }
         
-        # Calculate health score
-        health_score = self._calculate_health_score(
-            current_month, previous_month, goals, overall_summary
-        )
-        
-        # Calculate trends
-        trends = self._calculate_trends(current_month, previous_month)
-        
-        return {
+        # Build final response
+        response_data = {
             "current_balance": float(overall_summary.net_amount),
             "monthly_income": float(current_month.total_income),
             "monthly_expenses": float(current_month.total_expenses),
             "savings": float(current_month.net_amount),
             "health_score": health_score["score"],
             "health_label": health_score["label"],
-            "recent_transactions": [
-                {
-                    "id": t.id,
-                    "description": t.description,
-                    "amount": float(t.amount),
-                    "type": t.type.value,
-                    "transaction_date": t.transaction_date.isoformat(),
-                    "category": {
-                        "name": t.category_name or "Sem categoria"
-                    }
-                }
-                for t in recent_transactions
-            ],
-            "financial_goals": [
-                {
-                    "id": g.id,
-                    "name": g.name,
-                    "description": g.description,
-                    "type": g.type.value,
-                    "target_amount": float(g.target_amount),
-                    "current_amount": float(g.current_amount),
-                    "progress_percentage": g.progress_percentage,
-                    "days_remaining": g.days_remaining,
-                    "is_completed": g.is_completed,
-                    "status": g.status.value
-                }
-                for g in goals
-            ],
-            "alerts": [
-                {
-                    "id": a.id,
-                    "type": a.type.value,
-                    "title": a.title,
-                    "description": a.description,
-                    "amount": float(a.amount) if a.amount else None,
-                    "due_date": a.due_date.isoformat() if a.due_date else None,
-                    "priority": a.priority.value,
-                    "status": a.status.value,
-                    "days_until_due": a.days_until_due,
-                    "is_overdue": a.is_overdue
-                }
-                for a in alerts
-            ],
-            "insights": {
-                "health_score": insights.health_score,
-                "health_label": insights.health_label,
-                "risk_level": insights.risk_level,
-                "monthly_trend": insights.monthly_trend,
-                "recommendations": insights.recommendations
-            },
+            "recent_transactions": recent_transactions_data,
+            "financial_goals": financial_goals_data,
+            "alerts": alerts_data,
+            "insights": insights_data,
             "trends": trends
         }
+        
+        logger.info(
+            "Financial overview response built",
+            user_id=user_id,
+            current_balance=response_data["current_balance"],
+            monthly_income=response_data["monthly_income"],
+            monthly_expenses=response_data["monthly_expenses"],
+            savings=response_data["savings"],
+            health_score=response_data["health_score"],
+            transactions_count=len(response_data["recent_transactions"]),
+            goals_count=len(response_data["financial_goals"]),
+            alerts_count=len(response_data["alerts"])
+        )
+        
+        return response_data
     
     def _calculate_health_score(
         self, 

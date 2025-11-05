@@ -67,7 +67,7 @@ export interface PersonalizedRecommendation {
   description: string
   category: string
   priority: 'low' | 'medium' | 'high' | 'urgent'
-  potential_impact: number
+  potential_impact: number | string // Can be string when serialized from Decimal
   implementation_steps: string[]
   difficulty: string
   estimated_time: string

@@ -2,7 +2,6 @@ import { AdvancedAIDashboard } from "@/components/ai/advanced-dashboard";
 import { FinancialSimulator } from "@/components/ai/financial-simulator";
 import { PatternAnalysis } from "@/components/ai/pattern-analysis";
 import { AIRecommendations } from "@/components/ai/ai-recommendations";
-import { MonthlyReport } from "@/components/ai/monthly-report";
 import { MainNavigation } from "@/components/main-navigation";
 import { RouteGuard } from "@/components/route-guard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,12 +21,11 @@ export default function AIInsightsPage() {
           </header>
 
           <Tabs defaultValue="dashboard" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="patterns">Padrões</TabsTrigger>
               <TabsTrigger value="recommendations">Recomendações</TabsTrigger>
               <TabsTrigger value="simulator">Simulador</TabsTrigger>
-              <TabsTrigger value="reports">Relatórios</TabsTrigger>
             </TabsList>
 
             <TabsContent value="dashboard">
@@ -44,10 +42,6 @@ export default function AIInsightsPage() {
 
             <TabsContent value="simulator">
               <FinancialSimulator />
-            </TabsContent>
-
-            <TabsContent value="reports">
-              <MonthlyReport />
             </TabsContent>
           </Tabs>
         </main>

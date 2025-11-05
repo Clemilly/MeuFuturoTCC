@@ -127,19 +127,6 @@ export interface DateRange {
   end: Date
 }
 
-export interface FilterState {
-  search: string
-  type: 'all' | 'income' | 'expense'
-  category: string
-  dateRange: DateRange | null
-  amountRange: {
-    min: number | null
-    max: number | null
-  }
-  sortBy: string
-  sortOrder: 'asc' | 'desc'
-}
-
 export interface ModalState {
   isEditOpen: boolean
   isDeleteOpen: boolean

@@ -115,10 +115,17 @@ class PatternAnalysisService:
         # Group by category and month
         category_monthly = defaultdict(lambda: defaultdict(Decimal))
         
+        # Month names in Portuguese
+        month_names_pt = {
+            1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril",
+            5: "Maio", 6: "Junho", 7: "Julho", 8: "Agosto",
+            9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
+        }
+        
         for transaction in transactions:
             if transaction.type.value == "expense":
                 category = transaction.category_name
-                month = transaction.transaction_date.strftime("%B")
+                month = month_names_pt[transaction.transaction_date.month]
                 category_monthly[category][month] += transaction.amount
         
         patterns = []
@@ -146,7 +153,7 @@ class PatternAnalysisService:
                 
                 pattern = SeasonalPattern(
                     category=category,
-                    pattern_type="yearly" if len(peak_months) <= 3 else "quarterly",
+                    pattern_type="Anual" if len(peak_months) <= 3 else "Trimestral",
                     peak_months=peak_months,
                     average_variation=round(variation, 2),
                     next_peak_date=next_peak,
@@ -251,22 +258,28 @@ class PatternAnalysisService:
             return {
                 "peak_spending_day": "N/A",
                 "lowest_spending_day": "N/A",
-                "month_pattern": "insufficient_data"
+                "month_pattern": "dados_insuficientes"
             }
         
         # Analyze by day of week
         weekday_totals = defaultdict(Decimal)
         
+        # Weekday names in Portuguese
+        weekday_names_pt = {
+            0: "Segunda-feira", 1: "Terça-feira", 2: "Quarta-feira",
+            3: "Quinta-feira", 4: "Sexta-feira", 5: "Sábado", 6: "Domingo"
+        }
+        
         for transaction in transactions:
             if transaction.type.value == "expense":
-                weekday = transaction.transaction_date.strftime("%A")
+                weekday = weekday_names_pt[transaction.transaction_date.weekday()]
                 weekday_totals[weekday] += transaction.amount
         
         if not weekday_totals:
             return {
                 "peak_spending_day": "N/A",
                 "lowest_spending_day": "N/A",
-                "month_pattern": "no_expenses"
+                "month_pattern": "sem_gastos"
             }
         
         peak_day = max(weekday_totals.items(), key=lambda x: x[1])[0]
@@ -275,7 +288,7 @@ class PatternAnalysisService:
         return {
             "peak_spending_day": peak_day,
             "lowest_spending_day": lowest_day,
-            "month_pattern": "stable",
+            "month_pattern": "estável",
         }
     
     def _analyze_category_correlations(
@@ -346,9 +359,15 @@ class PatternAnalysisService:
         """Analyze average spending by day of week."""
         weekday_totals = defaultdict(lambda: {"total": Decimal("0"), "count": 0})
         
+        # Weekday names in Portuguese
+        weekday_names_pt = {
+            0: "Segunda-feira", 1: "Terça-feira", 2: "Quarta-feira",
+            3: "Quinta-feira", 4: "Sexta-feira", 5: "Sábado", 6: "Domingo"
+        }
+        
         for transaction in transactions:
             if transaction.type.value == "expense":
-                weekday = transaction.transaction_date.strftime("%A")
+                weekday = weekday_names_pt[transaction.transaction_date.weekday()]
                 weekday_totals[weekday]["total"] += transaction.amount
                 weekday_totals[weekday]["count"] += 1
         
@@ -365,9 +384,9 @@ class PatternAnalysisService:
         # This would require transaction time, which we don't have
         # Return mock data for now
         return {
-            "morning": Decimal("0"),
-            "afternoon": Decimal("0"),
-            "evening": Decimal("0"),
+            "Manhã": Decimal("0"),
+            "Tarde": Decimal("0"),
+            "Noite": Decimal("0"),
         }
     
     def _generate_behavioral_insights(
@@ -427,9 +446,9 @@ class PatternAnalysisService:
             return None
         
         month_numbers = {
-            "January": 1, "February": 2, "March": 3, "April": 4,
-            "May": 5, "June": 6, "July": 7, "August": 8,
-            "September": 9, "October": 10, "November": 11, "December": 12
+            "Janeiro": 1, "Fevereiro": 2, "Março": 3, "Abril": 4,
+            "Maio": 5, "Junho": 6, "Julho": 7, "Agosto": 8,
+            "Setembro": 9, "Outubro": 10, "Novembro": 11, "Dezembro": 12
         }
         
         today = date.today()

@@ -418,16 +418,35 @@ async def get_financial_overview(
     Dados consolidados para exibição no dashboard principal.
     """
     try:
+        logger.info("Financial overview requested", user_id=current_user.id)
         overview = await financial_service.get_financial_overview(current_user.id)
+        
+        # Log the overview data for debugging
+        logger.info(
+            "Financial overview generated",
+            user_id=current_user.id,
+            current_balance=overview.get("current_balance", 0),
+            monthly_income=overview.get("monthly_income", 0),
+            monthly_expenses=overview.get("monthly_expenses", 0),
+            recent_transactions_count=len(overview.get("recent_transactions", [])),
+            goals_count=len(overview.get("financial_goals", [])),
+            alerts_count=len(overview.get("alerts", []))
+        )
+        
         return overview
     except Exception as e:
-        logger.error(f"Error in financial overview: {e}")
-        # Return a basic overview structure
-        return {
-            "current_balance": 0,
-            "monthly_income": 0,
-            "monthly_expenses": 0,
-            "savings": 0,
+        logger.error(
+            "Error in financial overview",
+            user_id=current_user.id,
+            error=str(e),
+            exc_info=True
+        )
+        # Return a basic overview structure with zeros (not null/undefined)
+        fallback_overview = {
+            "current_balance": 0.0,
+            "monthly_income": 0.0,
+            "monthly_expenses": 0.0,
+            "savings": 0.0,
             "health_score": 0,
             "health_label": "Indisponível",
             "recent_transactions": [],
@@ -446,6 +465,12 @@ async def get_financial_overview(
                 "savings_trend": "stable"
             }
         }
+        logger.warning(
+            "Returning fallback overview",
+            user_id=current_user.id,
+            overview=fallback_overview
+        )
+        return fallback_overview
 
 
 @router.get(

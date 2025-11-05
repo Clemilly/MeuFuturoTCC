@@ -17,7 +17,10 @@ export function useFinancialOverview() {
       // Use the basic overview endpoint first
       const response = await apiService.request('/financial/overview')
       
+      console.log('📊 Financial Overview Response:', response)
+      
       if (response.error) {
+        console.error('❌ Error in financial overview response:', response.error)
         if (handleAuthError(response)) {
           return
         }
@@ -25,9 +28,26 @@ export function useFinancialOverview() {
         return
       }
       
-      setOverview(response.data)
+      // Check if data exists
+      if (!response.data) {
+        console.warn('⚠️ No data in financial overview response')
+        setError('Nenhum dado retornado do servidor')
+        return
+      }
+      
+      console.log('✅ Financial Overview Data:', response.data)
+      
+      // Validate data structure
+      const overviewData = response.data
+      if (typeof overviewData !== 'object' || overviewData === null) {
+        console.error('❌ Invalid data structure:', overviewData)
+        setError('Estrutura de dados inválida')
+        return
+      }
+      
+      setOverview(overviewData)
     } catch (err) {
-      console.error('Error loading financial overview:', err)
+      console.error('❌ Error loading financial overview:', err)
       if (handleAuthError(err)) {
         return
       }

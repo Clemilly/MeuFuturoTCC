@@ -5,7 +5,8 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useTransactionsOrchestrator } from "@/hooks/transactions/use-transactions-orchestrator";
 import { useCategories } from "@/hooks/use-categories";
 import { usePageRefresh } from "@/hooks/use-page-refresh";
@@ -53,6 +54,10 @@ export function TransactionsPageModular() {
   // Estado local apenas para modals (UI state)
   const [modals, setModals] = useState<ModalState>(initialModalState);
   const [isCreateCategoryOpen, setIsCreateCategoryOpen] = useState(false);
+  
+  // Check for query params to open modal
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   // Hook para recarregar dados após refresh e salvar/restaurar filtros
   usePageRefresh({
@@ -88,6 +93,17 @@ export function TransactionsPageModular() {
     console.log("➕ Opening create modal");
     setModals({ ...initialModalState, isCreateOpen: true });
   };
+
+  // Check query params on mount and when searchParams change
+  useEffect(() => {
+    const action = searchParams.get('action');
+    if (action === 'create' && !modals.isCreateOpen) {
+      openCreateModal();
+      // Remove query param from URL without page reload
+      router.replace('/transactions', { scroll: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, modals.isCreateOpen, router]);
 
   const openEditModal = (transaction: Transaction) => {
     console.log("✏️ Opening edit modal for:", transaction.id);
